@@ -1,6 +1,6 @@
 import numpy as np
 
-from dicomclass.dataset.generate_dataset import disease_placeholder, gene_placeholder
+from ...dataset.generate_dataset import disease_placeholder, gene_placeholder
 
 
 def generate_embedding_matrix(sentences_tokenized, word_vectors, word_to_index, max_length, min_words_mapped=0,
