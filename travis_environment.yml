@@ -1,6 +1,7 @@
 name: test-environment
 channels:
 - defaults
+- conda-forge
 dependencies:
 - xgboost=0.6a2=py36_0
 - nltk=3.2.2=py36_0
