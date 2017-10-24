@@ -8,44 +8,104 @@ from sklearn.model_selection import GridSearchCV, ParameterGrid
 from sklearn.pipeline import Pipeline
 import xgboost as xgb
 
-# from dicomclass.dataset.generate_dataset import disease_placeholder, gene_placeholder
+
+def _cv_independent_entities_treted_separately(data_df, cv_folds, entity_columns, random_state):
+    entity1s = data_df[entity_columns[0]].unique()
+    entity1s.sort()
+    entity2s = data_df[entity_columns[1]].unique()
+    entity2s.sort()
+    random_state.shuffle(entity2s)
+    random_state.shuffle(entity1s)
+    for entity1s_test, entity2s_test in zip(np.array_split(entity1s, cv_folds),
+                                         np.array_split(entity2s, cv_folds)):
+        entity1_is_test = data_df[entity_columns[0]].isin(entity1s_test)
+        entity2_is_test = data_df[entity_columns[1]].isin(entity2s_test)
+        is_test_set = np.logical_and(entity1_is_test, entity2_is_test)
+        test_indices = np.where(is_test_set)[0]
+        is_remove_set = np.logical_xor(entity1_is_test, entity2_is_test)
+        remove_indices = np.where(is_remove_set)[0]
+        is_train_set = np.logical_not(np.logical_or(entity1_is_test, entity2_is_test))
+        train_indices = np.where(is_train_set)[0]
+        assert len(set(np.concatenate([train_indices, test_indices, remove_indices]))) == len(data_df)
+        yield train_indices, test_indices
 
 
-def cv_independent_associations(data_df, cv_folds=5, random_state=None):
+def cv_independent_entities(data_df, cv_folds=5, entity_columns=('entity1', 'entity2'),
+                            treat_entity_columns_separately=False,
+                            random_state=None):
     """
-    Performs a disease- and gene-aware splitting into CV folds to ensure independence between folds.
-    
-    Independence is established by, for instance, reserving 20% of all diseases and genes for each CV test set.
-    All interactions between these diseases/genes are then assigned to the given test set. The CV training
-    set are the remaining associations not involving any of the previously selected diseases/genes.
-    This ensures that features learned for specific diseases/genes to not bleed into the CV test sets.
-    
+    Performs an entity aware splitting into CV folds to ensure independence between folds.
+
+    Independence is established by, for instance, reserving 20% of all interacting entities for each CV test set.
+    All interactions between these entities are then assigned to the given test set. The CV training
+    set are the remaining associations not involving any of the previously selected entities.
+    This ensures that features learned for specific entities do not bleed into the CV test sets.
+
     :param data_df: the DataFrame to be split up into CV folds
     :param cv_folds: int, the number of CV folds to generate
+    :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
+    :param treat_entity_columns_separately: boolean, set this to split the given entity columns independently
     :param random_state: numpy RandomState to use while splitting into folds
     :return: a generator that returns (train_indices, test_indices) tuples where each array of indices denotes the
     indices of rows in data_df that are assigned to the train/test set in the given CV fold.
     """
-    diseases = data_df['disease'].unique()
-    diseases.sort()
-    genes = data_df['gene'].unique()
-    genes.sort()
+    assert len(entity_columns) == 2
     if random_state is None:
         # random seeding
         random_state = np.random.RandomState()
-    random_state.shuffle(genes)
-    random_state.shuffle(diseases)
-    for diseases_test, genes_test in zip(np.array_split(diseases, cv_folds),
-                                         np.array_split(genes, cv_folds)):
-        disease_is_test = data_df['disease'].isin(diseases_test)
-        gene_is_test = data_df['gene'].isin(genes_test)
-        is_test_set = np.logical_and(disease_is_test, gene_is_test)
+    if treat_entity_columns_separately:
+        for cv_pair in _cv_independent_entities_treted_separately(data_df, cv_folds, entity_columns, random_state):
+            yield cv_pair
+    entities = data_df[entity_columns[0]].append(data_df[entity_columns[1]]).unique()
+    entities.sort()
+    random_state.shuffle(entities)
+    for entities_test in np.array_split(entities, cv_folds):
+        first_is_test = data_df[entity_columns[0]].isin(entities_test)
+        second_is_test = data_df[entity_columns[1]].isin(entities_test)
+        is_test_set = np.logical_and(first_is_test, second_is_test)
         test_indices = np.where(is_test_set)[0]
-        is_remove_set = np.logical_xor(disease_is_test, gene_is_test)
+        is_remove_set = np.logical_xor(first_is_test, second_is_test)
         remove_indices = np.where(is_remove_set)[0]
-        is_train_set = np.logical_not(np.logical_or(disease_is_test, gene_is_test))
+        is_train_set = np.logical_not(np.logical_or(first_is_test, second_is_test))
         train_indices = np.where(is_train_set)[0]
         assert len(set(np.concatenate([train_indices, test_indices, remove_indices]))) == len(data_df)
+        yield train_indices, test_indices
+
+
+def cv_independent_associations(data_df, cv_folds=5, entity_columns=('entity1', 'entity2'), random_state=None):
+    """
+    Performs an association aware splitting into CV folds to ensure independence between folds.
+
+    Independence is established by, for instance, reserving 20% of all associations for each CV test set.
+    All instances of this association are then assigned to the given test set. The CV training
+    set are the remaining instances not involving any of the previously selected associations.
+    This ensures that features learned for specific associations do not bleed into the CV test sets.
+
+    :param data_df: the DataFrame to be split up into CV folds
+    :param cv_folds: int, the number of CV folds to generate
+    :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
+    :param random_state: numpy RandomState to use while splitting into folds
+    :return: a generator that returns (train_indices, test_indices) tuples where each array of indices denotes the
+    indices of rows in data_df that are assigned to the train/test set in the given CV fold.
+    """
+    assert len(entity_columns) == 2
+
+    # interacting are first sorted and then combined to a string; this eases things later
+    # because we do not need to worry about the order of entity1 and entity2 anymore
+    associations = data_df.apply(lambda row: ','.join(sorted((row[entity_columns[0]], row[entity_columns[1]]))),
+                                 axis=1,
+                                 raw=False)
+    all_assoc = sorted(set(associations))
+    if random_state is None:
+        # random seeding
+        random_state = np.random.RandomState()
+    random_state.shuffle(all_assoc)
+    for entities_test in np.array_split(all_assoc, cv_folds):
+        is_test_assoc = associations.isin(entities_test)
+        is_train_assoc = np.logical_not(is_test_assoc)
+        test_indices = np.where(is_test_assoc)[0]
+        train_indices = np.where(is_train_assoc)[0]
+        assert len(set(np.concatenate([train_indices, test_indices]))) == len(data_df)
         yield train_indices, test_indices
 
 
@@ -196,7 +256,7 @@ def grid_search_cv(estimator, param_grid, dataset, results_file, n_jobs, cv_fold
     else:
         matrix_non_missing = None
 
-    cv_sets = list(cv_independent_associations(dataset, cv_folds=cv_folds, random_state=random_state))
+    cv_sets = list(cv_independent_entities(dataset, cv_folds=cv_folds, random_state=random_state))
 
     # stop_words = [gene_placeholder, disease_placeholder]
     # vectorizer = CountVectorizer(stop_words=stop_words)
@@ -245,3 +305,26 @@ def grid_search_cv(estimator, param_grid, dataset, results_file, n_jobs, cv_fold
 
     with gzip.open(results_file, 'wt', encoding='utf-8', errors='raise') as file_out:
         results_df.to_csv(file_out, sep='\t', header=True, index=False)
+
+
+def get_random_parameter_sampler(param_distributions, n_iter):
+    """
+    Sample parameters from given distributions.
+
+    :param param_distributions : dict
+        Dictionary where the keys are parameters and values
+        are distributions from which a parameter is to be sampled by calling the disribution.
+    :param n_iter : integer
+        Number of parameter settings that are produced.
+    :return: dict of string to any
+        Yields dictionaries mapping each estimator parameter to
+        as sampled value.
+    """
+    # Code below is a simplified version of sklearn.model_selection.ParameterSampler
+    # Sort the keys for reproducibility
+    items = sorted(param_distributions.items())
+    for _ in range(n_iter):
+        params = dict()
+        for k, v in items:
+                params[k] = v()
+        yield params
