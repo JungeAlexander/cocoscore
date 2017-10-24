@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 
-from cocoscore.dataset.generate_glove_feature_matrix import get_sentence_vector_array
+from cocoscore.ml.feature.embedding_matrix import get_sentence_vector_array
 
 
 class CVTest(unittest.TestCase):

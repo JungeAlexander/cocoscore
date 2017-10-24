@@ -14,7 +14,6 @@ class CVTest(unittest.TestCase):
     testcase_cv_fold_stats = pandas.read_csv('tests/ml/test_cv_fold_stats.csv', sep=',', header=0, index_col=None)
     test_case_df_path = 'tests/ml/cv_test.tsv'
 
-
     def test_reproducibility(self):
         run1 = cv.cv_independent_entities(self.testcase_df, random_state=np.random.RandomState(0))
         run2 = cv.cv_independent_entities(self.testcase_df, random_state=np.random.RandomState(0))

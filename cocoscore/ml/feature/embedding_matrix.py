@@ -1,6 +1,10 @@
+import logging
 import numpy as np
+import string
 
-from ...dataset.generate_dataset import disease_placeholder, gene_placeholder
+from ...tools.constants import DISEASE_PLACEHOLDER, GENE_PLACEHOLDER
+
+module_logger = logging.getLogger(__name__)
 
 
 def generate_embedding_matrix(sentences_tokenized, word_vectors, word_to_index, max_length, min_words_mapped=0,
@@ -27,9 +31,9 @@ def generate_embedding_matrix(sentences_tokenized, word_vectors, word_to_index, 
         for j, word in enumerate(sentence):
             if j >= max_length:
                 break
-            if word not in word_to_index and replace_disease_gene_tokens and word == disease_placeholder.lower():
+            if word not in word_to_index and replace_disease_gene_tokens and word == DISEASE_PLACEHOLDER.lower():
                 embedding_matrix[i, j] = word_vectors[word_to_index['disease']]
-            elif word not in word_to_index and replace_disease_gene_tokens and word == gene_placeholder.lower():
+            elif word not in word_to_index and replace_disease_gene_tokens and word == GENE_PLACEHOLDER.lower():
                 embedding_matrix[i, j] = word_vectors[word_to_index['gene']]
             elif word in word_to_index:
                 words_mapped += 1
@@ -37,3 +41,34 @@ def generate_embedding_matrix(sentences_tokenized, word_vectors, word_to_index, 
         if words_mapped < min_words_mapped:
             embedding_matrix[i, :, :] = np.full((max_length, vector_dim), np.nan)
     return embedding_matrix
+
+
+def get_sentence_vector_array(sentences_tokenized, word_vectors, word_to_index, min_vector_count, remove_punctuation,
+                              replace_disease_gene_tokens=True):
+    # :param replace_disease_gene_tokens: boolean indicating if tokens representing tagged diseases and genes
+    #         are mapped to the word vectors for 'disease' and 'gene', respectively. If False, the tokens are ignored.
+
+    # simply average all word vectors corresponding to words in the sentence
+    vector_dim = len(word_vectors[0])
+    sentence_array = np.zeros((len(sentences_tokenized), vector_dim))
+    for sentence_index, sentence in enumerate(sentences_tokenized):
+        vector_count = 0
+        sentence_vec = np.zeros(vector_dim)
+        for word in sentence:
+            if remove_punctuation and word.strip() in string.punctuation:
+                continue
+            if word not in word_to_index and replace_disease_gene_tokens and word == DISEASE_PLACEHOLDER.lower():
+                vector_count += 1
+                sentence_vec += word_vectors[word_to_index['disease']]
+            elif word not in word_to_index and replace_disease_gene_tokens and word == GENE_PLACEHOLDER.lower():
+                vector_count += 1
+                sentence_vec += word_vectors[word_to_index['gene']]
+            elif word in word_to_index:
+                vector_count += 1
+                sentence_vec += word_vectors[word_to_index[word]]
+        if vector_count < min_vector_count:
+            sentence_vec = np.full(vector_dim, np.nan)
+            module_logger.warning('Following sentence could not be represented as a vector since only {:d} words were '
+                                  'mapped to vectors: {}'.format(vector_count, ' '.join(sentence)))
+        sentence_array[sentence_index] = sentence_vec/vector_count
+    return sentence_array
