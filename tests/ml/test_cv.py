@@ -4,12 +4,16 @@ from pandas.util.testing import assert_frame_equal
 import unittest
 
 import cocoscore.ml.cv as cv
+import cocoscore.ml.fasttext_helpers as fth
+import cocoscore.tools.data_tools as data_tools
 
 
 class CVTest(unittest.TestCase):
     testcase_df = pandas.read_csv('tests/ml/test_df.tsv', sep='\t', header=0, index_col=None)
     testcase_cross_df = pandas.read_csv('tests/ml/test_cross_df.tsv', sep='\t', header=0, index_col=None)
     testcase_cv_fold_stats = pandas.read_csv('tests/ml/test_cv_fold_stats.csv', sep=',', header=0, index_col=None)
+    test_case_df_path = 'tests/ml/cv_test.tsv'
+
 
     def test_reproducibility(self):
         run1 = cv.cv_independent_entities(self.testcase_df, random_state=np.random.RandomState(0))
@@ -83,6 +87,56 @@ class CVTest(unittest.TestCase):
                                         'pos_test': [0.5, 0]})
         observed_df = cv.compute_cv_fold_stats(self.testcase_cv_fold_stats, cv_splits)
         assert_frame_equal(expected_df, observed_df)
+
+    def test_reproducibility_associations(self):
+        test_case_df = data_tools.load_data_frame(self.test_case_df_path)
+        run1 = cv.cv_independent_associations(test_case_df, cv_folds=3, random_state=np.random.RandomState(0))
+        run2 = cv.cv_independent_associations(test_case_df, cv_folds=3, random_state=np.random.RandomState(0))
+        for first, second in zip(run1, run2):
+            train_first, test_first = first
+            train_second, test_second = second
+            np.testing.assert_array_equal(train_first, train_second)
+            np.testing.assert_array_equal(test_first, test_second)
+            self.assertEqual(len(train_first), 4)
+            self.assertEqual(len(test_first), 2)
+            self.assertEqual(len(train_second), 4)
+            self.assertEqual(len(test_second), 2)
+
+    def test_randomness_associations(self):
+        test_case_df = data_tools.load_data_frame(self.test_case_df_path)
+        # since this may fail due to randomness in some cases, allow a couple of attempts
+        max_attempts = 20
+        attempt = 0
+        while True:
+            if attempt == max_attempts:
+                self.fail('Failed due since no randomness in shuffled splits found.')
+            else:
+                try:
+                    run1 = cv.cv_independent_associations(test_case_df, cv_folds=3)
+                    run2 = cv.cv_independent_associations(test_case_df, cv_folds=3)
+                    for first, second in zip(run1, run2):
+                        train_first, test_first = first
+                        train_second, test_second = second
+                        self.assertFalse(all([x in train_first for x in train_second]))
+                        self.assertFalse(all([x in test_first for x in test_second]))
+                    break
+                except AssertionError:
+                    attempt += 1
+
+    def test_random_parameter_sampler_reproducibility(self):
+        dist1 = fth.get_hyperparameter_distributions()
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = fth.get_hyperparameter_distributions()
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertEqual(sample1, sample2)
+
+    def test_random_parameter_sampler_random(self):
+        dist = fth.get_hyperparameter_distributions()
+        generator = cv.get_random_parameter_sampler(dist, 3)
+        sample1 = generator.__next__()
+        sample2 = generator.__next__()
+        self.assertNotEqual(sample1, sample2)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 import xgboost as xgb
 
 
-def _cv_independent_entities_treted_separately(data_df, cv_folds, entity_columns, random_state):
+def _cv_independent_entities_treated_separately(data_df, cv_folds, entity_columns, random_state):
     entity1s = data_df[entity_columns[0]].unique()
     entity1s.sort()
     entity2s = data_df[entity_columns[1]].unique()
@@ -17,7 +17,7 @@ def _cv_independent_entities_treted_separately(data_df, cv_folds, entity_columns
     random_state.shuffle(entity2s)
     random_state.shuffle(entity1s)
     for entity1s_test, entity2s_test in zip(np.array_split(entity1s, cv_folds),
-                                         np.array_split(entity2s, cv_folds)):
+                                            np.array_split(entity2s, cv_folds)):
         entity1_is_test = data_df[entity_columns[0]].isin(entity1s_test)
         entity2_is_test = data_df[entity_columns[1]].isin(entity2s_test)
         is_test_set = np.logical_and(entity1_is_test, entity2_is_test)
@@ -54,8 +54,9 @@ def cv_independent_entities(data_df, cv_folds=5, entity_columns=('entity1', 'ent
         # random seeding
         random_state = np.random.RandomState()
     if treat_entity_columns_separately:
-        for cv_pair in _cv_independent_entities_treted_separately(data_df, cv_folds, entity_columns, random_state):
+        for cv_pair in _cv_independent_entities_treated_separately(data_df, cv_folds, entity_columns, random_state):
             yield cv_pair
+            return
     entities = data_df[entity_columns[0]].append(data_df[entity_columns[1]]).unique()
     entities.sort()
     random_state.shuffle(entities)
