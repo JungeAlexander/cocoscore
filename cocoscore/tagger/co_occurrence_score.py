@@ -190,3 +190,12 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
                                paragraph_weight=paragraph_weight,
                                sentence_weight=sentence_weight, weighting_exponent=weighting_exponent,
                                ignore_scores=True, silent=silent)
+
+
+def co_occurrence_score_string(matches_file_path, entities_file, document_weight=1.0, paragraph_weight=2.0,
+                               sentence_weight=0.2, weighting_exponent=0.6, silent=False):
+    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None,
+                               entities_file=entities_file,
+                               document_weight=document_weight, paragraph_weight=paragraph_weight,
+                               sentence_weight=sentence_weight, weighting_exponent=weighting_exponent,
+                               ignore_scores=True, silent=silent)
