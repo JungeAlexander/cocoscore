@@ -20,8 +20,8 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda env create -f travis_environment.yml
-  - source activate test-environment
+  - conda env create -f environment.yml
+  - source activate cocoscore
 
 script: python -m unittest discover
 
