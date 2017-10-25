@@ -78,7 +78,7 @@ class CVTest(unittest.TestCase):
             self.assertSetEqual(set(all_diseases), set(train_diseases).union(set(test_diseases)))
 
     def test_compute_cv_fold_stats(self):
-        cv_splits = (((0, 1), (2, 3)), ((2, 3), (0, 1)))
+        cv_splits = (([0, 1], [2, 3]), ([2, 3], [0, 1]))
         expected_df = pandas.DataFrame({'fold': [0, 1],
                                         'n_train': [2, 2],
                                         'pos_train': [0, 0.5],
