@@ -4,4 +4,22 @@
 
 # CoCoScore: context-aware co-occurrence scores for text mining applications
 
+## Background
 
+TODO
+
+## Performance
+
+TODO
+
+## Dependencies
+
+TODO
+
+### Create a virtual environment
+
+TODO
+
+## Example
+
+TODO
