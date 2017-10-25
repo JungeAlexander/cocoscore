@@ -1,3 +1,4 @@
+from gensim import utils
 import numpy as np
 
 
@@ -62,7 +63,7 @@ def get_fasttext_calls(train_file_path, test_file_path, param_dict, fasttext_pat
 
 
 def run_fasttext(train_file_path, test_file_path, param_dict, fasttext_path, probability_file_prefix, thread=1,
-                 ):
+                 compress_model=True):
     """
     Generates fastText command-line calls for training a supervised model and applying it to a test dataset.
 
@@ -71,6 +72,16 @@ def run_fasttext(train_file_path, test_file_path, param_dict, fasttext_path, pro
     :param param_dict: dictionary mapping fasttext hyperparameters to their values
     :param fasttext_path: path to the fastText executable
     :param probability_file_prefix: str, prefix for the output file with class probabilities for the test dataset
-    :param thread: int, the number of threads to use:
+    :param thread: int, the number of threads to use
+    :param compress_model:
     """
-    pass
+    train_call, predict_call, compress_call, compress_predict_call = get_fasttext_calls(
+        train_file_path, test_file_path, param_dict, fasttext_path, probability_file_prefix, thread=thread)
+    utils.check_output(args=train_call)
+    if compress_model:
+        utils.check_output(args=compress_call)
+        utils.check_output(args=compress_predict_call)
+    else:
+        utils.check_output(args=predict_call)
+    # TODO what to return here? model path and a performmance measure?
+    # TODO clean up here?
