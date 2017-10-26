@@ -1,4 +1,5 @@
 from gensim import utils
+import gzip
 import numpy as np
 import os
 
@@ -84,7 +85,8 @@ def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_
 
 def get_fasttext_test_calls(test_file_path, fasttext_path, model_path, probability_file_path):
     """
-    Generates fastText command-line calls to apply a previously trained model to a test dataset.
+    Generates fastText command-line calls to apply a previously trained model to a test dataset. Note, this only
+    supports binary classification scenarios.
 
     :param test_file_path: path to the test dataset
     :param fasttext_path: path to the fastText executable
@@ -92,8 +94,9 @@ def get_fasttext_test_calls(test_file_path, fasttext_path, model_path, probabili
     :param probability_file_path: str, path to the output file with class probabilities for the test dataset
     :return str - fastText calls for testing
     """
-    predict_call = fasttext_path + ' predict-prob ' + model_path + ' ' + test_file_path + ' 1 | gzip > ' + \
-        probability_file_path
+    class_count = 2
+    predict_call = fasttext_path + ' predict-prob ' + model_path + ' ' + test_file_path + ' ' + str(class_count) + \
+        ' | gzip > ' + probability_file_path
     return predict_call
 
 
@@ -110,5 +113,21 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
     utils.check_output(args=predict_call)
 
 
-def load_fasttext_class_probabilities():
-    pass
+def load_fasttext_class_probabilities(probability_file_path):
+    """
+    Utility function that loads class probabilities from a previously performed prediction run.
+
+    :param probability_file_path: str, path to the output file with class probabilities for the test dataset
+    :return: list of float: probability of belonging to the positive class for each example in the test dataset
+    """
+    probabilities = []
+    with gzip.open(probability_file_path, 'rt') as fin:
+        for line in fin:
+            cols = line.rstrip().split()
+            prob = None
+            for i, col in enumerate(cols):
+                if col == '__label__1':
+                    prob = float(cols[i + 1])
+            assert prob is not None
+            probabilities.append(prob)
+    return probabilities
