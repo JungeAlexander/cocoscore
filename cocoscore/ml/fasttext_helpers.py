@@ -47,12 +47,13 @@ def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_p
     :return tuple of str - fastText calls for training and quantizing
     """
     param_dict['-thread'] = thread
-    train_args = ''
+    train_args = []
     for arg in sorted(param_dict.keys()):
         val = param_dict[arg]
-        train_args += arg + ' ' + str(val) + ' '
-    train_call = fasttext_path + ' supervised -input ' + train_file_path + ' -output ' + model_path + ' ' + train_args
-    compress_call = fasttext_path + ' quantize -input ' + model_path + ' -output ' + model_path
+        train_args += [arg, str(val)]
+    train_call = [fasttext_path, 'supervised',  '-input', train_file_path, '-output', model_path]
+    train_call += train_args
+    compress_call = [fasttext_path, 'quantize', '-input',  model_path, '-output', model_path]
     return train_call, compress_call
 
 
@@ -72,15 +73,14 @@ def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_
     utils.check_output(args=train_call)
     if compress_model:
         utils.check_output(args=compress_call)
-    model_file = 'model'
-    model_path = model_file + '.bin'
+    model_file = model_path + '.bin'
     # remove auxiliary vectors file
-    os.remove(model_file + '.vec')
+    os.remove(model_path + '.vec')
     # remove non-compressed model file if compression was performed
     if compress_model:
-        os.remove(model_path)
-        model_path = model_file + '.ftz'
-    return model_path
+        os.remove(model_file)
+        model_file = model_path + '.ftz'
+    return model_file
 
 
 def get_fasttext_test_calls(test_file_path, fasttext_path, model_path, probability_file_path):
@@ -95,8 +95,7 @@ def get_fasttext_test_calls(test_file_path, fasttext_path, model_path, probabili
     :return str - fastText calls for testing
     """
     class_count = 2
-    predict_call = fasttext_path + ' predict-prob ' + model_path + ' ' + test_file_path + ' ' + str(class_count) + \
-        ' | gzip > ' + probability_file_path
+    predict_call = [fasttext_path, 'predict-prob', model_path, test_file_path, str(class_count)]
     return predict_call
 
 
@@ -107,10 +106,13 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
     :param trained_model_path: path to the trained fastText model
     :param test_file_path: path to the test dataset
     :param fasttext_path: path to the fastText executable
-    :param probability_file_path: str, path to the output file with class probabilities for the test dataset
+    :param probability_file_path: str, path to the output file with class probabilities for the test dataset;
+        output written to this file will always be gzipped
     """
     predict_call = get_fasttext_test_calls(test_file_path, fasttext_path, trained_model_path, probability_file_path)
-    utils.check_output(args=predict_call)
+    predictions = utils.check_output(args=predict_call)
+    with gzip.open(probability_file_path, 'wb') as fout:
+        fout.write(predictions)
 
 
 def load_fasttext_class_probabilities(probability_file_path):
