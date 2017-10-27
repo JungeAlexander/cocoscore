@@ -54,6 +54,18 @@ class CVTest(unittest.TestCase):
         os.remove(model_path)
         os.remove(self.probability_path)
 
+    def test_fasttext_class_probabilities(self):
+        model_path = fth.fasttext_fit(self.train_path, {'-bucket': 1000}, self.ft_path,
+                                                     model_path=self.model_path, thread=1,
+                                                     compress_model=False)
+        fth.fasttext_predict(model_path, self.test_path, self.ft_path, self.probability_path)
+        probabilities = fth.load_fasttext_class_probabilities(self.probability_path)
+        self.assertEqual(len(probabilities), 40)
+        self.assertTrue(all([x > 0.75 for x in probabilities[:20]]))
+        self.assertTrue(all([x < 0.25 for x in probabilities[20:]]))
+        os.remove(model_path)
+        os.remove(self.probability_path)
+
 
 
 if __name__ == '__main__':
