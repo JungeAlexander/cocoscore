@@ -83,7 +83,7 @@ def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_
     return model_file
 
 
-def get_fasttext_test_calls(test_file_path, fasttext_path, model_path, probability_file_path):
+def get_fasttext_test_calls(test_file_path, fasttext_path, model_path):
     """
     Generates fastText command-line calls to apply a previously trained model to a test dataset. Note, this only
     supports binary classification scenarios.
@@ -91,7 +91,6 @@ def get_fasttext_test_calls(test_file_path, fasttext_path, model_path, probabili
     :param test_file_path: path to the test dataset
     :param fasttext_path: path to the fastText executable
     :param model_path: str, path to output model
-    :param probability_file_path: str, path to the output file with class probabilities for the test dataset
     :return str - fastText calls for testing
     """
     class_count = 2
@@ -109,7 +108,7 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
     :param probability_file_path: str, path to the output file with class probabilities for the test dataset;
         output written to this file will always be gzipped
     """
-    predict_call = get_fasttext_test_calls(test_file_path, fasttext_path, trained_model_path, probability_file_path)
+    predict_call = get_fasttext_test_calls(test_file_path, fasttext_path, trained_model_path)
     predictions = utils.check_output(args=predict_call)
     with gzip.open(probability_file_path, 'wb') as fout:
         fout.write(predictions)

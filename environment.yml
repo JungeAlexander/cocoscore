@@ -3,6 +3,7 @@ channels:
 - defaults
 - conda-forge
 dependencies:
+- fasttext=0.1.0
 - xgboost=0.6a2
 - nltk=3.2.4
 - numpy=1.13.3
