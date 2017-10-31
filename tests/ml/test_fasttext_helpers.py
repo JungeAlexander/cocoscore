@@ -65,6 +65,12 @@ class CVTest(unittest.TestCase):
         os.remove(model_path)
         os.remove(self.probability_path)
 
+    def test_fasttext_load_labels(self):
+        labels = fth.load_labels(self.train_path, compression=False)
+        self.assertEqual(len(labels), 40)
+        self.assertTrue(all([x == 1 for x in labels[:20]]))
+        self.assertTrue(all([x == 0 for x in labels[20:]]))
+
 
 if __name__ == '__main__':
     unittest.main()
