@@ -1,3 +1,4 @@
+from ..tools.file_tools import get_file_handle
 from gensim import utils
 import gzip
 import numpy as np
@@ -132,3 +133,22 @@ def load_fasttext_class_probabilities(probability_file_path):
             assert prob is not None
             probabilities.append(prob)
     return probabilities
+
+
+def load_labels(dataset_path, compression=False):
+    """
+    Load class labels from a given dataset.
+    :param dataset_path: str, path to dataset
+    :param compression: boolean, indicates whether or not dataset_path is gzipped
+    :return: list of 0/1, depending on class label of the instances
+    """
+    conn = None
+    try:
+        conn = get_file_handle(dataset_path, compression)
+        true_labels = []
+        for line in conn:
+            true_labels.append(line.split()[0])
+        true_labels = [1 if l == '__label__1' else 0 for l in true_labels]
+        return true_labels
+    finally:
+        conn.close()
