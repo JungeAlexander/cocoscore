@@ -1,3 +1,6 @@
 __pycache__/
 
 doc/example/demo.ftz
+doc/example/demo_scored.tsv
+doc/example/probabilities.txt.gz
+doc/example/sentences.txt
