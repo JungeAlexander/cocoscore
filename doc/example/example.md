@@ -1,9 +1,11 @@
 # Example
 
-First of all, activate the virtual environment with the CoCoScore dependencies:
+First of all, open a terminal, activate the virtual environment with the CoCoScore dependencies and
+change to the directory of this example:
 
 ```bash
 source activate cocoscore
+cd doc/example
 ```
 
 ## Using a pre-trained scoring model
@@ -13,37 +15,42 @@ TODO:
 - explain gene/disease wildcards
 - document what is going in here
 
-```bash
-cd doc/example
-dataset_path=demo.tsv
-model_path=demo.ftz
-```
 
 ### Scoring sentences
 
+The example dataset consists of sentences containing co-occurrences of genes and diseases. 
+
+To extract sentences to be processed, execute in a terminal:
+
 ```bash
-sentences_path=demo.txt
+dataset_path=demo.tsv
+sentences_path=sentences.txt
 cut -f 6 "$dataset_path" > "$sentences_path"
 ```
 
+We use a pre-trained fastText model to predict the probability that each sentence describes an association.
+The sentence scores are then written to the file `demo_scored.tsv`.
+Execute the following in Python:
+
 ```python
 import cocoscore.ml.fasttext_helpers as fth
+import cocoscore.tools.data_tools as dt
 
 model_path = 'demo.ftz'
-sentences_path = 'demo.txt'
+dataset_path = 'demo.tsv'
+sentences_path = 'sentences.txt'
 fasttext_path = 'fasttext'
 prob_path = 'probabilities.txt.gz'
-
+scored_dataset_path = 'demo_scored.tsv'
 
 fth.fasttext_predict(model_path, sentences_path, fasttext_path, prob_path)
 probabilities = fth.load_fasttext_class_probabilities(prob_path)
 
-# TODO write scored sentences to file
-    df = dt.load_data_frame(dataset_to_test_path[dataset], sort_reindex=True)
-    df['predicted'] = scores
-    with gzip.open(score_file_path, 'wt') as test_out:
-        df.to_csv(test_out, sep='\t', header=False, index=False,
-                       columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
+df = dt.load_data_frame(dataset_path, class_labels=False)
+df['predicted'] = probabilities
+with open(scored_dataset_path, 'wt') as test_out:
+    df.to_csv(test_out, sep='\t', header=False, index=False,
+                   columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
 ```
 
 ### Computing CoCoScores
