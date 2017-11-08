@@ -1,4 +1,10 @@
-# Example 
+# Example
+
+First of all, activate the virtual environment with the CoCoScore dependencies:
+
+```bash
+source activate cocoscore
+```
 
 ## Using a pre-trained scoring model
 
