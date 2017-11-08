@@ -1,4 +1,4 @@
-![CoCoScore-small.png](https://raw.githubusercontent.com/JungeAlexander/cocoscore/master/doc/logos/CoCoScore-small.png)
+![CoCoScore-text-small.png](doc/logos/CoCoScore-text-small.png)
 
 [![Build Status](https://travis-ci.org/JungeAlexander/cocoscore.svg?branch=master)](https://travis-ci.org/JungeAlexander/cocoscore)
 
