@@ -1,17 +1,14 @@
-
 ![CoCoScore-text-small.png](doc/logos/CoCoScore-text-small.png) 
 
 # Context-aware co-occurrence scores for text mining applications
 
 [![Build Status](https://travis-ci.org/JungeAlexander/cocoscore.svg?branch=master)](https://travis-ci.org/JungeAlexander/cocoscore)
  
+ 
+Text mining of the biomedical literature has been successful in retrieving interactions between proteins, non-coding RNAs, and chemicals as well as in determining tissue-specific expression and subcellular localization. Simple co-occurrence-based scoring schemes can uncover such associations by finding entity pairs that are frequently mentioned together but ignore the textual context of each co-occurrence.
 
-TODO 
-
-## Performance
-
-TODO
-
+CoCoScore implements an improved context-aware co-occurrence scoring scheme that uses textual context to assess whether an association is described or not. CoCoScore achieves an area under the ROC curve of 0.94, compared to 0.92 for previous approaches, based on a dataset of curated disease-gene associations. 
+ 
 ## Dependencies
 
 CoCoScore has been tested on Linux and Mac OS.
@@ -23,7 +20,7 @@ The complete list of dependencies and version numbers CoCoScore has been tested 
 
 ### Create a virtual environment using conda
 
-Please install the Python 3.6 version of either miniconda or anacoda as described here:
+Please install the Python 3.6 version of either miniconda or anaconda as described here:
 https://conda.io/docs/user-guide/install/download.html
 
 Afterwards, prepare a virtual environment for CoCoScore by executing the following in a terminal:
