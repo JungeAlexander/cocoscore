@@ -1,7 +1,7 @@
 
-# ![CoCoScore-text-small.png](doc/logos/CoCoScore-text-small.png) Context-aware co-occurrence scores for text mining applications
+![CoCoScore-text-small.png](doc/logos/CoCoScore-text-small.png) 
 
-===========
+# Context-aware co-occurrence scores for text mining applications
 
 [![Build Status](https://travis-ci.org/JungeAlexander/cocoscore.svg?branch=master)](https://travis-ci.org/JungeAlexander/cocoscore)
  
