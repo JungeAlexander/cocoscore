@@ -9,7 +9,15 @@ Text mining of the biomedical literature has been successful in retrieving inter
 
 CoCoScore implements an improved context-aware co-occurrence scoring scheme that uses textual context to assess whether an association is described or not. CoCoScore achieves an area under the ROC curve of 0.94, compared to 0.92 for previous approaches, based on a dataset of curated disease-gene associations. 
  
-## Dependencies
+## Installation
+
+To install CoCoScore, first clone the repository and add the directory to your PYTHONPATH, e.g.:
+
+```bash
+git clone git@github.com:JungeAlexander/cocoscore.git
+cd cocoscore
+export PYTHONPATH="`pwd`:$PYTHONPATH"
+```
 
 CoCoScore has been tested on Linux and Mac OS.
 We recommend installing all dependencies in a virtual environment as described in the next section.
@@ -17,6 +25,7 @@ We recommend installing all dependencies in a virtual environment as described i
 CoCoScore is written in Python and depends on a range of Python packages such as scikit-learn, nltk and gensim.
 Furthermore [fastText](https://github.com/facebookresearch/fastText) is a dependency.
 The complete list of dependencies and version numbers CoCoScore has been tested with can be found in [environment.yml](environment.yml).
+
 
 ### Create a virtual environment using conda
 
