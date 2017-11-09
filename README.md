@@ -44,4 +44,15 @@ source activate cocoscore
 
 ## Example usage
 
-See [here](doc/example/example.md) for usage examples. 
+See [here](doc/example/example.md) for usage examples.
+
+## Contributors
+
+CoCoScore is being developed by Alexander Junge and Lars Juhl Jensen at the
+Disease Systems Biology Program, Novo Nordisk Foundation Center for Protein Research,
+Faculty of Health and Medical Sciences, University of Copenhagen, Denmark.
+
+## Feedback
+
+Please open an issue here or write us:
+`{alexander.junge,lars.juhl.jensen} AT cpr DOT ku DOT dk`
