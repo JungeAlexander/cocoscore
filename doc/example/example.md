@@ -10,12 +10,6 @@ cd doc/example
 
 ## Using a pre-trained scoring model
 
-TODO:
-
-- explain gene/disease wildcards
-- document what is going in here
-
-
 ### Scoring sentences
 
 The example dataset consists of sentences containing co-occurrences of genes and diseases. 
@@ -69,8 +63,6 @@ with open(scores_path, 'wt') as fout:
 ```
 
 ## Training and testing your own scoring model
-
-TODO
 
 ### Training and test datasets
 
