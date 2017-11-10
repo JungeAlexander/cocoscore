@@ -1,5 +1,6 @@
 __pycache__/
 
+doc/example/co_occurrence_scores.tsv
 doc/example/demo.ftz
 doc/example/demo_scored.tsv
 doc/example/probabilities.txt.gz

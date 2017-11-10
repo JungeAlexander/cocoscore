@@ -53,15 +53,19 @@ with open(scored_dataset_path, 'wt') as test_out:
                    columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
 ```
 
-### Computing CoCoScores
+### Computing co-occurrence scores
 
 ```python
-import cocoscore.tagger.co_occurrence_score as coco
+import cocoscore.tagger.co_occurrence_score as cos
+import os
 
-scored_dataset_path = 'demo_scored.txt'
-cocoscores = coco.co_occurrence_score(score_file_path=scored_dataset_path,
-                                      matches_file_path=None,entities_file=None)
-# TODO write to file
+scores_path = 'co_occurrence_scores.tsv'
+
+cocoscores = cos.co_occurrence_score(score_file_path=scored_dataset_path,
+                                      matches_file_path=None, entities_file=None)
+with open(scores_path, 'wt') as fout:
+    for pair, score in sorted(cocoscores.items(), key=lambda x: x[0]):
+        fout.write('\t'.join(pair) + '\t' + str(score) + os.linesep)
 ```
 
 ## Training and testing your own scoring model
