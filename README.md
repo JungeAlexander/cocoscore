@@ -42,10 +42,6 @@ conda env create -f environment.yml
 source activate cocoscore
 ```
 
-### Docker/Singularity container 
-
-TODO add Docker/Singularity image with all software installed
-
 ## Example usage
 
 See [here](doc/example/example.md) for usage examples.
