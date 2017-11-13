@@ -8,6 +8,40 @@ source activate cocoscore
 cd doc/example
 ```
 
+## Data preparation
+
+The dataset is expected to come as a tab-delimited file (no header) with the following columns:
+
+- document identifier (integer, e.g. PubMed ID)
+- paragaph number (integer)
+- sentence number (integer)
+- first co-mentioned entity (string, e.g. disease identifier)
+- second co-mentioned entity (string, e.g. gene identifier)
+- text co-mentioning the entities (string with names of entities blanked as described below)
+
+See `demo.tsv` for an example of a file in the correct format.
+The file contains sentence-level co-mentions of hemochromatosis (iron storage disorder) and different genes that were extracted from Medline abstracts and PMC Open Access articles.
+
+### Blanking named entities in text
+
+Names of the co-mentioned entities in the dataset's text column must be blanked.
+Only this allows the scoring model to generalize to unseen entitiy pairs instead of overfitting to examples in the dataset used for training.
+
+We recommend replacing entity names with a fixed placeholder that reflects their type.
+For instance, gene (TFR2) and disease (hemochromatosis) in the sentence
+
+```
+TFR2 mutations in patients with hemochromatosis.
+```
+
+could be replaced by tokens `MYGENETOKEN` and `MYDISEASETOKEN`, respectively:
+
+```
+MYGENETOKEN mutations inpatients with MYDISEASETOKEN.
+```
+
+This strategy is followed in our `demo.tsv` example dataset.
+
 ## Using a pre-trained scoring model
 
 ### Scoring sentences
