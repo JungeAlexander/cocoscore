@@ -58,7 +58,8 @@ def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_p
     return train_call, compress_call
 
 
-def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_model=False, model_path='model'):
+def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_model=False, model_path='model',
+                 pretrained_vectos=None):
     """
     Trains a fastText supervised model. This is a wrapper around the fastText command line interface.
 
