@@ -10,12 +10,14 @@ class CVTest(unittest.TestCase):
     model_path = 'fastText_test_model'
     test_path = train_path
     probability_path = 'ft_simple_prob.txt.gz'
+    pretrained_vectors_path = 'tests/ml/pretrained.vec'
 
     def test_train_call_parameters(self):
         train_call, compress_call = fth.get_fasttext_train_calls(self.train_path, {'-aaa': 1.0}, self.ft_path,
-                                                                 self.model_path, thread=5)
+                                                                 self.model_path, thread=5,
+                                                                 pretrained_vectors_path=self.pretrained_vectors_path)
         expected_train_call = self.ft_path + ' supervised -input ' + self.train_path + ' -output ' + self.model_path + \
-            ' -aaa 1.0 -thread 5'
+            ' -aaa 1.0 -thread 5 -pretrainedVectors ' + self.pretrained_vectors_path
         self.assertEqual(' '.join(train_call), expected_train_call)
         expected_compress_call = self.ft_path + ' quantize -input ' + self.model_path + ' -output ' + self.model_path
         self.assertEqual(' '.join(compress_call), expected_compress_call)
@@ -40,6 +42,15 @@ class CVTest(unittest.TestCase):
                                       model_path=self.model_path, thread=1,
                                       compress_model=True)
         expected_model_path = self.model_path + '.ftz'
+        self.assertEqual(model_path, expected_model_path)
+        self.assertTrue(os.path.isfile(model_path))
+        os.remove(model_path)
+
+    def test_fit_pretrained_vectors(self):
+        model_path = fth.fasttext_fit(self.train_path, {'-bucket': 1000}, self.ft_path,
+                                      model_path=self.model_path, thread=1,
+                                      compress_model=False, pretrained_vectors_path=self.pretrained_vectors_path)
+        expected_model_path = self.model_path + '.bin'
         self.assertEqual(model_path, expected_model_path)
         self.assertTrue(os.path.isfile(model_path))
         os.remove(model_path)
