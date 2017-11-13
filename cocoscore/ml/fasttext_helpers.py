@@ -36,7 +36,8 @@ def get_hyperparameter_distributions():
     return param_dict
 
 
-def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_path, thread=1):
+def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_path, thread=1,
+                             pretrained_vectors_path=None):
     """
     Generates fastText command-line calls for training a supervised model and for compressing the output model.
 
@@ -45,6 +46,7 @@ def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_p
     :param fasttext_path: path to the fastText executable
     :param model_path: str, path to output model
     :param thread: int, the number of threads to use
+    :param pretrained_vectors_path: str, path to pre-trained `.vec` file with word embeddings
     :return tuple of str - fastText calls for training and quantizing
     """
     param_dict['-thread'] = thread
@@ -54,11 +56,14 @@ def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_p
         train_args += [arg, str(val)]
     train_call = [fasttext_path, 'supervised',  '-input', train_file_path, '-output', model_path]
     train_call += train_args
+    if pretrained_vectors_path is not None:
+        train_call += ['-pretrainedVectors', pretrained_vectors_path]
     compress_call = [fasttext_path, 'quantize', '-input',  model_path, '-output', model_path]
     return train_call, compress_call
 
 
-def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_model=False, model_path='model'):
+def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_model=False, model_path='model',
+                 pretrained_vectors_path=None):
     """
     Trains a fastText supervised model. This is a wrapper around the fastText command line interface.
 
@@ -68,9 +73,11 @@ def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_
     :param thread: int, the number of threads to use
     :param compress_model: indicates whether the fastText model should be compressed (using fastText's quantize).
     :param model_path: str, path to output model
+    :param pretrained_vectors_path: str, path to pre-trained `.vec` file with word embeddings
     :return str: path to trained model
     """
-    train_call, compress_call = get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_path, thread)
+    train_call, compress_call = get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_path, thread,
+                                                         pretrained_vectors_path=pretrained_vectors_path)
     utils.check_output(args=train_call)
     if compress_model:
         utils.check_output(args=compress_call)
