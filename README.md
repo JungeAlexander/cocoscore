@@ -48,7 +48,20 @@ TODO add Docker/Singularity image with all software installed
 
 ## Example usage
 
-See [here](doc/example/example.md) for usage examples.
+Before running the examples, please download the following files:
+
+- [Pre-trained fastText model](http://download.jensenlab.org/BLAH4/demo.ftz)
+- [Training set](http://download.jensenlab.org/BLAH4/medlinepmcoa_train_ghr.tsv.gz) of sentences co-mentioning diseases and genes derived from Medline abstracts and PubMed Central Open Access articles
+- [Test set](http://download.jensenlab.org/BLAH4/medlinepmcoa_test_ghr.tsv.gz) corresponding to the training set above
+
+The files are downloaded and placed in the correct directories by executing:
+
+```shell
+wget -P doc/example/ http://download.jensenlab.org/BLAH4/demo.ftz
+wget http://download.jensenlab.org/BLAH4/medlinepmcoa_train_ghr.tsv.gz http://download.jensenlab.org/BLAH4/medlinepmcoa_test_ghr.tsv.gz
+```
+
+Afterwards, please see [here](doc/example/example.md) for usage examples.
 
 ## Contributors
 
