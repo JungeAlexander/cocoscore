@@ -44,11 +44,11 @@ This strategy is followed in our `demo.tsv` example dataset.
 
 ## Using a pre-trained scoring model
 
+This section explains how context-aware co-occurrence scores can be computed using a pre-trained fastText model.
+
 ### Scoring sentences
 
-The example dataset consists of sentences containing co-occurrences of genes and diseases. 
-
-To extract sentences to be processed, execute in a terminal:
+To extract sentences to be processed from the example dataset `demo.tsv`, execute in a terminal:
 
 ```bash
 dataset_path=demo.tsv
@@ -56,7 +56,7 @@ sentences_path=sentences.txt
 cut -f 6 "$dataset_path" > "$sentences_path"
 ```
 
-We use a pre-trained fastText model to predict the probability that each sentence describes an association.
+We use the previously downloaded pre-trained fastText model `demo.ftz` to predict the probability that each sentence describes an association.
 The sentence scores are then written to the file `demo_scored.tsv`.
 Execute the following in Python:
 
@@ -83,6 +83,9 @@ with open(scored_dataset_path, 'wt') as test_out:
 
 ### Computing co-occurrence scores
 
+Based on the previously computed sentence scores, we can now compute the final disease-gene co-occurrence scores which are written to `co_occurrence_scores.tsv`
+Please execute the following in Python:
+
 ```python
 import cocoscore.tagger.co_occurrence_score as cos
 import os
@@ -99,8 +102,6 @@ with open(scores_path, 'wt') as fout:
 ## Training and testing your own scoring model
 
 ### Training and test datasets
-
-### Hyperparameter optimization via cross-validation
 
 ### Evaluation of test set performance
 
