@@ -5,3 +5,5 @@ doc/example/demo.ftz
 doc/example/demo_scored.tsv
 doc/example/probabilities.txt.gz
 doc/example/sentences.txt
+doc/example/demo_labels.tsv
+doc/example/sentences_labels.txt
