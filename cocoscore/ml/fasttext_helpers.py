@@ -122,6 +122,10 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
         fout.write(predictions)
 
 
+def fasttext_cv():
+    pass
+
+
 def load_fasttext_class_probabilities(probability_file_path):
     """
     Utility function that loads class probabilities from a previously performed prediction run.
