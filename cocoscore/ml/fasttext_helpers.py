@@ -3,6 +3,7 @@ from gensim import utils
 import gzip
 import numpy as np
 import os
+import pandas as pd
 
 
 def get_uniform(low, high, random_seed):
@@ -122,7 +123,27 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
         fout.write(predictions)
 
 
-def fasttext_cv():
+def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_folds=5,
+                                         entity_columns=('entity1', 'entity2'), random_state=None,
+                                         thread=1, compress_model=False,
+                                         pretrained_vectors_path=None):
+    """
+    A wrapper around `cv_independent_associations()` in `ml/cv.py` that runs fastText on each CV fold and returns
+    training and validation AUROC for each fold, means and standard variation across folds along with various other
+    statistics.
+
+    :param data_df: the DataFrame to be split up into CV folds
+    :param param_dict: dictionary mapping fasttext hyperparameters to their values
+    :param fasttext_path: path to the fastText executable
+    :param cv_folds: int, the number of CV folds to generate
+    :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
+    :param random_state: numpy RandomState to use while splitting into folds
+    :param thread: int, the number of threads to use by fastText
+    :param compress_model: indicates whether the fastText model should be compressed (using fastText's quantize) after
+                           training.
+    :param pretrained_vectors_path: str, path to pre-trained `.vec` file with word embeddings
+    :return: a pandas DataFrame with cross_validation results
+    """
     pass
 
 
