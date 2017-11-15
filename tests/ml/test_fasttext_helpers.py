@@ -1,4 +1,7 @@
+import numpy as np
 import os
+import pandas as pd
+from pandas.util.testing import assert_frame_equal
 import unittest
 
 import cocoscore.ml.fasttext_helpers as fth
@@ -11,6 +14,8 @@ class CVTest(unittest.TestCase):
     test_path = train_path
     probability_path = 'ft_simple_prob.txt.gz'
     pretrained_vectors_path = 'tests/ml/pretrained.vec'
+
+    cv_test_path = 'tests/ml/ft_simple_cv.txt'
 
     def test_train_call_parameters(self):
         train_call, compress_call = fth.get_fasttext_train_calls(self.train_path, {'-aaa': 1.0}, self.ft_path,
@@ -81,6 +86,58 @@ class CVTest(unittest.TestCase):
         self.assertEqual(len(labels), 40)
         self.assertTrue(all([x == 1 for x in labels[:20]]))
         self.assertTrue(all([x == 0 for x in labels[20:]]))
+
+    def test_fasttext_cv_independent_associations(self):
+        dim = 20
+        bucket = 1000
+        cv_folds = 2
+        cv_results = fth.fasttext_cv_independent_associations(self.cv_test_path, {'-bucket': bucket, '-dim': dim},
+                                                              self.ft_path,
+                                                              cv_folds=cv_folds, random_state=np.random.RandomState(0))
+        expected_col_names = [
+            'dim',
+            'bucket',
+            'mean_test_score',
+            'std_test_score',
+            'mean_train_score',
+            'std_train_score',
+            'split0_test_score',
+            'split0_train_score',
+            'split0_n_test',
+            'split0_pos_test',
+            'split0_n_train',
+            'split0_pos_train',
+            'split1_test_score',
+            'split1_train_score',
+            'split1_n_test',
+            'split1_pos_test',
+            'split1_n_train',
+            'split1_pos_train',
+        ]
+        expected_values = [
+            [dim] * cv_folds,
+            [bucket] * cv_folds,
+            [1.0] * cv_folds,
+            [0.0] * cv_folds,
+            [1.0] * cv_folds,
+            [0.0] * cv_folds,
+            [1.0] * cv_folds,
+            [1.0] * cv_folds,
+            [20] * cv_folds,
+            [0.5] * cv_folds,
+            [20] * cv_folds,
+            [0.5] * cv_folds,
+            [1.0] * cv_folds,
+            [1.0] * cv_folds,
+            [20] * cv_folds,
+            [0.5] * cv_folds,
+            [20] * cv_folds,
+            [0.5] * cv_folds,
+        ]
+        expected_df = pd.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
+                                   columns=expected_col_names)
+        assert_frame_equal(cv_results, expected_df)
+
 
 
 if __name__ == '__main__':
