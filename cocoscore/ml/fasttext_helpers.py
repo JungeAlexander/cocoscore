@@ -186,8 +186,8 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
         test_prob_file_path = 'test_predict-prob_iter_' + str(i) + '_'
 
         model_file = fasttext_fit(train_file_path, param_dict, fasttext_path, thread=thread,
-                                      compress_model=compress_model,
-                                      pretrained_vectors_path=pretrained_vectors_path)
+                                  compress_model=compress_model,
+                                  pretrained_vectors_path=pretrained_vectors_path)
         fasttext_predict(model_file, train_file_path, fasttext_path, train_prob_file_path)
         fasttext_predict(model_file, test_file_path, fasttext_path, test_prob_file_path)
         train_roc = _compute_auroc(train_file_path, train_prob_file_path)
