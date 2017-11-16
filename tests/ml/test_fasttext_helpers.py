@@ -5,6 +5,7 @@ from pandas.util.testing import assert_frame_equal
 import unittest
 
 import cocoscore.ml.fasttext_helpers as fth
+import cocoscore.tools.data_tools as dt
 
 
 class CVTest(unittest.TestCase):
@@ -91,48 +92,47 @@ class CVTest(unittest.TestCase):
         dim = 20
         bucket = 1000
         cv_folds = 2
-        cv_results = fth.fasttext_cv_independent_associations(self.cv_test_path, {'-bucket': bucket, '-dim': dim},
+        test_df = dt.load_data_frame(self.cv_test_path)
+        test_df['sentence_text'] = test_df['sentence_text'].apply(lambda s: s.strip().lower())
+        cv_results = fth.fasttext_cv_independent_associations(test_df, {'-bucket': bucket, '-dim': dim},
                                                               self.ft_path,
-                                                              cv_folds=cv_folds, random_state=np.random.RandomState(0))
+                                                              cv_folds=cv_folds, random_state=np.random.RandomState(3))
         expected_col_names = [
-            'dim',
-            'bucket',
             'mean_test_score',
-            'std_test_score',
+            'stdev_test_score',
             'mean_train_score',
-            'std_train_score',
-            'split0_test_score',
-            'split0_train_score',
-            'split0_n_test',
-            'split0_pos_test',
-            'split0_n_train',
-            'split0_pos_train',
-            'split1_test_score',
-            'split1_train_score',
-            'split1_n_test',
-            'split1_pos_test',
-            'split1_n_train',
-            'split1_pos_train',
+            'stdev_train_score',
+            'split_0_test_score',
+            'split_0_train_score',
+            'split_0_n_test',
+            'split_0_pos_test',
+            'split_0_n_train',
+            'split_0_pos_train',
+            'split_1_test_score',
+            'split_1_train_score',
+            'split_1_n_test',
+            'split_1_pos_test',
+            'split_1_n_train',
+            'split_1_pos_train',
         ]
+        cv_runs = 1 
         expected_values = [
-            [dim] * cv_folds,
-            [bucket] * cv_folds,
-            [1.0] * cv_folds,
-            [0.0] * cv_folds,
-            [1.0] * cv_folds,
-            [0.0] * cv_folds,
-            [1.0] * cv_folds,
-            [1.0] * cv_folds,
-            [20] * cv_folds,
-            [0.5] * cv_folds,
-            [20] * cv_folds,
-            [0.5] * cv_folds,
-            [1.0] * cv_folds,
-            [1.0] * cv_folds,
-            [20] * cv_folds,
-            [0.5] * cv_folds,
-            [20] * cv_folds,
-            [0.5] * cv_folds,
+            [1.0] * cv_runs,
+            [0.0] * cv_runs,
+            [1.0] * cv_runs,
+            [0.0] * cv_runs,
+            [1.0] * cv_runs,
+            [1.0] * cv_runs,
+            [20] * cv_runs,
+            [0.5] * cv_runs,
+            [20] * cv_runs,
+            [0.5] * cv_runs,
+            [1.0] * cv_runs,
+            [1.0] * cv_runs,
+            [20] * cv_runs,
+            [0.5] * cv_runs,
+            [20] * cv_runs,
+            [0.5] * cv_runs,
         ]
         expected_df = pd.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
                                    columns=expected_col_names)
