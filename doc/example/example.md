@@ -149,6 +149,45 @@ In practice, we make sure that training and test set are independent by entity p
 
 ### Hyperparameter optimization via cross-validation
 
+fastText comes with a number of important hyperparameters such as the number of training epochs,
+learning rate or n-gram length.
+While the example above uses a number of parameters that often yield good performance,
+these hyperparameters should ideally be tuned for each dataset.
+CoCoScore offers a set of functions to perform a random search cross-validation 
+akin to the [strategy implemented in scikit-learn](http://scikit-learn.org/stable/modules/grid_search.html#randomized-parameter-optimization).
+
+```python
+#TODO revise and run this
+import numpy as np
+
+import cocoscore.ml.cv as cv
+import cocoscore.ml.fasttext_helpers as fth
+import cocoscore.tools.data_tools as dt
+
+data_path = 'demo.tsv'
+output_path = 'cv_results.tsv'
+
+ft_path = 'fasttext'
+dim = 300  # for this example, fix the dimensionality of the generated word embeddings
+cv_folds = 3  # for 3-fold cross-validation
+cv_iterations = 5  # test 5 randomly selected parameters settings
+ft_threads = 1  # the number of threads to use by fastText
+
+data_df = dt.load_data_frame(data_path, sort_reindex=True)
+data_df['sentence_text'] = data_df['sentence_text'].apply(lambda s: s.strip().lower())
+
+def cv_function(input_df, params, random_state):
+    return fth.fasttext_cv_independent_associations(input_df, params,
+                                                    ft_path, cv_folds=cv_folds,
+                                                    random_state=random_state,
+                                                    thread=ft_threads)
+
+cv_results = cv.random_cv(data_df, cv_function, cv_iterations, {'-dim': dim},
+                          fth.get_hyperparameter_distributions(np.random.randint(1000000)), 3)
+with open(output_path, 'wt') as fout:
+    cv_results.to_csv(fout, sep='\t')
+```
+
 ### Computing co-occurrence scores
 
 To compute co-occurrence scores using your own model, simply follow the steps outlined in the section 'Using a pre-trained scoring model' while replacing the pre-trained model `demo.ftz` with your own model `mymodel.ftz` when scoring sentences.
