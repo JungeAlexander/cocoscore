@@ -132,6 +132,20 @@ class CVTest(unittest.TestCase):
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
         self.assertEqual(sample1, sample2)
 
+    def test_random_parameter_sampler_reproducibility_seed_argument(self):
+        dist1 = fth.get_hyperparameter_distributions(1)
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = fth.get_hyperparameter_distributions(1)
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertEqual(sample1, sample2)
+
+    def test_random_parameter_sampler_random_seed_argument(self):
+        dist1 = fth.get_hyperparameter_distributions(1)
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = fth.get_hyperparameter_distributions(12)
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertNotEqual(sample1, sample2)
+
     def test_random_parameter_sampler_random(self):
         dist = fth.get_hyperparameter_distributions()
         generator = cv.get_random_parameter_sampler(dist, 3)
