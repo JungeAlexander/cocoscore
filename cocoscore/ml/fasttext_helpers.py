@@ -182,7 +182,7 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
         test_path = 'cv_test_' + str(cv_iter) + '.txt'
         for curr_file, curr_df in zip([train_path, test_path],
                                       [train_df, test_df]):
-            with open(curr_file, 'wt') as fout:
+            with open(curr_file, 'wt', encoding='utf-8') as fout:
                 for row in curr_df.itertuples():
                     fout.write(str(row[1]) + ' ' + str(row[2]) + os.linesep)
         cv_train_test_file_pairs.append((train_path, test_path))
