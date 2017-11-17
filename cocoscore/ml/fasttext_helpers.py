@@ -29,6 +29,11 @@ def get_discrete_uniform(values, random_seed):
 
 
 def get_hyperparameter_distributions():
+    """
+
+    :return: a dictionary mapping the most important fastText parameters for classification to distributions
+    to sample parameters from.
+    """
     param_dict = {
         '-lr': get_log_uniform(-3, 1, 0),
         '-epoch': get_uniform_int(10, 51, 12),
