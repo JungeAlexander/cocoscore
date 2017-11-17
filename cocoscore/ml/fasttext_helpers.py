@@ -194,17 +194,33 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
         train_file_path, test_file_path = train_test_path
         train_prob_file_path = 'train_predict-prob_iter_' + str(i) + '_'
         test_prob_file_path = 'test_predict-prob_iter_' + str(i) + '_'
-
-        model_file = fasttext_fit(train_file_path, param_dict, fasttext_path, thread=thread,
-                                  compress_model=compress_model,
-                                  pretrained_vectors_path=pretrained_vectors_path)
-        fasttext_predict(model_file, train_file_path, fasttext_path, train_prob_file_path)
-        fasttext_predict(model_file, test_file_path, fasttext_path, test_prob_file_path)
+        try:
+            model_file = fasttext_fit(train_file_path, param_dict, fasttext_path, thread=thread,
+                                      compress_model=compress_model,
+                                      pretrained_vectors_path=pretrained_vectors_path)
+            fasttext_predict(model_file, train_file_path, fasttext_path, train_prob_file_path)
+            fasttext_predict(model_file, test_file_path, fasttext_path, test_prob_file_path)
+            os.remove(model_file)
+        except os.subprocess.CalledProcessError:
+            # fastText may fail (e.g. segfault) for some parameter combinations, return missing values if this happens
+            results_df = pd.DataFrame()
+            results_df['mean_test_score'] = [np.nan]
+            results_df['stdev_test_score'] = [np.nan]
+            results_df['mean_train_score'] = [np.nan]
+            results_df['stdev_train_score'] = [np.nan]
+            for stats_row in cv_stats_df.itertuples():
+                cv_fold = str(stats_row.fold)
+                results_df['split_' + cv_fold + '_test_score'] = [np.nan]
+                results_df['split_' + cv_fold + '_train_score'] = [np.nan]
+                results_df['split_' + cv_fold + '_n_test'] = [np.nan]
+                results_df['split_' + cv_fold + '_pos_test'] = [np.nan]
+                results_df['split_' + cv_fold + '_n_train'] = [np.nan]
+                results_df['split_' + cv_fold + '_pos_train'] = [np.nan]
+            return results_df
         train_roc = _compute_auroc(train_file_path, train_prob_file_path)
         test_roc = _compute_auroc(test_file_path, test_prob_file_path)
         train_rocs.append(train_roc)
         test_rocs.append(test_roc)
-        os.remove(model_file)
         os.remove(train_prob_file_path)
         os.remove(test_prob_file_path)
 
