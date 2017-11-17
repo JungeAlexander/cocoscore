@@ -14,6 +14,9 @@ class CVTest(unittest.TestCase):
     testcase_cv_fold_stats = pandas.read_csv('tests/ml/test_cv_fold_stats.csv', sep=',', header=0, index_col=None)
     test_case_df_path = 'tests/ml/cv_test.tsv'
 
+    ft_path = 'fasttext'
+    ft_cv_test_path = 'tests/ml/ft_simple_cv.txt'
+
     def test_reproducibility(self):
         run1 = cv.cv_independent_entities(self.testcase_df, random_state=np.random.RandomState(0))
         run2 = cv.cv_independent_entities(self.testcase_df, random_state=np.random.RandomState(0))
@@ -129,12 +132,118 @@ class CVTest(unittest.TestCase):
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
         self.assertEqual(sample1, sample2)
 
+    def test_random_parameter_sampler_reproducibility_seed_argument(self):
+        dist1 = fth.get_hyperparameter_distributions(1)
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = fth.get_hyperparameter_distributions(1)
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertEqual(sample1, sample2)
+
+    def test_random_parameter_sampler_random_seed_argument(self):
+        dist1 = fth.get_hyperparameter_distributions(1)
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = fth.get_hyperparameter_distributions(12)
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertNotEqual(sample1, sample2)
+
     def test_random_parameter_sampler_random(self):
         dist = fth.get_hyperparameter_distributions()
         generator = cv.get_random_parameter_sampler(dist, 3)
         sample1 = generator.__next__()
         sample2 = generator.__next__()
         self.assertNotEqual(sample1, sample2)
+
+    def test_random_cv(self):
+        bucket = 1000
+        dim = 20
+        cv_folds = 2
+        cv_iterations = 2
+
+        def cv_function(data_df, params, random_state):
+            return fth.fasttext_cv_independent_associations(data_df, params, self.ft_path, cv_folds=cv_folds,
+                                                            random_state=random_state)
+
+        test_df = data_tools.load_data_frame(self.ft_cv_test_path)
+        test_df['sentence_text'] = test_df['sentence_text'].apply(lambda s: s.strip().lower())
+        cv_results = cv.random_cv(test_df, cv_function, cv_iterations, {'-bucket': bucket, '-dim': dim},
+                                  fth.get_hyperparameter_distributions(), 3)
+        expected_col_names = [
+            'bucket',
+            'dim',
+            'epoch',
+            'lr',
+            'wordNgrams',
+            'ws',
+            'mean_test_score',
+            'stdev_test_score',
+            'mean_train_score',
+            'stdev_train_score',
+            'split_0_test_score',
+            'split_0_train_score',
+            'split_0_n_test',
+            'split_0_pos_test',
+            'split_0_n_train',
+            'split_0_pos_train',
+            'split_1_test_score',
+            'split_1_train_score',
+            'split_1_n_test',
+            'split_1_pos_test',
+            'split_1_n_train',
+            'split_1_pos_train',
+        ]
+        self.assertListEqual(expected_col_names, list(cv_results.columns))
+        # following parameters are chosen randomly and hence cannot be tested but only that they differ between the CV
+        # runs
+        random_col_names = [
+            'epoch',
+            'lr',
+            'wordNgrams',
+            'ws',
+        ]
+        for rand in random_col_names:
+            self.assertNotEqual(cv_results.loc[0, rand], cv_results.loc[1, rand])
+
+        # ignore columns that are linked to test performance since this cannot be tested for random parameter choices
+        ignore_params = [
+            'mean_test_score',
+            'stdev_test_score',
+            'mean_train_score',
+            'stdev_train_score',
+            'split_0_test_score',
+            'split_0_train_score',
+            'split_1_test_score',
+            'split_1_train_score',
+        ]
+
+        expected_values = [
+            [1000] * cv_iterations,
+            [20] * cv_iterations,
+            [.1] * cv_iterations,
+            [.2] * cv_iterations,
+            [.3] * cv_iterations,
+            [.4] * cv_iterations,
+            [1.0] * cv_iterations,
+            [0.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [0.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [20] * cv_iterations,
+            [0.5] * cv_iterations,
+            [20] * cv_iterations,
+            [0.5] * cv_iterations,
+            [1.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [20] * cv_iterations,
+            [0.5] * cv_iterations,
+            [20] * cv_iterations,
+            [0.5] * cv_iterations,
+        ]
+        expected_df = pandas.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
+                                       columns=expected_col_names)
+        results_test_df = cv_results.drop(random_col_names + ignore_params, axis=1)
+        expected_test_df = expected_df.drop(random_col_names + ignore_params, axis=1)
+        assert_frame_equal(results_test_df, expected_test_df)
 
 
 if __name__ == '__main__':
