@@ -332,7 +332,7 @@ def get_random_parameter_sampler(param_distributions, n_iter):
         yield params
 
 
-def random_cv(dataset, cv_function, cv_iterations, param_dict, param_distribution):
+def random_cv(dataset, cv_function, cv_iterations, param_dict, param_distribution, random_seed):
     """
     Performs a cross-validation over randomly sampled paramter values for a given dataset and cross-validation function.
 
@@ -343,6 +343,7 @@ def random_cv(dataset, cv_function, cv_iterations, param_dict, param_distributio
     :param cv_iterations: int, the number of random parameter assignments to try out
     :param param_dict: dict specifying parameters and values that are to be kept fixed
     :param param_distribution: dict mapping parameters to distributions to sample parameters from
+    :param random_seed: int to seed numpy RandomState to use while splitting into CV folds in each iteration
     :return: a pandas DataFrame containing results aggregated over the CV iterations; column names should be explanatory
     """
     cv_parameters = defaultdict(list)
@@ -352,7 +353,7 @@ def random_cv(dataset, cv_function, cv_iterations, param_dict, param_distributio
         for param, value in param_dict.items():
             params[param] = value
 
-        iteration_results = cv_function(dataset, params)
+        iteration_results = cv_function(dataset, params, np.random.RandomState(random_seed))
 
         # save parameter settings and CV results to aggregate them later
         for param, value in params.items():
