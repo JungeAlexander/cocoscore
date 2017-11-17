@@ -1,3 +1,4 @@
+from collections import defaultdict
 import gzip
 import numpy as np
 import os
@@ -331,7 +332,7 @@ def get_random_parameter_sampler(param_distributions, n_iter):
         yield params
 
 
-def random_cv(dataset, cv_function, cv_iterations, param_dict):
+def random_cv(dataset, cv_function, cv_iterations, param_dict, param_distribution):
     """
     Performs a cross-validation over randomly sampled paramter values for a given dataset and cross-validation function.
 
@@ -341,6 +342,24 @@ def random_cv(dataset, cv_function, cv_iterations, param_dict):
            a single cross-validation run.
     :param cv_iterations: int, the number of random parameter assignments to try out
     :param param_dict: dict specifying parameters and values that are to be kept fixed
+    :param param_distribution: dict mapping parameters to distributions to sample parameters from
     :return: a pandas DataFrame containing results aggregated over the CV iterations; column names should be explanatory
     """
-    pass
+    cv_parameters = defaultdict(list)
+    cv_results = []
+    for params in get_random_parameter_sampler(param_distribution, cv_iterations):
+        # set parameters to be kept fixed
+        for param, value in param_dict.items():
+            params[param] = value
+
+        iteration_results = cv_function(dataset, params)
+
+        # save parameter settings and CV results to aggregate them later
+        for param, value in params.items():
+            cv_parameters[param.replace('-', '')].append(value)
+        cv_results.append(iteration_results)
+    # Aggregate parameter settings and CV results into output DataFrame
+    results_df = pd.DataFrame(cv_parameters, columns=sorted(cv_parameters.keys()))
+    cv_iteration_results = pd.concat(cv_results)
+    results_df = pd.concat([results_df.reset_index(drop=True), cv_iteration_results.reset_index(drop=True)], axis=1)
+    return results_df
