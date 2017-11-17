@@ -1,4 +1,4 @@
-# Example
+# Example - computing context-aware co-occurrence scores with CoCoScore
 
 First of all, open a terminal, activate the virtual environment with the CoCoScore dependencies and
 change to the directory of this example:
@@ -106,7 +106,7 @@ We now describe how you can train your own model to score sentence-level co-occu
 ### Label column
 
 When training a custom model, an additional column is needed in the dataset file that indicates whether the sentence is classified as positive or negative.
-These class labels are to be specified as 1 (for positives) or 0 (for negatives). 
+These class labels are to be specified as 1 (for positives) or 0 (for negatives).
 For the purpose of this tutorial, we randomly assign each instance in `demo.tsv` to one of the classes and append the class labels to each line.
 This is achieved by executing the following in a terminal:
 
@@ -118,7 +118,7 @@ Before training the fastText model, we extract class labels (prefixed by `__labe
 
 ```bash
 awk -F '\t' '{print "__label__"$7" "tolower($6)}' demo_labels.tsv > sentences_labels.txt
-``` 
+```
 
 ### Fitting a model with fixed parameters
 
@@ -140,6 +140,14 @@ print(model_file)
 This trains a fastText model using the given parameter settings.
 The final model is written to `mymodel.ftz`.
 The ending `.ftz` indicates that the model has been compressed using the`fasttext quantize` command.
+
+### Splitting into training and test data
+
+In practice, we make sure that training and test set are independent by entity pairs are either exclusively used for training or testing, never both.
+
+### Evaluation of training and test set performance
+
+### Hyperparameter optimization via cross-validation
 
 ### Computing co-occurrence scores
 
