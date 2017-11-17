@@ -28,18 +28,23 @@ def get_discrete_uniform(values, random_seed):
     return lambda: values[random_state.randint(len(values))]
 
 
-def get_hyperparameter_distributions():
+def get_hyperparameter_distributions(random_seed=None):
     """
-
+    :param random_seed: int to seed numpy RandomState to use while initiating parameter distributions to sample from
     :return: a dictionary mapping the most important fastText parameters for classification to distributions
     to sample parameters from.
     """
+    if random_seed is None:
+        seeds = [0, 12, 23, 42, 55]
+    else:
+        random_state = np.random.RandomState(random_seed)
+        seeds = random_state.randint(100000, size=5)
     param_dict = {
-        '-lr': get_log_uniform(-3, 1, 0),
-        '-epoch': get_uniform_int(10, 51, 12),
-        '-wordNgrams': get_uniform_int(1, 6, 23),
-        '-dim': get_uniform_int(50, 500, 42),
-        '-ws': get_uniform_int(3, 10, 55)
+        '-lr': get_log_uniform(-3, 1, seeds[0]),
+        '-epoch': get_uniform_int(10, 51, seeds[1]),
+        '-wordNgrams': get_uniform_int(1, 6, seeds[2]),
+        '-dim': get_uniform_int(50, 500, seeds[3]),
+        '-ws': get_uniform_int(3, 10, seeds[4])
     }
     return param_dict
 
