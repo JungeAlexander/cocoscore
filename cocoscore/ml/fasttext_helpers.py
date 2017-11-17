@@ -7,6 +7,8 @@ import os
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 from statistics import mean, stdev
+import subprocess
+
 
 def get_uniform(low, high, random_seed):
     random_state = np.random.RandomState(random_seed)
@@ -201,7 +203,7 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
             fasttext_predict(model_file, train_file_path, fasttext_path, train_prob_file_path)
             fasttext_predict(model_file, test_file_path, fasttext_path, test_prob_file_path)
             os.remove(model_file)
-        except os.subprocess.CalledProcessError:
+        except subprocess.CalledProcessError:
             # fastText may fail (e.g. segfault) for some parameter combinations, return missing values if this happens
             results_df = pd.DataFrame()
             results_df['mean_test_score'] = [np.nan]
