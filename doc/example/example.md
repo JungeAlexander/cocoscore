@@ -1,4 +1,4 @@
-# Example
+# Example - computing context-aware co-occurrence scores with CoCoScore
 
 First of all, open a terminal, activate the virtual environment with the CoCoScore dependencies and
 change to the directory of this example:
@@ -99,14 +99,15 @@ with open(scores_path, 'wt') as fout:
         fout.write('\t'.join(pair) + '\t' + str(score) + os.linesep)
 ```
 
-## Training and applying a custom scoring model
+## Advanced usage: Training and applying a custom scoring model
 
-We now describe how you can train your own model to score sentence-level co-occurrences. This step is necessary if other co-mentions than disease-gene co-mentions are to be scored.
+We now describe how you can train your own fastText model to score sentence-level co-occurrences. This step is necessary if other co-mentions than disease-gene co-mentions are to be scored or if you prefer to the model on your own corpus.
+Please note that this section assumes a basic understanding of machine learning approaches such as the motivation behind training-test set splitting and cross-validation.
 
 ### Label column
 
 When training a custom model, an additional column is needed in the dataset file that indicates whether the sentence is classified as positive or negative.
-These class labels are to be specified as 1 (for positives) or 0 (for negatives). 
+These class labels are to be specified as 1 (for positives) or 0 (for negatives).
 For the purpose of this tutorial, we randomly assign each instance in `demo.tsv` to one of the classes and append the class labels to each line.
 This is achieved by executing the following in a terminal:
 
@@ -118,9 +119,9 @@ Before training the fastText model, we extract class labels (prefixed by `__labe
 
 ```bash
 awk -F '\t' '{print "__label__"$7" "tolower($6)}' demo_labels.tsv > sentences_labels.txt
-``` 
+```
 
-### Fitting a model with fixed parameters
+### Fitting a model with fixed hyperparameters
 
 To train the model, execute the following in Python:
 
@@ -137,10 +138,79 @@ print(model_file)
 # mymodel.ftz
 ```
 
-This trains a fastText model using the given parameter settings.
+This trains a fastText model using the given hyperparameter settings.
 The final model is written to `mymodel.ftz`.
 The ending `.ftz` indicates that the model has been compressed using the`fasttext quantize` command.
 
+### Splitting into training and test data
+
+The next section will explain how the best hyperparameter settings can be found for a given dataset.
+Before proceeding, please split your dataset into independent training and test sets by reserving, for instance, 20% of the association for the test set. We recommend that you perform the splitting by assigning **all** sentences co-mentioning a given pair either to training or test set, never both, to avoid underestimating the generalization error of the model.
+While the training set is used to pick the optimal hyperparameters for the fastText model (see next section), sentence-level scores and co-occurrences scores for the test dataset can be used to assess the performance of the overall model
+
+### Hyperparameter optimization via cross-validation
+
+fastText comes with a number of important hyperparameters such as the number of training epochs,
+learning rate or n-gram length.
+While the example above uses a selection of hyperparameters that often yield good performance,
+these hyperparameters should ideally be tuned for each dataset.
+CoCoScore offers a set of functions to perform a random search cross-validation 
+akin to the [strategy implemented in scikit-learn](http://scikit-learn.org/stable/modules/grid_search.html#randomized-parameter-optimization).
+
+Such a cross-validation on the `demo_labels.tsv` dataset can be performed as follows:
+
+```python
+import numpy as np
+
+import cocoscore.ml.cv as cv
+import cocoscore.ml.fasttext_helpers as fth
+import cocoscore.tools.data_tools as dt
+
+data_path = 'demo_labels.tsv'
+output_path = 'cv_results.tsv'
+
+ft_path = 'fasttext'
+dim = 300  # for this example, fix the dimensionality of the generated word embeddings to 300
+cv_folds = 3  # for 3-fold cross-validation
+cv_iterations = 5  # try out 5 randomly selected hyperparameters settings in cross-validation
+ft_threads = 1  # the number of threads to use by fastText
+
+data_df = dt.load_data_frame(data_path, sort_reindex=True)
+data_df['sentence_text'] = data_df['sentence_text'].apply(lambda s: s.strip().lower())
+
+def cv_function(input_df, params, random_state):
+    return fth.fasttext_cv_independent_associations(input_df, params,
+                                                    ft_path, cv_folds=cv_folds,
+                                                    random_state=random_state,
+                                                    thread=ft_threads)
+
+cv_results = cv.random_cv(data_df, cv_function, cv_iterations, {'-dim': dim},
+                          fth.get_hyperparameter_distributions(np.random.randint(1000)), 3)
+with open(output_path, 'wt') as fout:
+    cv_results.to_csv(fout, sep='\t')
+```
+
+The outputs of the cross-validation are written to the file `cv_results.tsv` in a tab-separated format which may look like this:
+
+| dim | epoch | lr     | wordNgrams | ws | mean_test_score    | 
+|-----|-------|--------|------------|----|--------------------| 
+| 300 | 32    | 5.44   | 5          | 7  | 0.5536735170844427 | 
+| 300 | 19    | 0.0324 | 5          | 4  | 0.5241161763750893 | 
+| 300 | 14    | 0.989  | 3          | 5  | 0.5537584015195791 | 
+| 300 | 41    | 0.226  | 4          | 3  | 0.5622071678085158 | 
+| 300 | 38    | 6.37   | 2          | 8  | 0.5092082278070005 | 
+
+
+The model with the best cross-validation performance in the one with highest `mean_test_score` which can be found in row 4 (as expected, all hyperparameter settings perform poorly due to the random labelling).
+
+This means that the following hyperparameter settings should be selected for the given dataset:
+
+```python
+hyperparams = {'-dim': 300, '-epoch': 41, '-lr': 0.226, '-wordNgrams': 4, '-ws': 4}
+```
+
+Note that in a real world setting the `cv_iterations` variable above should be greater than 3 to try out more hyperparameter combinations.
+
 ### Computing co-occurrence scores
 
-To compute co-occurrence scores using your own model, simply follow the steps outlined in the section 'Using a pre-trained scoring model' while replacing the pre-trained model `demo.ftz` with your own model `mymodel.ftz` when scoring sentences.
+To compute co-occurrence scores using your own model and hyperparameter settings, simply follow the steps outlined in the section 'Using a pre-trained scoring model' while replacing the pre-trained model `demo.ftz` with your own model `mymodel.ftz` when scoring sentences.
