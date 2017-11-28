@@ -192,13 +192,13 @@ with open(output_path, 'wt') as fout:
 
 The outputs of the cross-validation are written to the file `cv_results.tsv` in a tab-separated format which may look like this:
 
-| dim | epoch | lr     | wordNgrams | ws | mean_test_score    | 
-|-----|-------|--------|------------|----|--------------------| 
-| 300 | 32    | 5.44   | 5          | 7  | 0.5536735170844427 | 
-| 300 | 19    | 0.0324 | 5          | 4  | 0.5241161763750893 | 
-| 300 | 14    | 0.989  | 3          | 5  | 0.5537584015195791 | 
-| 300 | 41    | 0.226  | 4          | 3  | 0.5622071678085158 | 
-| 300 | 38    | 6.37   | 2          | 8  | 0.5092082278070005 | 
+| dim | epoch | lr     | wordNgrams | ws | mean_test_score    | ... |
+|-----|-------|--------|------------|----|--------------------| ----|
+| 300 | 32    | 5.44   | 5          | 7  | 0.5536735170844427 | ... |
+| 300 | 19    | 0.0324 | 5          | 4  | 0.5241161763750893 | ... |
+| 300 | 14    | 0.989  | 3          | 5  | 0.5537584015195791 | ... |
+| 300 | 41    | 0.226  | 4          | 3  | 0.5622071678085158 | ... |
+| 300 | 38    | 6.37   | 2          | 8  | 0.5092082278070005 | ... |
 
 
 The model with the best cross-validation performance in the one with highest `mean_test_score` which can be found in row 4 (as expected, all hyperparameter settings perform poorly due to the random labelling).
