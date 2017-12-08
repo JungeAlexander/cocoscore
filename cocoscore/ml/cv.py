@@ -1,13 +1,13 @@
 from collections import defaultdict
-import gzip
+# import gzip
 import numpy as np
-import os
+# import os
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import GridSearchCV, ParameterGrid
-from sklearn.pipeline import Pipeline
-import xgboost as xgb
+# from sklearn.ensemble import RandomForestClassifier
+# from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn.model_selection import GridSearchCV, ParameterGrid
+# from sklearn.pipeline import Pipeline
+# import xgboost as xgb
 
 
 def _cv_independent_entities_treated_separately(data_df, cv_folds, entity_columns, random_state):
@@ -143,72 +143,72 @@ def _remove_missing_data_points(matrix_loaded, dataset):
     return matrix_loaded[keep_rows, :], dataset_cleaned
 
 
-def _perform_xgboost_cv(dataset, vectorizer, param_grid, scoring, iid, cv_sets, out_file, features,
-                        feature_matrix_non_missing):
-    # xgboost expects evaluation metric as parameter
-    if scoring == 'roc_auc':
-        param_grid['classifier__eval_metric'] = ['auc']
-    else:
-        raise ValueError('Unknown scoring function {} for xgboost CV.'.format(scoring))
-
-    if iid:
-        raise ValueError('CV performance for iid data is not implemented for xgboost CV.')
-
-    with open(out_file, 'wt', buffering=1, encoding='utf-8', errors='strict') as out_handle:
-        # following scikit-learn' Pipeline implementation, param_grid prefixes arguments to the
-        # classifier with 'classifier__' - this prefix has to be removed before calling xgboost
-        classifier_arg_prefix = 'classifier__'
-        param_grid_classifier = {}
-        for key, values in param_grid.items():
-            if not key.startswith(classifier_arg_prefix):
-                raise ValueError('Cannot handle parameter {} in grid used for xgboost CV'.format(key))
-            param_grid_classifier[key[len(classifier_arg_prefix):]] = values
-
-        # following sklearn's GridSearch CV, output column names for parameters are prefixed 'param_classifier__'
-        params_header = ['param_' + classifier_arg_prefix + v for v in sorted(param_grid_classifier.keys())]
-        header = ['split', 'test_score', 'train_score'] + params_header
-        out_handle.write('\t'.join(header) + os.linesep)
-        for cv_iter, train_test_indices in enumerate(cv_sets):
-            train_indices, test_indices = train_test_indices
-            if features == 'bow':
-                train_df = dataset.iloc[train_indices, :]
-                test_df = dataset.iloc[test_indices, :]
-
-                vectorizer.fit(train_df['sentence_text'])
-                train_mat = vectorizer.transform(train_df['sentence_text'])
-                test_mat = vectorizer.transform(test_df['sentence_text'])
-
-                # FIXME converting sparse document-term matrix to dense is wasteful in terms of memory but
-                #       not doing this conversion leads to errors with unknown feature names in xgb.train() below
-                train_data = xgb.DMatrix(train_mat.todense(), train_df['class'])
-                test_data = xgb.DMatrix(test_mat.todense(), test_df['class'])
-            elif features == 'word_vectors':
-                train_matrix = feature_matrix_non_missing[train_indices, :]
-                test_matrix = feature_matrix_non_missing[test_indices, :]
-                train_labels = dataset['class'].iloc[train_indices]
-                test_labels = dataset['class'].iloc[test_indices]
-                train_data = xgb.DMatrix(train_matrix, train_labels)
-                test_data = xgb.DMatrix(test_matrix, test_labels)
-            else:
-                raise ValueError('Unknown features parameter: {}'.format(features))
-
-            for current_grid_point in ParameterGrid(param_grid_classifier):
-                # num_round must be given to fit method directly
-                if 'num_round' in current_grid_point:
-                    num_round = current_grid_point['num_round']
-                    del current_grid_point['num_round']
-                else:
-                    num_round = 10  # the default in xgboost
-                watchlist = [(test_data, 'eval'), (train_data, 'train')]
-                eval_result = {}
-                _ = xgb.train(current_grid_point, train_data, num_round, watchlist, evals_result=eval_result)
-                train_score = eval_result['train'][current_grid_point['eval_metric']][-1]
-                test_score = eval_result['eval'][current_grid_point['eval_metric']][-1]
-                current_grid_point['num_round'] = num_round
-
-                results = [str(cv_iter), str(test_score), str(train_score)] + \
-                          [str(current_grid_point[k[len('param_' + classifier_arg_prefix):]]) for k in params_header]
-                out_handle.write('\t'.join(results) + os.linesep)
+# def _perform_xgboost_cv(dataset, vectorizer, param_grid, scoring, iid, cv_sets, out_file, features,
+#                         feature_matrix_non_missing):
+#     # xgboost expects evaluation metric as parameter
+#     if scoring == 'roc_auc':
+#         param_grid['classifier__eval_metric'] = ['auc']
+#     else:
+#         raise ValueError('Unknown scoring function {} for xgboost CV.'.format(scoring))
+#
+#     if iid:
+#         raise ValueError('CV performance for iid data is not implemented for xgboost CV.')
+#
+#     with open(out_file, 'wt', buffering=1, encoding='utf-8', errors='strict') as out_handle:
+#         # following scikit-learn' Pipeline implementation, param_grid prefixes arguments to the
+#         # classifier with 'classifier__' - this prefix has to be removed before calling xgboost
+#         classifier_arg_prefix = 'classifier__'
+#         param_grid_classifier = {}
+#         for key, values in param_grid.items():
+#             if not key.startswith(classifier_arg_prefix):
+#                 raise ValueError('Cannot handle parameter {} in grid used for xgboost CV'.format(key))
+#             param_grid_classifier[key[len(classifier_arg_prefix):]] = values
+#
+#         # following sklearn's GridSearch CV, output column names for parameters are prefixed 'param_classifier__'
+#         params_header = ['param_' + classifier_arg_prefix + v for v in sorted(param_grid_classifier.keys())]
+#         header = ['split', 'test_score', 'train_score'] + params_header
+#         out_handle.write('\t'.join(header) + os.linesep)
+#         for cv_iter, train_test_indices in enumerate(cv_sets):
+#             train_indices, test_indices = train_test_indices
+#             if features == 'bow':
+#                 train_df = dataset.iloc[train_indices, :]
+#                 test_df = dataset.iloc[test_indices, :]
+#
+#                 vectorizer.fit(train_df['sentence_text'])
+#                 train_mat = vectorizer.transform(train_df['sentence_text'])
+#                 test_mat = vectorizer.transform(test_df['sentence_text'])
+#
+#                 # FIXME converting sparse document-term matrix to dense is wasteful in terms of memory but
+#                 #       not doing this conversion leads to errors with unknown feature names in xgb.train() below
+#                 train_data = xgb.DMatrix(train_mat.todense(), train_df['class'])
+#                 test_data = xgb.DMatrix(test_mat.todense(), test_df['class'])
+#             elif features == 'word_vectors':
+#                 train_matrix = feature_matrix_non_missing[train_indices, :]
+#                 test_matrix = feature_matrix_non_missing[test_indices, :]
+#                 train_labels = dataset['class'].iloc[train_indices]
+#                 test_labels = dataset['class'].iloc[test_indices]
+#                 train_data = xgb.DMatrix(train_matrix, train_labels)
+#                 test_data = xgb.DMatrix(test_matrix, test_labels)
+#             else:
+#                 raise ValueError('Unknown features parameter: {}'.format(features))
+#
+#             for current_grid_point in ParameterGrid(param_grid_classifier):
+#                 # num_round must be given to fit method directly
+#                 if 'num_round' in current_grid_point:
+#                     num_round = current_grid_point['num_round']
+#                     del current_grid_point['num_round']
+#                 else:
+#                     num_round = 10  # the default in xgboost
+#                 watchlist = [(test_data, 'eval'), (train_data, 'train')]
+#                 eval_result = {}
+#                 _ = xgb.train(current_grid_point, train_data, num_round, watchlist, evals_result=eval_result)
+#                 train_score = eval_result['train'][current_grid_point['eval_metric']][-1]
+#                 test_score = eval_result['eval'][current_grid_point['eval_metric']][-1]
+#                 current_grid_point['num_round'] = num_round
+#
+#                 results = [str(cv_iter), str(test_score), str(train_score)] + \
+#                           [str(current_grid_point[k[len('param_' + classifier_arg_prefix):]]) for k in params_header]
+#                 out_handle.write('\t'.join(results) + os.linesep)
 
 
 def _pivot_group(current_group):
@@ -218,95 +218,95 @@ def _pivot_group(current_group):
     return pivot_group.sum()
 
 
-def grid_search_cv(estimator, param_grid, dataset, results_file, n_jobs, cv_folds=5, random_state=None,
-                   scoring='roc_auc', features='bow', feature_matrix=None, iid=False):
-    """
-    Performs a GridSearchCV for a given estimator, parameter grid and data set.
-    
-    :param estimator: str, the estimator to use
-    :param param_grid: dict, the parameter grid to use 
-    :param dataset: DataFrame, the data set to be cross-validated
-    :param results_file: str, path to write (gzipped) GridSearchCV output to
-    :param n_jobs: int, the number of parallel ML jobs to run
-    :param cv_folds: int, the number of CV fold to generate using cv_independent_associations()
-    :param random_state: RandomState to use when generating CV folds
-    :param scoring: str, scoring function to compute CV errors
-    :param features: str, 'bow' for back-of-words; 'word_vectors' for numerical vectors using word embeddings
-    :param feature_matrix: str, if features == 'word_vectors', the path to file containing the matrix of word vectors
-    :param iid: boolean, indicate whether samples in given dataset are iid
-    """
-    if estimator == 'random_forest':
-        clf = RandomForestClassifier()
-    elif estimator == 'xgboost':
-        clf = None
-        pass  # handled below since xgboost's sklearn API seems incompatible with both Pipelines and auc_roc computation
-    else:
-        raise ValueError('Unknown estimator: {}'.format(estimator))
-
-    if features == 'word_vectors':
-        if not os.path.isfile(feature_matrix):
-            raise ValueError('When using word_vectors as features, a valid path to the feature matrix must be given.')
-    elif features == 'bow':
-        pass
-    else:
-        raise ValueError('Unknown features parameter: {}'.format(features))
-
-    if features == 'word_vectors':
-        matrix_loaded = np.loadtxt(feature_matrix)
-        # since feature vectors may be missing for some sentences, remove those from the dataset
-        matrix_non_missing, dataset = _remove_missing_data_points(matrix_loaded, dataset)
-    else:
-        matrix_non_missing = None
-
-    cv_sets = list(cv_independent_entities(dataset, cv_folds=cv_folds, random_state=random_state))
-
-    # stop_words = [gene_placeholder, disease_placeholder]
-    # vectorizer = CountVectorizer(stop_words=stop_words)
-    vectorizer = CountVectorizer()
-    if estimator != 'xgboost':
-        if features == 'bow':
-            text_clf = Pipeline([('vectorizer', vectorizer),  # ('tfidf', TfidfTransformer()),
-                                 ('classifier', clf)])
-            text_grid = GridSearchCV(text_clf, param_grid, scoring=scoring, n_jobs=n_jobs, iid=iid, cv=cv_sets)
-            _ = text_grid.fit(dataset['sentence_text'], dataset['class'])
-        elif features == 'word_vectors':
-            text_grid = GridSearchCV(clf, param_grid, scoring=scoring, n_jobs=n_jobs, iid=iid, cv=cv_sets)
-            _ = text_grid.fit(matrix_non_missing, dataset['class'])
-        else:
-            raise ValueError('Unknown features parameter: {}'.format(features))
-
-        results_df = pd.DataFrame(text_grid.cv_results_)
-    else:
-        out_file = 'tmp_xgboost.tsv'
-        _perform_xgboost_cv(dataset, vectorizer, param_grid, scoring, iid, cv_sets, out_file, features,
-                            matrix_non_missing)
-        xgboost_results = pd.DataFrame.from_csv(out_file, sep='\t', index_col=None)
-        param_columns = list(xgboost_results.filter(regex='^param_').columns)
-        grouped_results = xgboost_results.groupby(param_columns)
-        results_df = grouped_results.apply(_pivot_group).reset_index()
-
-        cv_test_score_columns = list(results_df.filter(regex='_test_score$'))
-        results_df['mean_test_score'] = results_df.loc[:, cv_test_score_columns].mean(axis=1, skipna=False)
-        results_df['std_test_score'] = results_df.loc[:, cv_test_score_columns].std(axis=1, skipna=False)
-
-        cv_train_score_columns = list(results_df.filter(regex='_train_score$'))
-        results_df['mean_train_score'] = results_df.loc[:, cv_train_score_columns].mean(axis=1, skipna=False)
-        results_df['std_train_score'] = results_df.loc[:, cv_train_score_columns].std(axis=1, skipna=False)
-
-        results_df['rank_test_score'] = results_df['mean_test_score'].rank(method='first', ascending=False)
-
-    # add CV fold stats to output data frame
-    fit_count = len(results_df)
-    cv_stats_df = compute_cv_fold_stats(dataset, cv_sets)
-    for stats_row in cv_stats_df.itertuples():
-        cv_fold = str(stats_row.fold)
-        results_df['split_' + cv_fold + '_n_test'] = [stats_row.n_test] * fit_count
-        results_df['split_' + cv_fold + '_pos_test'] = [stats_row.pos_test] * fit_count
-        results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train] * fit_count
-        results_df['split_' + cv_fold + '_pos_train'] = [stats_row.pos_train] * fit_count
-
-    with gzip.open(results_file, 'wt', encoding='utf-8', errors='raise') as file_out:
-        results_df.to_csv(file_out, sep='\t', header=True, index=False)
+# def grid_search_cv(estimator, param_grid, dataset, results_file, n_jobs, cv_folds=5, random_state=None,
+#                    scoring='roc_auc', features='bow', feature_matrix=None, iid=False):
+#     """
+#     Performs a GridSearchCV for a given estimator, parameter grid and data set.
+#
+#     :param estimator: str, the estimator to use
+#     :param param_grid: dict, the parameter grid to use
+#     :param dataset: DataFrame, the data set to be cross-validated
+#     :param results_file: str, path to write (gzipped) GridSearchCV output to
+#     :param n_jobs: int, the number of parallel ML jobs to run
+#     :param cv_folds: int, the number of CV fold to generate using cv_independent_associations()
+#     :param random_state: RandomState to use when generating CV folds
+#     :param scoring: str, scoring function to compute CV errors
+#     :param features: str, 'bow' for back-of-words; 'word_vectors' for numerical vectors using word embeddings
+#     :param feature_matrix: str, if features == 'word_vectors', the path to file containing the matrix of word vectors
+#     :param iid: boolean, indicate whether samples in given dataset are iid
+#     """
+#     if estimator == 'random_forest':
+#         clf = RandomForestClassifier()
+#     elif estimator == 'xgboost':
+#         clf = None
+#         pass  # handled below since xgboost's sklearn API seems incompatible with both Pipelines and auc_roc comput.
+#     else:
+#         raise ValueError('Unknown estimator: {}'.format(estimator))
+#
+#     if features == 'word_vectors':
+#         if not os.path.isfile(feature_matrix):
+#             raise ValueError('When using word_vectors as features, a valid path to the feature matrix must be given.')
+#     elif features == 'bow':
+#         pass
+#     else:
+#         raise ValueError('Unknown features parameter: {}'.format(features))
+#
+#     if features == 'word_vectors':
+#         matrix_loaded = np.loadtxt(feature_matrix)
+#         # since feature vectors may be missing for some sentences, remove those from the dataset
+#         matrix_non_missing, dataset = _remove_missing_data_points(matrix_loaded, dataset)
+#     else:
+#         matrix_non_missing = None
+#
+#     cv_sets = list(cv_independent_entities(dataset, cv_folds=cv_folds, random_state=random_state))
+#
+#     # stop_words = [gene_placeholder, disease_placeholder]
+#     # vectorizer = CountVectorizer(stop_words=stop_words)
+#     vectorizer = CountVectorizer()
+#     if estimator != 'xgboost':
+#         if features == 'bow':
+#             text_clf = Pipeline([('vectorizer', vectorizer),  # ('tfidf', TfidfTransformer()),
+#                                  ('classifier', clf)])
+#             text_grid = GridSearchCV(text_clf, param_grid, scoring=scoring, n_jobs=n_jobs, iid=iid, cv=cv_sets)
+#             _ = text_grid.fit(dataset['sentence_text'], dataset['class'])
+#         elif features == 'word_vectors':
+#             text_grid = GridSearchCV(clf, param_grid, scoring=scoring, n_jobs=n_jobs, iid=iid, cv=cv_sets)
+#             _ = text_grid.fit(matrix_non_missing, dataset['class'])
+#         else:
+#             raise ValueError('Unknown features parameter: {}'.format(features))
+#
+#         results_df = pd.DataFrame(text_grid.cv_results_)
+#     else:
+#         out_file = 'tmp_xgboost.tsv'
+#         _perform_xgboost_cv(dataset, vectorizer, param_grid, scoring, iid, cv_sets, out_file, features,
+#                             matrix_non_missing)
+#         xgboost_results = pd.DataFrame.from_csv(out_file, sep='\t', index_col=None)
+#         param_columns = list(xgboost_results.filter(regex='^param_').columns)
+#         grouped_results = xgboost_results.groupby(param_columns)
+#         results_df = grouped_results.apply(_pivot_group).reset_index()
+#
+#         cv_test_score_columns = list(results_df.filter(regex='_test_score$'))
+#         results_df['mean_test_score'] = results_df.loc[:, cv_test_score_columns].mean(axis=1, skipna=False)
+#         results_df['std_test_score'] = results_df.loc[:, cv_test_score_columns].std(axis=1, skipna=False)
+#
+#         cv_train_score_columns = list(results_df.filter(regex='_train_score$'))
+#         results_df['mean_train_score'] = results_df.loc[:, cv_train_score_columns].mean(axis=1, skipna=False)
+#         results_df['std_train_score'] = results_df.loc[:, cv_train_score_columns].std(axis=1, skipna=False)
+#
+#         results_df['rank_test_score'] = results_df['mean_test_score'].rank(method='first', ascending=False)
+#
+#     # add CV fold stats to output data frame
+#     fit_count = len(results_df)
+#     cv_stats_df = compute_cv_fold_stats(dataset, cv_sets)
+#     for stats_row in cv_stats_df.itertuples():
+#         cv_fold = str(stats_row.fold)
+#         results_df['split_' + cv_fold + '_n_test'] = [stats_row.n_test] * fit_count
+#         results_df['split_' + cv_fold + '_pos_test'] = [stats_row.pos_test] * fit_count
+#         results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train] * fit_count
+#         results_df['split_' + cv_fold + '_pos_train'] = [stats_row.pos_train] * fit_count
+#
+#     with gzip.open(results_file, 'wt', encoding='utf-8', errors='raise') as file_out:
+#         results_df.to_csv(file_out, sep='\t', header=True, index=False)
 
 
 def get_random_parameter_sampler(param_distributions, n_iter):
