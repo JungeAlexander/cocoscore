@@ -151,6 +151,9 @@ The ending `.ftz` indicates that the model has been compressed using the`fasttex
 
 The next section will explain how the best hyperparameter settings can be found for a given dataset.
 Before proceeding, please split your dataset into independent training and test sets by reserving, for instance, 20% of the association for the test set. We recommend that you perform the splitting by assigning **all** sentences co-mentioning a given pair either to training or test set, never both, to avoid underestimating the generalization error of the model.
+This cross-validation strategy is implemented in the utility function
+`cocoscore.ml.fasttext_helpers.fasttext_cv_independent_associations()` used in the example below.
+
 While the training set is used to pick the optimal hyperparameters for the fastText model (see next section), sentence-level scores and co-occurrences scores for the test dataset can be used to assess the performance of the overall model
 
 ### Hyperparameter optimization via cross-validation
@@ -195,6 +198,11 @@ with open(output_path, 'wt') as fout:
     cv_results.to_csv(fout, sep='\t')
 ```
 
+This will produce temporary cross-validation datasets, compute train and test error (i.e. validation error) on each fold and report these errors for different parameter choices.
+Note that the dimensionality of the word embeddings is fixed to 300 in the example above (the `dim` variable).
+This means that the `-dim` parameter of fastText will not be subjected to cross-validation.
+Fixing parameters like this allows to incorporate prior knowledge into the model training.
+
 The outputs of the cross-validation are written to the file `cv_results.tsv` in a tab-separated format which may look like this:
 
 | dim | epoch | lr     | wordNgrams | ws | mean_test_score    | ... |
@@ -214,7 +222,7 @@ This means that the following hyperparameter settings should be selected for the
 hyperparams = {'-dim': 300, '-epoch': 41, '-lr': 0.226, '-wordNgrams': 4, '-ws': 4}
 ```
 
-Note that in a real world setting the `cv_iterations` variable above should be greater than 3 to try out more hyperparameter combinations.
+Note that in a real world setting the `cv_iterations` variable above should be greater than 5 to try out more hyperparameter combinations.
 
 ### Computing co-occurrence scores
 
