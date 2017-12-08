@@ -37,7 +37,7 @@ TFR2 mutations in patients with hemochromatosis.
 could be replaced by tokens `MYGENETOKEN` and `MYDISEASETOKEN`, respectively:
 
 ```
-MYGENETOKEN mutations inpatients with MYDISEASETOKEN.
+MYGENETOKEN mutations in patients with MYDISEASETOKEN.
 ```
 
 This strategy is followed in our `demo.tsv` example dataset.
@@ -90,6 +90,7 @@ Please execute the following in Python:
 import cocoscore.tagger.co_occurrence_score as cos
 import os
 
+scored_dataset_path = 'demo_scored.tsv'
 scores_path = 'co_occurrence_scores.tsv'
 
 cocoscores = cos.co_occurrence_score(score_file_path=scored_dataset_path,
