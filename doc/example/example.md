@@ -58,11 +58,13 @@ cut -f 6 "$dataset_path" | awk '{print tolower($0);}' > "$sentences_path"
 
 We use the previously downloaded pre-trained fastText model `demo.ftz` to predict the probability that each sentence describes an association.
 The sentence scores are then written to the file `demo_scored.tsv`.
-Execute the following in Python:
+Execute the following piece of code in Python.
+fastText will be called in the process and write progress information to the command line.
 
 ```python
 import cocoscore.ml.fasttext_helpers as fth
 import cocoscore.tools.data_tools as dt
+import os
 
 model_path = 'demo.ftz'
 dataset_path = 'demo.tsv'
@@ -79,6 +81,8 @@ df['predicted'] = probabilities
 with open(scored_dataset_path, 'wt') as test_out:
     df.to_csv(test_out, sep='\t', header=False, index=False,
                    columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
+                   
+os.remove(prob_path) # remove intermediary class probabilities file
 ```
 
 ### Computing co-occurrence scores
@@ -140,7 +144,7 @@ print(model_file)
 ```
 
 This trains a fastText model using the given hyperparameter settings.
-The final model is written to `mymodel.ftz`.
+The final model is written to `mymodel.ftz` and fastText's progress is written to the command line.
 The ending `.ftz` indicates that the model has been compressed using the`fasttext quantize` command.
 
 ### Splitting into training and test data
