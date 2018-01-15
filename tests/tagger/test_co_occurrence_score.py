@@ -5,6 +5,7 @@ import cocoscore.tagger.co_occurrence_score as co_occurrence_score
 
 class CooccurrenceTest(unittest.TestCase):
     matches_file_path = 'tests/tagger/matches_file.tsv'
+    matches_file_same_type_path = 'tests/tagger/matches_file_same_type.tsv'
     matches_document_level_comentions_file_path = 'tests/tagger/matches_file_document_level_comentions.tsv'
     matches_file_single_matches_path = 'tests/tagger/matches_file_single_matches.tsv'
     matches_file_cross_path = 'tests/tagger/matches_file_cross.tsv'
@@ -12,6 +13,7 @@ class CooccurrenceTest(unittest.TestCase):
     score_file_path = 'tests/tagger/sentence_scores_file.tsv'
     entity_file_path = 'tests/tagger/entities2.tsv.gz'
     entity_fantasy_types_file_path = 'tests/tagger/entities2_fantasy_types.tsv.gz'
+    entity_file_same_type_path = 'tests/tagger/entities2_same_type.tsv.gz'
 
     def test_load_sentence_scores(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -134,6 +136,35 @@ class CooccurrenceTest(unittest.TestCase):
         scores = co_occurrence_score.co_occurrence_score(self.matches_file_path, self.score_file_path,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         weighting_exponent=weighting_exponent)
+        c_a_d = counts[('--D', 'A')]
+        c_a = counts['A']
+        c_d = counts['--D']
+        c_all = counts[None]
+        s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
+        c_b_c = counts[('B', 'C')]
+        c_b = counts['B']
+        c_c = counts['C']
+        s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
+        self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
+
+    def test_co_occurrence_score_matches_file_same_type(self):
+        sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
+        document_weight = 15.0
+        paragraph_weight = 0
+        weighting_exponent = 0.6
+        counts = co_occurrence_score.get_weighted_counts(self.matches_file_same_type_path, sentence_scores,
+                                                         self.entity_file_same_type_path,
+                                                         first_type=2, second_type=2,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         sentence_weight=1.0)
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_same_type_path, self.score_file_path,
+                                                         self.entity_file_same_type_path,
+                                                         first_type=2, second_type=2,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          weighting_exponent=weighting_exponent)
