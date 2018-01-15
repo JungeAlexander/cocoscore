@@ -513,4 +513,3 @@ class CooccurrenceTest(unittest.TestCase):
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
         self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
         self.assertAlmostEqual(s_d_b, scores[('--D', 'B')])
-
