@@ -385,6 +385,38 @@ class CooccurrenceTest(unittest.TestCase):
         self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
         self.assertAlmostEqual(s_d_b, scores[('--D', 'B')])
 
+    def test_co_occurrence_score_matches_file_cross_swap_types(self):
+        sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
+        document_weight = 15.0
+        paragraph_weight = 0
+        weighting_exponent = 0.6
+        counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_path, sentence_scores,
+                                                         self.entity_file_path,
+                                                         first_type=-26, second_type=9606,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         sentence_weight=1.0)
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.score_file_path,
+                                                         self.entity_file_path,
+                                                         first_type=-26, second_type=9606,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         weighting_exponent=weighting_exponent)
+        c_a_d = counts[('--D', 'A')]
+        c_d_b = counts[('--D', 'B')]
+        c_a = counts['A']
+        c_d = counts['--D']
+        c_all = counts[None]
+        s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
+        c_b_c = counts[('B', 'C')]
+        c_b = counts['B']
+        c_c = counts['C']
+        s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
+        s_d_b = c_d_b ** weighting_exponent * ((c_d_b * c_all) / (c_b * c_d)) ** (1 - weighting_exponent)
+        self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
+        self.assertAlmostEqual(s_d_b, scores[('--D', 'B')])
+
     def test_co_occurrence_score_matches_file_cross_fantasy_types(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
         document_weight = 15.0
