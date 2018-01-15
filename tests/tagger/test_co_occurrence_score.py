@@ -15,7 +15,7 @@ class CooccurrenceTest(unittest.TestCase):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
         self.assertDictEqual({('--D', 'A'): {(1111, 1, 2): 0.9, (1111, 2, 3): 0.5,
                                              (3333, 2, 2): 0.4, (3333, 2, 3): 0.44},
-                              ('C', 'B'): {(2222, 1, 1): 0}}, sentence_scores)
+                              ('B', 'C'): {(2222, 1, 1): 0}}, sentence_scores)
 
     def test_weighted_counts_sentences_only(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -24,7 +24,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                                   document_weight=15.0, paragraph_weight=0,
                                                                   sentence_weight=1.0)
         self.assertDictEqual({('--D', 'A'): 15.9 + 15.44,
-                              ('C', 'B'): 15,
+                              ('B', 'C'): 15,
                               'A': 15.9 + 15.44,
                               '--D': 15.9 + 15.44,
                               'B': 15,
@@ -51,12 +51,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_weighted_counts_sentences_only_diseases(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -66,7 +66,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                                   sentence_weight=1.0,
                                                                   ignore_scores=True)
         self.assertDictEqual({('--D', 'A'): 32,
-                              ('C', 'B'): 16,
+                              ('B', 'C'): 16,
                               'A': 32,
                               '--D': 32,
                               'B': 16,
@@ -95,12 +95,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_weighted_counts_matches_file(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -112,7 +112,7 @@ class CooccurrenceTest(unittest.TestCase):
         self.assertAlmostEqual(15.9 + 15.44 + 15., weighted_counts[None])  # needed due to floating point strangeness
         del weighted_counts[None]
         self.assertDictEqual({('--D', 'A'): 15.9 + 15.44,
-                              ('C', 'B'): 15.,
+                              ('B', 'C'): 15.,
                               'A': 15.9 + 15.44,
                               '--D': 15.9 + 15.44,
                               'B': 15.,
@@ -140,12 +140,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_co_occurrence_score_matches_file_diseases(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -169,12 +169,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_weighted_counts_matches_document_level_comentions_file(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -186,7 +186,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                                   sentence_weight=1.0)
 
         self.assertDictEqual({('--D', 'A'): 15. + 15.4,
-                              ('C', 'B'): 15.,
+                              ('B', 'C'): 15.,
                               'A': 15. + 15.4,
                               '--D': 15. + 15.4,
                               'B': 15.,
@@ -217,12 +217,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_co_occurrence_score_matches_document_level_comentions_file_diseases(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -247,12 +247,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_weighted_counts_matches_single_matches_file(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -265,7 +265,7 @@ class CooccurrenceTest(unittest.TestCase):
         self.assertAlmostEqual(15.9 + 15.44 + 15., weighted_counts[None])  # needed due to floating point strangeness
         del weighted_counts[None]
         self.assertDictEqual({('--D', 'A'): 15.9 + 15.44,
-                              ('C', 'B'): 15.,
+                              ('B', 'C'): 15.,
                               'A': 15.9 + 15.44,
                               '--D': 15.9 + 15.44,
                               'B': 15.,
@@ -295,12 +295,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_co_occurrence_score_matches_single_matches_file_diseases(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -326,12 +326,12 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
 
     def test_weighted_counts_matches_file_cross(self):
         sentence_scores = co_occurrence_score.load_score_file(self.score_file_path)
@@ -346,7 +346,7 @@ class CooccurrenceTest(unittest.TestCase):
         del weighted_counts['--D']
         self.assertDictEqual({('--D', 'A'): 15.9 + 15.44,
                               ('--D', 'B'): 15.,
-                              ('C', 'B'): 15.,
+                              ('B', 'C'): 15.,
                               'A': 15.9 + 15.44,
                               'B': 15. + 15.,
                               'C': 15.}, weighted_counts)
@@ -374,13 +374,13 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         s_d_b = c_d_b ** weighting_exponent * ((c_d_b * c_all) / (c_b * c_d)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
         self.assertAlmostEqual(s_d_b, scores[('--D', 'B')])
 
     def test_co_occurrence_score_matches_file_cross_diseases(self):
@@ -407,11 +407,11 @@ class CooccurrenceTest(unittest.TestCase):
         c_d = counts['--D']
         c_all = counts[None]
         s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
-        c_b_c = counts[('C', 'B')]
+        c_b_c = counts[('B', 'C')]
         c_b = counts['B']
         c_c = counts['C']
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         s_d_b = c_d_b ** weighting_exponent * ((c_d_b * c_all) / (c_b * c_d)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
-        self.assertAlmostEqual(s_b_c, scores[('C', 'B')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
         self.assertAlmostEqual(s_d_b, scores[('--D', 'B')])
