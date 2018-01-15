@@ -7,42 +7,44 @@ from ..tools.file_tools import get_file_handle
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
 
 
-def get_gene_disease_pairs(taxid_name_set, first_taxid=9606, second_taxid=-26):
-    first_taxid_names = set()
-    second_taxid_names = set()
-    for taxid_name in taxid_name_set:
-        taxid, name = taxid_name
-        if taxid == first_taxid:
-            first_taxid_names.add(taxid_name)
-        elif taxid == second_taxid:
-            second_taxid_names.add(taxid_name)
+def get_gene_disease_pairs(type_name_set, first_type=9606, second_type=-26):
+    first_type_names = set()
+    second_type_names = set()
+    for type_name in type_name_set:
+        type, name = type_name
+        if type == first_type:
+            first_type_names.add(type_name)
+        elif type == second_type:
+            second_type_names.add(type_name)
         else:
-            raise ValueError("Encountered unknown taxonomy ID {:d}.".format(taxid))
-    return itertools.product(first_taxid_names, second_taxid_names)
+            raise ValueError("Encountered unknown taxonomy ID {:d}.".format(type))
+    if first_type != second_type:
+        return itertools.product(first_type_names, second_type_names)
+    else:
+        return itertools.combinations(first_type_names, 2)
 
 
-def process_current_pmid_score_lines(current_pmid_lines, serial_to_taxid_name):
+def process_current_pmid_score_lines(current_pmid_lines, serial_to_type_entity, first_type=9606, second_type=-26):
     return_list = []
     pmid = int(current_pmid_lines[0][0])
-    taxid_names = set()
-    taxid_name_to_sentences = collections.defaultdict(set)
-    taxid_name_to_paragraphs = collections.defaultdict(set)
+    type_entities = set()
+    type_entity_to_sentences = collections.defaultdict(set)
+    type_entity_to_paragraphs = collections.defaultdict(set)
     for current_line in current_pmid_lines:
-        _, paragraph, sentence, _, _, _, taxon, serial = current_line
-        taxid_name = serial_to_taxid_name[int(serial)]
-        assert int(taxon) == taxid_name[0]
-        taxid_names.add(taxid_name)
-        taxid_name_to_sentences[taxid_name].add((int(paragraph), int(sentence)))
-        taxid_name_to_paragraphs[taxid_name].add(int(paragraph))
-    for gene_disease_pair in get_gene_disease_pairs(taxid_names):
-        tax_gene, tax_disease = gene_disease_pair
-        assert tax_gene[0] == 9606
-        assert tax_disease[0] == -26
-        if tax_gene == tax_disease:  # this may happen if gene-gene pairs are scored in another project
-            continue
-        common_sentences = taxid_name_to_sentences[tax_gene] & taxid_name_to_sentences[tax_disease]
-        common_paragraphs = taxid_name_to_paragraphs[tax_gene] & taxid_name_to_paragraphs[tax_disease]
-        return_list.append([pmid, tax_gene[1], tax_disease[1], common_sentences, common_paragraphs])
+        _, paragraph, sentence, _, _, _, type, serial = current_line
+        type_entity = serial_to_type_entity[int(serial)]
+        assert int(type) == type_entity[0]
+        type_entities.add(type_entity)
+        type_entity_to_sentences[type_entity].add((int(paragraph), int(sentence)))
+        type_entity_to_paragraphs[type_entity].add(int(paragraph))
+    for gene_disease_pair in get_gene_disease_pairs(type_entities):
+        first_type_entity, second_type_entity = gene_disease_pair
+        assert first_type_entity[0] == first_type
+        assert second_type_entity[0] == second_type
+        common_sentences = type_entity_to_sentences[first_type_entity] & type_entity_to_sentences[second_type_entity]
+        common_paragraphs = type_entity_to_paragraphs[first_type_entity] & type_entity_to_paragraphs[second_type_entity]
+        entity_key = sorted((first_type_entity[1], second_type_entity[1]))
+        return_list.append([pmid, *entity_key, common_sentences, common_paragraphs])
     return return_list
 
 
@@ -133,8 +135,9 @@ def load_score_file(score_file_path):
     score_dict = collections.defaultdict(dict)
     try:
         for line in score_file:
-            pmid, paragraph, sentence, gene, disease, score = line.rstrip().split('\t')
-            score_dict[(gene, disease)][(int(pmid), int(paragraph), int(sentence))] = float(score)
+            pmid, paragraph, sentence, entity_1, entity_2, score = line.rstrip().split('\t')
+            entity_key = tuple(sorted((entity_1, entity_2)))
+            score_dict[entity_key][(int(pmid), int(paragraph), int(sentence))] = float(score)
     finally:
         score_file.close()
     return dict(score_dict)
