@@ -7,37 +7,37 @@ from ..tools.file_tools import get_file_handle
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
 
 
-def get_gene_disease_pairs(type_name_set, first_type=9606, second_type=-26):
+def get_gene_disease_pairs(type_name_set, first_type, second_type):
     first_type_names = set()
     second_type_names = set()
     for type_name in type_name_set:
-        type, name = type_name
-        if type == first_type:
+        mytype, name = type_name
+        if mytype == first_type:
             first_type_names.add(type_name)
-        elif type == second_type:
+        elif mytype == second_type:
             second_type_names.add(type_name)
         else:
-            raise ValueError("Encountered unknown taxonomy ID {:d}.".format(type))
+            raise ValueError("Encountered unknown taxonomy ID {:d}.".format(mytype))
     if first_type != second_type:
         return itertools.product(first_type_names, second_type_names)
     else:
         return itertools.combinations(first_type_names, 2)
 
 
-def process_current_pmid_score_lines(current_pmid_lines, serial_to_type_entity, first_type=9606, second_type=-26):
+def process_current_pmid_score_lines(current_pmid_lines, serial_to_type_entity, first_type, second_type):
     return_list = []
     pmid = int(current_pmid_lines[0][0])
     type_entities = set()
     type_entity_to_sentences = collections.defaultdict(set)
     type_entity_to_paragraphs = collections.defaultdict(set)
     for current_line in current_pmid_lines:
-        _, paragraph, sentence, _, _, _, type, serial = current_line
+        _, paragraph, sentence, _, _, _, mytype, serial = current_line
         type_entity = serial_to_type_entity[int(serial)]
-        assert int(type) == type_entity[0]
+        assert int(mytype) == type_entity[0]
         type_entities.add(type_entity)
         type_entity_to_sentences[type_entity].add((int(paragraph), int(sentence)))
         type_entity_to_paragraphs[type_entity].add(int(paragraph))
-    for gene_disease_pair in get_gene_disease_pairs(type_entities):
+    for gene_disease_pair in get_gene_disease_pairs(type_entities, first_type, second_type):
         first_type_entity, second_type_entity = gene_disease_pair
         assert first_type_entity[0] == first_type
         assert second_type_entity[0] == second_type
@@ -48,7 +48,7 @@ def process_current_pmid_score_lines(current_pmid_lines, serial_to_type_entity, 
     return return_list
 
 
-def load_matches_file(matches_file_path, entities_file):
+def load_matches_file(matches_file_path, entities_file, first_type, second_type):
     serial_to_taxid_name = get_serial_to_taxid_name_mapper(entities_file)
     matches_file = get_file_handle(matches_file_path, matches_file_path.endswith('.gz'))
     try:
@@ -57,12 +57,13 @@ def load_matches_file(matches_file_path, entities_file):
             # Fields are: pmid, paragraph, sentence, start_match, end_match, matched, taxon, serial
             line_split = line.rstrip().split('\t')
             if len(current_pmid_lines) > 0 and line_split[0] != current_pmid_lines[0][0]:
-                yield process_current_pmid_score_lines(current_pmid_lines, serial_to_taxid_name)
+                yield process_current_pmid_score_lines(current_pmid_lines, serial_to_taxid_name, first_type,
+                                                       second_type)
                 current_pmid_lines = [line_split]
             else:
                 current_pmid_lines.append(line_split)
         if len(current_pmid_lines) > 0:
-            yield process_current_pmid_score_lines(current_pmid_lines, serial_to_taxid_name)
+            yield process_current_pmid_score_lines(current_pmid_lines, serial_to_taxid_name, first_type, second_type)
     finally:
         matches_file.close()
 
@@ -97,7 +98,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first
                         ignore_scores=False, silent=False):
     pair_scores = collections.defaultdict(float)
     if matches_file_path is not None:
-        matches_iter = load_matches_file(matches_file_path, entities_file)
+        matches_iter = load_matches_file(matches_file_path, entities_file, first_type, second_type)
     else:
         matches_iter = [load_score_file_iterator(sentence_scores)]
     for i, document_matches in enumerate(matches_iter):
