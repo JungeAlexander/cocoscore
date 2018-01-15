@@ -90,8 +90,8 @@ def get_max_sentence_score(scores, sentence_co_mentions, pmid, gene, disease):
     return max(sentence_scores)
 
 
-def get_weighted_counts(matches_file_path, sentence_scores, entities_file, document_weight, paragraph_weight,
-                        sentence_weight,
+def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first_type, second_type,
+                        document_weight, paragraph_weight, sentence_weight,
                         ignore_scores=False, silent=False):
     pair_scores = collections.defaultdict(float)
     if matches_file_path is not None:
@@ -151,7 +151,7 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, first
     If this is None, co-occurrences are extracted from score_file_path.
     :param score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number, sentence
     number, gene identifier, disease identifier, sentence score
-    :param entities_file: entitites file as used by tagger
+    :param entities_file: entities file as used by tagger
     :param first_type: int, type of the first entity class to be scored
     :param second_type: int, type of the second entity class to be scored
     :param document_weight: document weight in co-occurrence score
@@ -168,7 +168,7 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, first
         scores = load_score_file(score_file_path)
     co_occurrence_scores = {}
     weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=scores,
-                                          entities_file=entities_file,
+                                          entities_file=entities_file, first_type=first_type, second_type=second_type,
                                           document_weight=document_weight, paragraph_weight=paragraph_weight,
                                           sentence_weight=sentence_weight,
                                           ignore_scores=ignore_scores, silent=silent)
@@ -189,6 +189,7 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
                                  weighting_exponent=0.6,
                                  silent=False):
     return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None, entities_file=entities_file,
+                               first_type=9606, second_type=-26,
                                document_weight=document_weight,
                                paragraph_weight=paragraph_weight,
                                sentence_weight=sentence_weight, weighting_exponent=weighting_exponent,
@@ -199,6 +200,7 @@ def co_occurrence_score_string(matches_file_path, entities_file, document_weight
                                sentence_weight=0.2, weighting_exponent=0.6, silent=False):
     return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None,
                                entities_file=entities_file,
+                               first_type=9606, second_type=9606,
                                document_weight=document_weight, paragraph_weight=paragraph_weight,
                                sentence_weight=sentence_weight, weighting_exponent=weighting_exponent,
                                ignore_scores=True, silent=silent)
