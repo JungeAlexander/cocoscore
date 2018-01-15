@@ -140,7 +140,8 @@ def load_score_file(score_file_path):
     return dict(score_dict)
 
 
-def co_occurrence_score(matches_file_path, score_file_path, entities_file, document_weight=15.0, paragraph_weight=0.0,
+def co_occurrence_score(matches_file_path, score_file_path, entities_file, first_type, second_type,
+                        document_weight=15.0, paragraph_weight=0.0,
                         sentence_weight=1.0, weighting_exponent=0.6, ignore_scores=False, silent=False):
     """
     Computes co-occurrence score for a given matches file and/or sentence score file. See notes from 20170803 for an
@@ -151,6 +152,8 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, docum
     :param score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number, sentence
     number, gene identifier, disease identifier, sentence score
     :param entities_file: entitites file as used by tagger
+    :param first_type: int, type of the first entity class to be scored
+    :param second_type: int, type of the second entity class to be scored
     :param document_weight: document weight in co-occurrence score
     :param paragraph_weight: paragraph weight in the co-occurrence score
     :param sentence_weight: sentence weight in the co-occurrence score
