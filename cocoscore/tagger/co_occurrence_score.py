@@ -49,7 +49,7 @@ def process_current_pmid_score_lines(current_pmid_lines, serial_to_type_entity, 
 
 
 def load_matches_file(matches_file_path, entities_file, first_type, second_type):
-    serial_to_taxid_name = get_serial_to_taxid_name_mapper(entities_file)
+    serial_to_taxid_name = get_serial_to_taxid_name_mapper(entities_file, taxids=(first_type, second_type))
     matches_file = get_file_handle(matches_file_path, matches_file_path.endswith('.gz'))
     try:
         current_pmid_lines = []
