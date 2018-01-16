@@ -130,7 +130,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first
     return dict(pair_scores)
 
 
-def load_score_file(score_file_path):
+def load_sentence_score_file(score_file_path):
     compression = score_file_path.endswith('.gz')
     score_file = get_file_handle(score_file_path, compression)
     score_dict = collections.defaultdict(dict)
@@ -142,6 +142,14 @@ def load_score_file(score_file_path):
     finally:
         score_file.close()
     return dict(score_dict)
+
+
+def load_paragraph_score_file(score_file_path):
+    pass
+
+
+def load_document_score_file(score_file_path):
+    pass
 
 
 def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_score_file_path,
@@ -171,7 +179,7 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
     if sentence_score_file_path is None:
         scores = None
     else:
-        scores = load_score_file(sentence_score_file_path)
+        scores = load_sentence_score_file(sentence_score_file_path)
     co_occurrence_scores = {}
     weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=scores,
                                           entities_file=entities_file, first_type=first_type, second_type=second_type,
