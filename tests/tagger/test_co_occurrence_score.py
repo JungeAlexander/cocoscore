@@ -35,9 +35,9 @@ class CooccurrenceTest(unittest.TestCase):
                                              3333: 0.4},
                               ('B', 'C'): {2222: 0}}, document_scores)
 
-    def test_weighted_counts_sentences_only(self):
+    def test_weighted_counts_sentences(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
-        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None,
+        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None, None, None,
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=0,
                                                                   sentence_weight=1.0)
@@ -54,7 +54,7 @@ class CooccurrenceTest(unittest.TestCase):
         document_weight = 15.0
         paragraph_weight = 0
         weighting_exponent = 0.6
-        counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None,
+        counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None, None, None,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -78,7 +78,7 @@ class CooccurrenceTest(unittest.TestCase):
 
     def test_weighted_counts_sentences_only_diseases(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
-        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None,
+        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None, None, None,
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=0,
                                                                   sentence_weight=1.0,
@@ -96,7 +96,7 @@ class CooccurrenceTest(unittest.TestCase):
         document_weight = 15.0
         paragraph_weight = 0
         weighting_exponent = 0.6
-        counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None,
+        counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None, None, None,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -122,7 +122,7 @@ class CooccurrenceTest(unittest.TestCase):
 
     def test_weighted_counts_matches_file(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
-        weighted_counts = co_occurrence_score.get_weighted_counts(self.matches_file_path, sentence_scores,
+        weighted_counts = co_occurrence_score.get_weighted_counts(self.matches_file_path, sentence_scores, None, None,
                                                                   self.entity_file_path,
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=0,
@@ -141,13 +141,14 @@ class CooccurrenceTest(unittest.TestCase):
         document_weight = 15.0
         paragraph_weight = 0
         weighting_exponent = 0.6
-        counts = co_occurrence_score.get_weighted_counts(self.matches_file_path, sentence_scores,
+        counts = co_occurrence_score.get_weighted_counts(self.matches_file_path, sentence_scores, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_path, self.sentence_score_file_path, None, None,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_path, self.sentence_score_file_path,
+                                                         None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -170,13 +171,14 @@ class CooccurrenceTest(unittest.TestCase):
         document_weight = 15.0
         paragraph_weight = 0
         weighting_exponent = 0.6
-        counts = co_occurrence_score.get_weighted_counts(self.matches_file_same_type_path, sentence_scores,
+        counts = co_occurrence_score.get_weighted_counts(self.matches_file_same_type_path, sentence_scores, None, None,
                                                          self.entity_file_same_type_path,
                                                          first_type=2, second_type=2,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_same_type_path, self.sentence_score_file_path,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_same_type_path,
+                                                         self.sentence_score_file_path,
                                                          None, None,
                                                          self.entity_file_same_type_path,
                                                          first_type=2, second_type=2,
@@ -201,7 +203,8 @@ class CooccurrenceTest(unittest.TestCase):
         paragraph_weight = 0
         sentence_weight = 1.0
         weighting_exponent = 0.6
-        counts = co_occurrence_score.get_weighted_counts(self.matches_file_path, sentence_scores, self.entity_file_path,
+        counts = co_occurrence_score.get_weighted_counts(self.matches_file_path, sentence_scores, None, None,
+                                                         self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -227,7 +230,7 @@ class CooccurrenceTest(unittest.TestCase):
     def test_weighted_counts_matches_document_level_comentions_file(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
         weighted_counts = co_occurrence_score.get_weighted_counts(self.matches_document_level_comentions_file_path,
-                                                                  sentence_scores,
+                                                                  sentence_scores, None, None,
                                                                   self.entity_file_path,
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=0,
@@ -247,7 +250,7 @@ class CooccurrenceTest(unittest.TestCase):
         paragraph_weight = 0
         weighting_exponent = 0.6
         counts = co_occurrence_score.get_weighted_counts(self.matches_document_level_comentions_file_path,
-                                                         sentence_scores,
+                                                         sentence_scores, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -279,7 +282,7 @@ class CooccurrenceTest(unittest.TestCase):
         weighting_exponent = 0.6
         sentence_weight = 1.0
         counts = co_occurrence_score.get_weighted_counts(self.matches_document_level_comentions_file_path,
-                                                         sentence_scores, self.entity_file_path,
+                                                         sentence_scores, None, None, self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -305,7 +308,7 @@ class CooccurrenceTest(unittest.TestCase):
     def test_weighted_counts_matches_single_matches_file(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
         weighted_counts = co_occurrence_score.get_weighted_counts(self.matches_file_single_matches_path,
-                                                                  sentence_scores,
+                                                                  sentence_scores, None, None,
                                                                   self.entity_file_path,
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=0,
@@ -325,7 +328,7 @@ class CooccurrenceTest(unittest.TestCase):
         paragraph_weight = 0
         weighting_exponent = 0.6
         counts = co_occurrence_score.get_weighted_counts(self.matches_file_single_matches_path,
-                                                         sentence_scores,
+                                                         sentence_scores, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -358,7 +361,7 @@ class CooccurrenceTest(unittest.TestCase):
         sentence_weight = 1.0
 
         counts = co_occurrence_score.get_weighted_counts(self.matches_file_single_matches_path,
-                                                         sentence_scores, self.entity_file_path,
+                                                         sentence_scores, None, None, self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -384,6 +387,7 @@ class CooccurrenceTest(unittest.TestCase):
     def test_weighted_counts_matches_file_cross(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
         weighted_counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_path, sentence_scores,
+                                                                  None, None,
                                                                   self.entity_file_path,
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=0,
@@ -404,13 +408,14 @@ class CooccurrenceTest(unittest.TestCase):
         document_weight = 15.0
         paragraph_weight = 0
         weighting_exponent = 0.6
-        counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_path, sentence_scores,
+        counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_path, sentence_scores, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.sentence_score_file_path, None, None,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.sentence_score_file_path,
+                                                         None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -437,12 +442,14 @@ class CooccurrenceTest(unittest.TestCase):
         paragraph_weight = 0
         weighting_exponent = 0.6
         counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_path, sentence_scores,
+                                                         None, None,
                                                          self.entity_file_path,
                                                          first_type=-26, second_type=9606,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.sentence_score_file_path, None, None,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.sentence_score_file_path,
+                                                         None, None,
                                                          self.entity_file_path,
                                                          first_type=-26, second_type=9606,
                                                          document_weight=document_weight,
@@ -469,6 +476,7 @@ class CooccurrenceTest(unittest.TestCase):
         paragraph_weight = 0
         weighting_exponent = 0.6
         counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_fantasy_types_path, sentence_scores,
+                                                         None, None,
                                                          self.entity_fantasy_types_file_path,
                                                          first_type=1, second_type=2,
                                                          document_weight=document_weight,
@@ -503,6 +511,7 @@ class CooccurrenceTest(unittest.TestCase):
         weighting_exponent = 0.6
         sentence_weight = 1.0
         counts = co_occurrence_score.get_weighted_counts(self.matches_file_cross_path, sentence_scores,
+                                                         None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,

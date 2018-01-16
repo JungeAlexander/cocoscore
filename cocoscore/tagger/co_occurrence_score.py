@@ -93,7 +93,8 @@ def get_max_sentence_score(scores, sentence_co_mentions, pmid, entity_1, entity_
     return max(sentence_scores)
 
 
-def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first_type, second_type,
+def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, document_scores,
+                        entities_file, first_type, second_type,
                         document_weight, paragraph_weight, sentence_weight,
                         ignore_scores=False, silent=False):
     pair_scores = collections.defaultdict(float)
@@ -177,11 +178,14 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
     :return: a dictionary mapping entity pairs to their co-occurrence scores
     """
     if sentence_score_file_path is None:
-        scores = None
+        sentence_scores = None
     else:
-        scores = load_sentence_score_file(sentence_score_file_path)
+        sentence_scores = load_sentence_score_file(sentence_score_file_path)
+    paragraph_scores = None
+    document_scores = None
     co_occurrence_scores = {}
-    weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=scores,
+    weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=sentence_scores,
+                                          paragraph_scores=paragraph_scores, document_scores=document_scores,
                                           entities_file=entities_file, first_type=first_type, second_type=second_type,
                                           document_weight=document_weight, paragraph_weight=paragraph_weight,
                                           sentence_weight=sentence_weight,
