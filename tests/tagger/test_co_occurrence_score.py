@@ -31,9 +31,9 @@ class CooccurrenceTest(unittest.TestCase):
 
     def test_load_document_scores(self):
         document_scores = co_occurrence_score.load_document_score_file(self.document_score_file_path)
-        self.assertDictEqual({('--D', 'A'): {1111: 0.9,
-                                             3333: 0.4},
-                              ('B', 'C'): {2222: 0}}, document_scores)
+        self.assertDictEqual({('--D', 'A'): {1111: 1,
+                                             3333: 2},
+                              ('B', 'C'): {2222: 3}}, document_scores)
 
     def test_weighted_counts_sentences(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
@@ -48,6 +48,38 @@ class CooccurrenceTest(unittest.TestCase):
                               'B': 15,
                               'C': 15,
                               None: 15.9 + 15.44 + 15}, weighted_counts)
+
+    def test_weighted_counts_sentences_paragraphs(self):
+        sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
+        paragraph_scores = co_occurrence_score.load_paragraph_score_file(self.paragraph_score_file_path)
+        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, paragraph_scores, None, None,
+                                                                  first_type=9606, second_type=-26,
+                                                                  document_weight=15.0, paragraph_weight=0,
+                                                                  sentence_weight=1.0)
+        self.assertDictEqual({('--D', 'A'): 15.9 + 0.9 + 15.44 + 0.4,
+                              ('B', 'C'): 15,
+                              'A': 15.9 + 0.9 + 15.44 + 0.4,
+                              '--D': 15.9 + 0.9 + 15.44 + 0.4,
+                              'B': 15,
+                              'C': 15,
+                              None: 15.9 + 0.9 + 15.44 + 0.4 + 15}, weighted_counts)
+
+    def test_weighted_counts_sentences_paragraphs_documents(self):
+        sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
+        paragraph_scores = co_occurrence_score.load_paragraph_score_file(self.paragraph_score_file_path)
+        document_scores = co_occurrence_score.load_document_score_file(self.document_score_file_path)
+        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, paragraph_scores,
+                                                                  document_scores, None,
+                                                                  first_type=9606, second_type=-26,
+                                                                  document_weight=15.0, paragraph_weight=0,
+                                                                  sentence_weight=1.0)
+        self.assertDictEqual({('--D', 'A'): 0.9 + 0.9 + 1 + 0.44 + 0.4 + 2,
+                              ('B', 'C'): 3,
+                              'A': 0.9 + 0.9 + 1 + 0.44 + 0.4 + 2,
+                              '--D': 0.9 + 0.9 + 1 + 0.44 + 0.4 + 2,
+                              'B': 3,
+                              'C': 3,
+                              None: 0.9 + 0.9 + 1 + 0.44 + 0.4 + 2 + 3}, weighted_counts)
 
     def test_co_occurrence_score_sentences_only(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
