@@ -97,8 +97,10 @@ import os
 scored_dataset_path = 'demo_scored.tsv'
 scores_path = 'co_occurrence_scores.tsv'
 
+# only the first mandatory argument score_file_path of co_occurrence_score() matters here
 cocoscores = cos.co_occurrence_score(score_file_path=scored_dataset_path,
-                                      matches_file_path=None, entities_file=None)
+                                     first_type=9606, second_type=-26,
+                                     matches_file_path=None, entities_file=None)
 with open(scores_path, 'wt') as fout:
     for pair, score in sorted(cocoscores.items(), key=lambda x: x[0]):
         fout.write('\t'.join(pair) + '\t' + str(score) + os.linesep)
