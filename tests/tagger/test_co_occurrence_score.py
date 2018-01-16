@@ -81,12 +81,69 @@ class CooccurrenceTest(unittest.TestCase):
                               'C': 3,
                               None: 0.9 + 0.9 + 1 + 0.44 + 0.4 + 2 + 3}, weighted_counts)
 
-    def test_co_occurrence_score_sentences_only(self):
+    def test_co_occurrence_score_sentences(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
         document_weight = 15.0
         paragraph_weight = 0
         weighting_exponent = 0.6
         counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, None, None, None,
+                                                         first_type=9606, second_type=-26,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         sentence_weight=1.0)
+        scores = co_occurrence_score.co_occurrence_score(None, self.sentence_score_file_path, None, None, None,
+                                                         first_type=9606, second_type=-26,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         weighting_exponent=weighting_exponent)
+        c_a_d = counts[('--D', 'A')]
+        c_a = counts['A']
+        c_d = counts['--D']
+        c_all = counts[None]
+        s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
+        c_b_c = counts[('B', 'C')]
+        c_b = counts['B']
+        c_c = counts['C']
+        s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
+        self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
+
+    def test_co_occurrence_score_sentences_paragraphs(self):
+        sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
+        paragraph_scores = co_occurrence_score.load_paragraph_score_file(self.paragraph_score_file_path)
+        document_weight = 15.0
+        paragraph_weight = 0
+        weighting_exponent = 0.6
+        counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, paragraph_scores, None, None,
+                                                         first_type=9606, second_type=-26,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         sentence_weight=1.0)
+        scores = co_occurrence_score.co_occurrence_score(None, self.sentence_score_file_path, None, None, None,
+                                                         first_type=9606, second_type=-26,
+                                                         document_weight=document_weight,
+                                                         paragraph_weight=paragraph_weight,
+                                                         weighting_exponent=weighting_exponent)
+        c_a_d = counts[('--D', 'A')]
+        c_a = counts['A']
+        c_d = counts['--D']
+        c_all = counts[None]
+        s_a_d = c_a_d ** weighting_exponent * ((c_a_d * c_all) / (c_a * c_d)) ** (1 - weighting_exponent)
+        c_b_c = counts[('B', 'C')]
+        c_b = counts['B']
+        c_c = counts['C']
+        s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
+        self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
+        self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
+
+    def test_co_occurrence_score_sentences_documents(self):
+        sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
+        paragraph_scores = co_occurrence_score.load_paragraph_score_file(self.paragraph_score_file_path)
+        document_scores = co_occurrence_score.load_document_score_file(self.document_score_file_path)
+        document_weight = 15.0
+        paragraph_weight = 0
+        weighting_exponent = 0.6
+        counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, paragraph_scores, document_scores, None,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
