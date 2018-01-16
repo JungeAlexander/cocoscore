@@ -86,11 +86,32 @@ def get_max_sentence_score(scores, sentence_co_mentions, pmid, entity_1, entity_
     for paragraph, sentence in sentence_co_mentions:
         key = (pmid, paragraph, sentence)
         if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
-            sentence_scores.append(scores[(entity_1, entity_2)][(pmid, paragraph, sentence)])
+            sentence_scores.append(scores[(entity_1, entity_2)][key])
         else:
             # TODO return 0.5 and print message to debug logging if no sentence scores found?
             pass
     return max(sentence_scores)
+
+
+def get_max_paragraph_score(scores, paragraph_co_mentions, pmid, entity_1, entity_2):
+    paragraph_scores = [0.0]
+    for paragraph in paragraph_co_mentions:
+        key = (pmid, paragraph)
+        if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
+            paragraph_scores.append(scores[(entity_1, entity_2)][key])
+        else:
+            # TODO return 0.5 and print message to debug logging if no paragraph scores found?
+            pass
+    return max(paragraph_scores)
+
+
+def get_document_score(scores, pmid, entity_1, entity_2):
+    key = pmid
+    if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
+        return scores[(entity_1, entity_2)][key]
+    else:
+        # TODO return 0.5 and print message to debug logging if no document scores found?
+        pass
 
 
 def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, document_scores,
@@ -115,12 +136,19 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                 else:
                     sentence_score = 0
 
-            if len(paragraph_co_mentions) > 0:
-                paragraph_score = 1
+            if isinstance(paragraph_scores, dict) and not ignore_scores:
+                paragraph_score = get_max_paragraph_score(paragraph_scores, paragraph_co_mentions, pmid, entity_1,
+                                                         entity_2)
             else:
-                paragraph_score = 0
+                if len(paragraph_co_mentions) > 0:
+                    paragraph_score = 1
+                else:
+                    paragraph_score = 0
 
-            document_score = 1
+            if isinstance(document_scores, dict) and not ignore_scores:
+                document_score = get_document_score(document_scores, pmid, entity_1, entity_2)
+            else:
+                document_score = 1
 
             pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight +\
                 document_score * document_weight
@@ -146,11 +174,31 @@ def load_sentence_score_file(score_file_path):
 
 
 def load_paragraph_score_file(score_file_path):
-    pass
+    compression = score_file_path.endswith('.gz')
+    score_file = get_file_handle(score_file_path, compression)
+    score_dict = collections.defaultdict(dict)
+    try:
+        for line in score_file:
+            pmid, paragraph, entity_1, entity_2, score = line.rstrip().split('\t')
+            entity_key = tuple(sorted((entity_1, entity_2)))
+            score_dict[entity_key][(int(pmid), int(paragraph))] = float(score)
+    finally:
+        score_file.close()
+    return dict(score_dict)
 
 
 def load_document_score_file(score_file_path):
-    pass
+    compression = score_file_path.endswith('.gz')
+    score_file = get_file_handle(score_file_path, compression)
+    score_dict = collections.defaultdict(dict)
+    try:
+        for line in score_file:
+            pmid, entity_1, entity_2, score = line.rstrip().split('\t')
+            entity_key = tuple(sorted((entity_1, entity_2)))
+            score_dict[entity_key][int(pmid)] = float(score)
+    finally:
+        score_file.close()
+    return dict(score_dict)
 
 
 def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_score_file_path,
@@ -166,6 +214,10 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
     If this is None, co-occurrences are extracted from score_file_path.
     :param sentence_score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number,
     sentence number, first entity, second entity, sentence score
+    :param paragraph_score_file_path: paragraph score file (tsv formatted) with five columns: pmid, paragraph number,
+    first entity, second entity, sentence score
+    :param document_score_file_path: sentence score file (tsv formatted) with five columns: pmid, first entity,
+    second entity, sentence score
     :param entities_file: entities file as used by tagger
     :param first_type: int, type of the first entity class to be scored
     :param second_type: int, type of the second entity class to be scored
@@ -181,8 +233,14 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
         sentence_scores = None
     else:
         sentence_scores = load_sentence_score_file(sentence_score_file_path)
-    paragraph_scores = None
-    document_scores = None
+    if paragraph_score_file_path is None:
+        paragraph_scores = None
+    else:
+        paragraph_scores = load_paragraph_score_file(paragraph_score_file_path)
+    if document_score_file_path is None:
+        document_scores = None
+    else:
+        document_scores = load_document_score_file(document_score_file_path)
     co_occurrence_scores = {}
     weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=sentence_scores,
                                           paragraph_scores=paragraph_scores, document_scores=document_scores,
