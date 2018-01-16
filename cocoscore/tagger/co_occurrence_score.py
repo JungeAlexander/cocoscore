@@ -86,14 +86,36 @@ def get_max_sentence_score(scores, sentence_co_mentions, pmid, entity_1, entity_
     for paragraph, sentence in sentence_co_mentions:
         key = (pmid, paragraph, sentence)
         if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
-            sentence_scores.append(scores[(entity_1, entity_2)][(pmid, paragraph, sentence)])
+            sentence_scores.append(scores[(entity_1, entity_2)][key])
         else:
             # TODO return 0.5 and print message to debug logging if no sentence scores found?
             pass
     return max(sentence_scores)
 
 
-def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first_type, second_type,
+def get_max_paragraph_score(scores, paragraph_co_mentions, pmid, entity_1, entity_2):
+    paragraph_scores = [0.0]
+    for paragraph in paragraph_co_mentions:
+        key = (pmid, paragraph)
+        if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
+            paragraph_scores.append(scores[(entity_1, entity_2)][key])
+        else:
+            # TODO return 0.5 and print message to debug logging if no paragraph scores found?
+            pass
+    return max(paragraph_scores)
+
+
+def get_document_score(scores, pmid, entity_1, entity_2):
+    key = pmid
+    if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
+        return scores[(entity_1, entity_2)][key]
+    else:
+        # TODO return 0.5 and print message to debug logging if no document scores found?
+        pass
+
+
+def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, document_scores,
+                        entities_file, first_type, second_type,
                         document_weight, paragraph_weight, sentence_weight,
                         ignore_scores=False, silent=False):
     pair_scores = collections.defaultdict(float)
@@ -114,12 +136,19 @@ def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first
                 else:
                     sentence_score = 0
 
-            if len(paragraph_co_mentions) > 0:
-                paragraph_score = 1
+            if isinstance(paragraph_scores, dict) and not ignore_scores:
+                paragraph_score = get_max_paragraph_score(paragraph_scores, paragraph_co_mentions, pmid, entity_1,
+                                                         entity_2)
             else:
-                paragraph_score = 0
+                if len(paragraph_co_mentions) > 0:
+                    paragraph_score = 1
+                else:
+                    paragraph_score = 0
 
-            document_score = 1
+            if isinstance(document_scores, dict) and not ignore_scores:
+                document_score = get_document_score(document_scores, pmid, entity_1, entity_2)
+            else:
+                document_score = 1
 
             pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight +\
                 document_score * document_weight
@@ -130,7 +159,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, entities_file, first
     return dict(pair_scores)
 
 
-def load_score_file(score_file_path):
+def load_sentence_score_file(score_file_path):
     compression = score_file_path.endswith('.gz')
     score_file = get_file_handle(score_file_path, compression)
     score_dict = collections.defaultdict(dict)
@@ -144,7 +173,37 @@ def load_score_file(score_file_path):
     return dict(score_dict)
 
 
-def co_occurrence_score(matches_file_path, score_file_path, entities_file, first_type, second_type,
+def load_paragraph_score_file(score_file_path):
+    compression = score_file_path.endswith('.gz')
+    score_file = get_file_handle(score_file_path, compression)
+    score_dict = collections.defaultdict(dict)
+    try:
+        for line in score_file:
+            pmid, paragraph, entity_1, entity_2, score = line.rstrip().split('\t')
+            entity_key = tuple(sorted((entity_1, entity_2)))
+            score_dict[entity_key][(int(pmid), int(paragraph))] = float(score)
+    finally:
+        score_file.close()
+    return dict(score_dict)
+
+
+def load_document_score_file(score_file_path):
+    compression = score_file_path.endswith('.gz')
+    score_file = get_file_handle(score_file_path, compression)
+    score_dict = collections.defaultdict(dict)
+    try:
+        for line in score_file:
+            pmid, entity_1, entity_2, score = line.rstrip().split('\t')
+            entity_key = tuple(sorted((entity_1, entity_2)))
+            score_dict[entity_key][int(pmid)] = float(score)
+    finally:
+        score_file.close()
+    return dict(score_dict)
+
+
+def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_score_file_path,
+                        document_score_file_path,
+                        entities_file, first_type, second_type,
                         document_weight=15.0, paragraph_weight=0.0,
                         sentence_weight=1.0, weighting_exponent=0.6, ignore_scores=False, silent=False):
     """
@@ -153,8 +212,12 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, first
 
     :param matches_file_path: matches file as produced by tagger. Used to define co-occurring terms.
     If this is None, co-occurrences are extracted from score_file_path.
-    :param score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number, sentence
-    number, first entity, second entity, sentence score
+    :param sentence_score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number,
+    sentence number, first entity, second entity, sentence score
+    :param paragraph_score_file_path: paragraph score file (tsv formatted) with five columns: pmid, paragraph number,
+    first entity, second entity, sentence score
+    :param document_score_file_path: sentence score file (tsv formatted) with five columns: pmid, first entity,
+    second entity, sentence score
     :param entities_file: entities file as used by tagger
     :param first_type: int, type of the first entity class to be scored
     :param second_type: int, type of the second entity class to be scored
@@ -166,12 +229,21 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, first
     :param silent: If True, no progress updates are printed
     :return: a dictionary mapping entity pairs to their co-occurrence scores
     """
-    if score_file_path is None:
-        scores = None
+    if sentence_score_file_path is None:
+        sentence_scores = None
     else:
-        scores = load_score_file(score_file_path)
+        sentence_scores = load_sentence_score_file(sentence_score_file_path)
+    if paragraph_score_file_path is None:
+        paragraph_scores = None
+    else:
+        paragraph_scores = load_paragraph_score_file(paragraph_score_file_path)
+    if document_score_file_path is None:
+        document_scores = None
+    else:
+        document_scores = load_document_score_file(document_score_file_path)
     co_occurrence_scores = {}
-    weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=scores,
+    weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=sentence_scores,
+                                          paragraph_scores=paragraph_scores, document_scores=document_scores,
                                           entities_file=entities_file, first_type=first_type, second_type=second_type,
                                           document_weight=document_weight, paragraph_weight=paragraph_weight,
                                           sentence_weight=sentence_weight,
@@ -192,7 +264,9 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
                                  sentence_weight=0.2,
                                  weighting_exponent=0.6,
                                  silent=False):
-    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None, entities_file=entities_file,
+    return co_occurrence_score(matches_file_path=matches_file_path, sentence_score_file_path=None,
+                               paragraph_score_file_path=None, document_score_file_path=None,
+                               entities_file=entities_file,
                                first_type=9606, second_type=-26,
                                document_weight=document_weight,
                                paragraph_weight=paragraph_weight,
@@ -202,7 +276,8 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
 
 def co_occurrence_score_string(matches_file_path, entities_file, entity_type, document_weight=1.0, paragraph_weight=2.0,
                                sentence_weight=0.2, weighting_exponent=0.6, silent=False):
-    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None,
+    return co_occurrence_score(matches_file_path=matches_file_path, sentence_score_file_path=None,
+                               paragraph_score_file_path=None, document_score_file_path=None,
                                entities_file=entities_file,
                                first_type=entity_type, second_type=entity_type,
                                document_weight=document_weight, paragraph_weight=paragraph_weight,
