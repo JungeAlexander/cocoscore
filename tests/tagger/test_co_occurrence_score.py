@@ -45,7 +45,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(None, self.score_file_path, None,
+        scores = co_occurrence_score.co_occurrence_score(None, self.score_file_path, None, None, None,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -88,7 +88,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0,
                                                          ignore_scores=True)
-        scores = co_occurrence_score.co_occurrence_score(None, self.score_file_path, None,
+        scores = co_occurrence_score.co_occurrence_score(None, self.score_file_path, None, None, None,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
@@ -133,7 +133,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_path, self.score_file_path,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_path, self.score_file_path, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -163,6 +163,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
         scores = co_occurrence_score.co_occurrence_score(self.matches_file_same_type_path, self.score_file_path,
+                                                         None, None,
                                                          self.entity_file_same_type_path,
                                                          first_type=2, second_type=2,
                                                          document_weight=document_weight,
@@ -239,7 +240,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
         scores = co_occurrence_score.co_occurrence_score(self.matches_document_level_comentions_file_path,
-                                                         self.score_file_path,
+                                                         self.score_file_path, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -317,7 +318,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
         scores = co_occurrence_score.co_occurrence_score(self.matches_file_single_matches_path,
-                                                         self.score_file_path,
+                                                         self.score_file_path, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -395,7 +396,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.score_file_path,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.score_file_path, None, None,
                                                          self.entity_file_path,
                                                          first_type=9606, second_type=-26,
                                                          document_weight=document_weight,
@@ -427,7 +428,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          document_weight=document_weight,
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
-        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.score_file_path,
+        scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_path, self.score_file_path, None, None,
                                                          self.entity_file_path,
                                                          first_type=-26, second_type=9606,
                                                          document_weight=document_weight,
@@ -460,7 +461,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                          paragraph_weight=paragraph_weight,
                                                          sentence_weight=1.0)
         scores = co_occurrence_score.co_occurrence_score(self.matches_file_cross_fantasy_types_path,
-                                                         self.score_file_path,
+                                                         self.score_file_path, None, None,
                                                          self.entity_fantasy_types_file_path,
                                                          first_type=1, second_type=2,
                                                          document_weight=document_weight,

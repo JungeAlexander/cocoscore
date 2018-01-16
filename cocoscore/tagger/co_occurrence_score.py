@@ -144,7 +144,9 @@ def load_score_file(score_file_path):
     return dict(score_dict)
 
 
-def co_occurrence_score(matches_file_path, score_file_path, entities_file, first_type, second_type,
+def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_score_file_path,
+                        document_score_file_path,
+                        entities_file, first_type, second_type,
                         document_weight=15.0, paragraph_weight=0.0,
                         sentence_weight=1.0, weighting_exponent=0.6, ignore_scores=False, silent=False):
     """
@@ -153,8 +155,8 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, first
 
     :param matches_file_path: matches file as produced by tagger. Used to define co-occurring terms.
     If this is None, co-occurrences are extracted from score_file_path.
-    :param score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number, sentence
-    number, first entity, second entity, sentence score
+    :param sentence_score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number,
+    sentence number, first entity, second entity, sentence score
     :param entities_file: entities file as used by tagger
     :param first_type: int, type of the first entity class to be scored
     :param second_type: int, type of the second entity class to be scored
@@ -166,10 +168,10 @@ def co_occurrence_score(matches_file_path, score_file_path, entities_file, first
     :param silent: If True, no progress updates are printed
     :return: a dictionary mapping entity pairs to their co-occurrence scores
     """
-    if score_file_path is None:
+    if sentence_score_file_path is None:
         scores = None
     else:
-        scores = load_score_file(score_file_path)
+        scores = load_score_file(sentence_score_file_path)
     co_occurrence_scores = {}
     weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=scores,
                                           entities_file=entities_file, first_type=first_type, second_type=second_type,
@@ -192,7 +194,9 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
                                  sentence_weight=0.2,
                                  weighting_exponent=0.6,
                                  silent=False):
-    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None, entities_file=entities_file,
+    return co_occurrence_score(matches_file_path=matches_file_path, sentence_score_file_path=None,
+                               paragraph_score_file_path=None, document_score_file_path=None,
+                               entities_file=entities_file,
                                first_type=9606, second_type=-26,
                                document_weight=document_weight,
                                paragraph_weight=paragraph_weight,
@@ -202,7 +206,8 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
 
 def co_occurrence_score_string(matches_file_path, entities_file, entity_type, document_weight=1.0, paragraph_weight=2.0,
                                sentence_weight=0.2, weighting_exponent=0.6, silent=False):
-    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None,
+    return co_occurrence_score(matches_file_path=matches_file_path, sentence_score_file_path=None,
+                               paragraph_score_file_path=None, document_score_file_path=None,
                                entities_file=entities_file,
                                first_type=entity_type, second_type=entity_type,
                                document_weight=document_weight, paragraph_weight=paragraph_weight,
