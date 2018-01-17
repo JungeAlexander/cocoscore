@@ -68,7 +68,7 @@ def load_matches_file(matches_file_path, entities_file, first_type, second_type)
         matches_file.close()
 
 
-def load_score_file_iterator(score_dict):
+def load_sentence_score_iterator(score_dict):
     for entity_pair, pmid_paragraph_sentence_dict in score_dict.items():
         entity_1, entity_2 = entity_pair
         pmid_to_paragraphs = collections.defaultdict(set)
@@ -79,6 +79,24 @@ def load_score_file_iterator(score_dict):
             pmid_to_paragraphs[pmid].add(paragraph)
         for pmid in pmid_to_sentences:
             yield pmid, entity_1, entity_2, pmid_to_sentences[pmid], pmid_to_paragraphs[pmid]
+
+
+def load_paragraph_score_iterator(score_dict):
+    for entity_pair, pmid_paragraph_dict in score_dict.items():
+        entity_1, entity_2 = entity_pair
+        pmid_to_paragraphs = collections.defaultdict(set)
+        for pmid_paragraph, _ in pmid_paragraph_dict.items():
+            pmid, paragraph = pmid_paragraph
+            pmid_to_paragraphs[pmid].add(paragraph)
+        for pmid in pmid_to_paragraphs:
+            yield pmid, entity_1, entity_2, {}, pmid_to_paragraphs[pmid]
+
+
+def load_document_score_iterator(score_dict):
+    for entity_pair, pmid_dict in score_dict.items():
+        entity_1, entity_2 = entity_pair
+        for pmid in pmid_dict.keys():
+            yield pmid, entity_1, entity_2, {}, {}
 
 
 def get_max_sentence_score(scores, sentence_co_mentions, pmid, entity_1, entity_2):
@@ -110,7 +128,7 @@ def get_document_score(scores, pmid, entity_1, entity_2):
     if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
         return scores[(entity_1, entity_2)][key]
     else:
-        # TODO return 0.5 and print message to debug logging if no document scores found?
+        # TODO return 0.5 and print message to debug logging if no document scores found? 
         pass
 
 
@@ -122,7 +140,13 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
     if matches_file_path is not None:
         matches_iter = load_matches_file(matches_file_path, entities_file, first_type, second_type)
     else:
-        matches_iter = [load_score_file_iterator(sentence_scores)]
+        if sentence_scores is not None:
+            my_iterator = load_sentence_score_iterator(sentence_scores)
+        elif paragraph_scores is not None:
+            my_iterator = load_paragraph_score_iterator(paragraph_scores)
+        else:
+            my_iterator = load_document_score_iterator(document_scores)
+        matches_iter = [my_iterator]
     for i, document_matches in enumerate(matches_iter):
         if i > 0 and i % 100000 == 0 and not silent:
             print('Document', i)
@@ -138,7 +162,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
 
             if isinstance(paragraph_scores, dict) and not ignore_scores:
                 paragraph_score = get_max_paragraph_score(paragraph_scores, paragraph_co_mentions, pmid, entity_1,
-                                                         entity_2)
+                                                          entity_2)
             else:
                 if len(paragraph_co_mentions) > 0:
                     paragraph_score = 1
