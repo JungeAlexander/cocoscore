@@ -128,7 +128,7 @@ def get_document_score(scores, pmid, entity_1, entity_2):
     if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
         return scores[(entity_1, entity_2)][key]
     else:
-        # TODO return 0.5 and print message to debug logging if no document scores found?
+        # TODO return 0.5 and print message to debug logging if no document scores found? 
         pass
 
 
