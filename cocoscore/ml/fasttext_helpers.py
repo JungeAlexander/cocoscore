@@ -176,8 +176,8 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
     for cv_iter, train_test_indices in enumerate(cv_sets):
         train_indices, test_indices = train_test_indices
 
-        train_df = cv_data_df.iloc[train_indices, :].loc[:, ['class', 'sentence_text']]
-        test_df = cv_data_df.iloc[test_indices, :].loc[:, ['class', 'sentence_text']]
+        train_df = cv_data_df.iloc[train_indices, :].loc[:, ['class', 'text']]
+        test_df = cv_data_df.iloc[test_indices, :].loc[:, ['class', 'text']]
 
         # manual printing to file as to_csv complains about space as separator and spaces within sentences
         train_path = 'cv_train_' + str(cv_iter) + '.txt'

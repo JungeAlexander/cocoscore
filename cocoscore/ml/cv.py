@@ -174,9 +174,9 @@ def _remove_missing_data_points(matrix_loaded, dataset):
 #                 train_df = dataset.iloc[train_indices, :]
 #                 test_df = dataset.iloc[test_indices, :]
 #
-#                 vectorizer.fit(train_df['sentence_text'])
-#                 train_mat = vectorizer.transform(train_df['sentence_text'])
-#                 test_mat = vectorizer.transform(test_df['sentence_text'])
+#                 vectorizer.fit(train_df['text'])
+#                 train_mat = vectorizer.transform(train_df['text'])
+#                 test_mat = vectorizer.transform(test_df['text'])
 #
 #                 # FIXME converting sparse document-term matrix to dense is wasteful in terms of memory but
 #                 #       not doing this conversion leads to errors with unknown feature names in xgb.train() below
@@ -268,7 +268,7 @@ def _pivot_group(current_group):
 #             text_clf = Pipeline([('vectorizer', vectorizer),  # ('tfidf', TfidfTransformer()),
 #                                  ('classifier', clf)])
 #             text_grid = GridSearchCV(text_clf, param_grid, scoring=scoring, n_jobs=n_jobs, iid=iid, cv=cv_sets)
-#             _ = text_grid.fit(dataset['sentence_text'], dataset['class'])
+#             _ = text_grid.fit(dataset['text'], dataset['class'])
 #         elif features == 'word_vectors':
 #             text_grid = GridSearchCV(clf, param_grid, scoring=scoring, n_jobs=n_jobs, iid=iid, cv=cv_sets)
 #             _ = text_grid.fit(matrix_non_missing, dataset['class'])

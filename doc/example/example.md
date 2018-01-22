@@ -187,7 +187,7 @@ cv_iterations = 5  # try out 5 randomly selected hyperparameters settings in cro
 ft_threads = 1  # the number of threads to use by fastText
 
 data_df = dt.load_data_frame(data_path, sort_reindex=True)
-data_df['sentence_text'] = data_df['sentence_text'].apply(lambda s: s.strip().lower())
+data_df['text'] = data_df['text'].apply(lambda s: s.strip().lower())
 
 def cv_function(input_df, params, random_state):
     return fth.fasttext_cv_independent_associations(input_df, params,

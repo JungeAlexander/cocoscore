@@ -11,7 +11,7 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     :param match_distance: if True, the distance between the closest match is assumed to be present as the last column
     :return: a pandas DataFrame loaded from the given path
     """
-    column_names = ['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'sentence_text']
+    column_names = ['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'text']
     if class_labels:
         column_names.append('class')
     if match_distance:

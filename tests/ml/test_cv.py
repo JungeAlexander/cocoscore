@@ -164,7 +164,7 @@ class CVTest(unittest.TestCase):
                                                             random_state=random_state)
 
         test_df = data_tools.load_data_frame(self.ft_cv_test_path)
-        test_df['sentence_text'] = test_df['sentence_text'].apply(lambda s: s.strip().lower())
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
         cv_results = cv.random_cv(test_df, cv_function, cv_iterations, {'-bucket': bucket, '-dim': dim},
                                   fth.get_hyperparameter_distributions(), 3)
         expected_col_names = [

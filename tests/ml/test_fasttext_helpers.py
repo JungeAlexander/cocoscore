@@ -93,7 +93,7 @@ class CVTest(unittest.TestCase):
         bucket = 1000
         cv_folds = 2
         test_df = dt.load_data_frame(self.cv_test_path)
-        test_df['sentence_text'] = test_df['sentence_text'].apply(lambda s: s.strip().lower())
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
         cv_results = fth.fasttext_cv_independent_associations(test_df, {'-bucket': bucket, '-dim': dim},
                                                               self.ft_path,
                                                               cv_folds=cv_folds, random_state=np.random.RandomState(3))
