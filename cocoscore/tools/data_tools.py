@@ -1,7 +1,8 @@
 import pandas as pd
 
 
-def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, match_distance=False):
+def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, match_distance=False,
+                    allow_missing_text=False):
     """
     Load a dataset as pandas DataFrame from a given path.
 
@@ -9,6 +10,7 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     :param sort_reindex: if True, the returned data frame will be sorted by PMID and reindex by 0, 1, 2, ...
     :param class_labels: if True, the class label is assumed to be present as the second-to-last column
     :param match_distance: if True, the distance between the closest match is assumed to be present as the last column
+    :param allow_missing_text: if True, missing text is replaced with empty strings
     :return: a pandas DataFrame loaded from the given path
     :raises ValueError if
     """
@@ -22,6 +24,8 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     if sort_reindex:
         data_df.sort_values('pmid', axis=0, inplace=True, kind='mergesort')
         data_df.reset_index(inplace=True, drop=True)
+    if allow_missing_text:
+        data_df['text'] = data_df['text'].fillna('')
     if data_df.isnull().sum().sum() != 0:
         raise ValueError(f'Encountered missing values while loading data from {data_frame_path}.')
     return data_df
