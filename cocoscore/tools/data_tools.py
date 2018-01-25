@@ -12,7 +12,7 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     :param match_distance: if True, the distance between the closest match is assumed to be present as the last column
     :param allow_missing_text: if True, missing text is replaced with empty strings
     :return: a pandas DataFrame loaded from the given path
-    :raises ValueError if
+    :raises ValueError if missing data is encountered
     """
     column_names = ['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'text']
     if class_labels:
