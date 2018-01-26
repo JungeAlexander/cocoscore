@@ -249,12 +249,16 @@ In this example, the knowledge base consists of two known disease-gene associati
 We furthermore have a set of unlabelled sentences co-mentioning diseases and genes:
 
 > Okihiro syndrome is caused by SALL4 mutations.
+> 
 > Potential role of SALL4 in the development of Okihiro syndrome.
+>
 > SALL4: a new marker for Parkinson's disease?
+>
 > PINK1 is not associated with Parkinson's disease.
+>
 > PINK1 is linked to Crohn's disease.
 
-In distance supervision, every sentence that co-mentions a disease-gene pair that is in our knowledge base
+In distant supervision, every sentence that co-mentions a disease-gene pair that is in our knowledge base
 is assumed to be a positive example.
 Every sentence where both disease and gene appear in the knowledge base but *not* their association is assumed to be
 a negative example.
@@ -271,6 +275,6 @@ This leaves us with the following labelled set of sentences:
 Note that distant supervision results in a *noisy labelling*.
 For instance, sentence four describes the absence of an association but is still marked as a positive example because
 the association Parkinson's disease-PINK1 appears in the knowledge base.
-Applying distance supervision will usually result in a noisy but a much larger dataset than we could label by hand.
+Applying distant supervision will usually result in a noisy but a much larger dataset than we could label by hand.
 In our experience, this excess of training data allows the distantly supervised model to pick up subtle differences
 between positive and negative examples, despite the noise in the labels.
