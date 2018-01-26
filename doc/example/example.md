@@ -107,7 +107,7 @@ with open(scores_path, 'wt') as fout:
         fout.write('\t'.join(pair) + '\t' + str(score) + os.linesep)
 ```
 
-## Advanced usage: Training and applying a custom scoring model
+## Advanced use case: Training and applying a custom scoring model to your own dataset
 
 We now describe how you can train your own fastText model to score sentence-level co-occurrences. This step is necessary if other co-mentions than disease-gene co-mentions are to be scored or if you prefer to the model on your own corpus.
 Please note that this section assumes a basic understanding of machine learning approaches such as the motivation behind training-test set splitting and cross-validation.
@@ -117,6 +117,8 @@ Please note that this section assumes a basic understanding of machine learning 
 When training a custom model, an additional column is needed in the dataset file that indicates whether the sentence is classified as positive or negative.
 These class labels are to be specified as 1 (for positives) or 0 (for negatives).
 For the purpose of this tutorial, we randomly assign each instance in `demo.tsv` to one of the classes and append the class labels to each line.
+In a real world setting, we assign these labels using [distant supervision](#appendix-distant-supervision) or
+you can use a manually labelled dataset, if available.
 This is achieved by executing the following in a terminal:
 
 ```bash
@@ -230,3 +232,45 @@ Note that in a real world setting the `cv_iterations` variable above should be g
 ### Computing co-occurrence scores
 
 To compute co-occurrence scores using your own model and hyperparameter settings, simply follow the steps outlined in the section 'Using a pre-trained scoring model' while replacing the pre-trained model `demo.ftz` with your own model `mymodel.ftz` when scoring sentences.
+
+## Appendix: distant supervision
+
+Distant supervision is an approach to label a large amount of data without manually inspecting each element
+in the dataset to assign a label.
+The approach is based on an curated *knowledge base* that contains known associations of interest.
+ 
+In this example, the knowledge base consists of two known disease-gene associations:
+
+| disease             | gene  |
+| ------------------- | ----- |
+| Okihiro syndrome    | SALL4 |
+| Parkinson's disease | PINK1 |
+
+We furthermore have a set of unlabelled sentences co-mentioning diseases and genes:
+
+> Okihiro syndrome is caused by SALL4 mutations.
+> Potential role of SALL4 in the development of Okihiro syndrome.
+> SALL4: a new marker for Parkinson's disease?
+> PINK1 is not associated with Parkinson's disease.
+> PINK1 is linked to Crohn's disease.
+
+In distance supervision, every sentence that co-mentions a disease-gene pair that is in our knowledge base
+is assumed to be a positive example.
+Every sentence where both disease and gene appear in the knowledge base but *not* their association is assumed to be
+a negative example.
+Sentences where either disease or gene do not appear in the knowledge base are removed from the dataset.
+This leaves us with the following labelled set of sentences:
+
+| sentence                                                        | label  |
+| --------------------------------------------------------------- | ------ |
+| Okihiro syndrome is caused by SALL4 mutations.                  | 1      |
+| Potential role of SALL4 in the development of Okihiro syndrome. | 1      |
+| SALL4: a new marker for Parkinson's disease?                    | 0      |
+| PINK1 is not associated with Parkinson's disease.               | 1      |
+
+Note that distant supervision results in a *noisy labelling*.
+For instance, sentence four describes the absence of an association but is still marked as a positive example because
+the association Parkinson's disease-PINK1 appears in the knowledge base.
+Applying distance supervision will usually result in a noisy but a much larger dataset than we could label by hand.
+In our experience, this excess of training data allows the distantly supervised model to pick up subtle differences
+between positive and negative examples, despite the noise in the labels.
