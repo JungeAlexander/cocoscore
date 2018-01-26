@@ -1,11 +1,11 @@
 import unittest
 
-import cocoscore.tagger.co_occurrence_score as co_occurrence_score
-
 import numpy
 
+import cocoscore.tagger.co_occurrence_score as co_occurrence_score
 
-def assertDeepAlmostEqual(test_case, expected, actual, *args, **kwargs):
+
+def assert_deep_almost_equal(test_case, expected, actual, *args, **kwargs):
     """
     See https://stackoverflow.com/questions/23549419/assert-that-two-dictionaries-are-almost-equal#23550280
     Assert that two complex structures have almost equal contents.
@@ -19,9 +19,11 @@ def assertDeepAlmostEqual(test_case, expected, actual, *args, **kwargs):
 
     :param test_case: TestCase object on which we can call all of the basic
     'assert' methods.
+    :param expected result
+    :param actual result
     :type test_case: :py:class:`unittest.TestCase` object
     """
-    is_root = not '__trace' in kwargs
+    # is_root = not '__trace' in kwargs
     trace = kwargs.pop('__trace', 'ROOT')
     try:
         if isinstance(expected, (int, float, complex)):
@@ -30,13 +32,13 @@ def assertDeepAlmostEqual(test_case, expected, actual, *args, **kwargs):
             test_case.assertEqual(len(expected), len(actual))
             for index in range(len(expected)):
                 v1, v2 = expected[index], actual[index]
-                assertDeepAlmostEqual(test_case, v1, v2,
-                                      __trace=repr(index), *args, **kwargs)
+                assert_deep_almost_equal(test_case, v1, v2,
+                                         __trace=repr(index), *args, **kwargs)
         elif isinstance(expected, dict):
             test_case.assertEqual(set(expected), set(actual))
             for key in expected:
-                assertDeepAlmostEqual(test_case, expected[key], actual[key],
-                                      __trace=repr(key), *args, **kwargs)
+                assert_deep_almost_equal(test_case, expected[key], actual[key],
+                                         __trace=repr(key), *args, **kwargs)
         else:
             test_case.assertEqual(expected, actual)
     except AssertionError as exc:
@@ -114,13 +116,13 @@ class CooccurrenceTest(unittest.TestCase):
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=15.0, paragraph_weight=1.0,
                                                                   sentence_weight=1.0)
-        assertDeepAlmostEqual(self, {('--D', 'A'): 15.0 + 0.9 + 15.0 + 0.4,
-                              ('B', 'C'): 15.0,
-                              'A': 15.0 + 0.9 + 15.0 + 0.4,
-                              '--D': 15.0 + 0.9 + 15.0 + 0.4,
-                              'B': 15.0,
-                              'C': 15.0,
-                              None: 15.0 + 0.9 + 15.0 + 0.4 + 15.0}, weighted_counts)
+        assert_deep_almost_equal(self, {('--D', 'A'): 15.0 + 0.9 + 15.0 + 0.4,
+                                        ('B', 'C'): 15.0,
+                                        'A': 15.0 + 0.9 + 15.0 + 0.4,
+                                        '--D': 15.0 + 0.9 + 15.0 + 0.4,
+                                        'B': 15.0,
+                                        'C': 15.0,
+                                        None: 15.0 + 0.9 + 15.0 + 0.4 + 15.0}, weighted_counts)
 
     def test_weighted_counts_sentences_paragraphs_documents(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
@@ -140,7 +142,6 @@ class CooccurrenceTest(unittest.TestCase):
                               None: 0.9 + 0.9 + 1 * 2 + 0.44 + 0.4 + 2 * 2 + 3 * 2}, weighted_counts)
 
     def test_weighted_counts_documents(self):
-
         document_scores = co_occurrence_score.load_document_score_file(self.document_score_file_path)
         weighted_counts = co_occurrence_score.get_weighted_counts(None, None, None,
                                                                   document_scores, None,
@@ -163,13 +164,13 @@ class CooccurrenceTest(unittest.TestCase):
                                                                   first_type=9606, second_type=-26,
                                                                   document_weight=2.0, paragraph_weight=1.0,
                                                                   sentence_weight=1.0)
-        assertDeepAlmostEqual(self, {('--D', 'A'): 0.9 + 1 * 2. + 0.4 + 2 * 2.,
-                              ('B', 'C'): 3 * 2.,
-                              'A': 0.9 + 1 * 2. + 0.4 + 2 * 2.,
-                              '--D': 0.9 + 1 * 2. + 0.4 + 2 * 2.,
-                              'B': 3 * 2.,
-                              'C': 3 * 2.,
-                              None: 0.9 + 1 * 2. + 0.4 + 2 * 2. + 3 * 2.}, weighted_counts)
+        assert_deep_almost_equal(self, {('--D', 'A'): 0.9 + 1 * 2. + 0.4 + 2 * 2.,
+                                        ('B', 'C'): 3 * 2.,
+                                        'A': 0.9 + 1 * 2. + 0.4 + 2 * 2.,
+                                        '--D': 0.9 + 1 * 2. + 0.4 + 2 * 2.,
+                                        'B': 3 * 2.,
+                                        'C': 3 * 2.,
+                                        None: 0.9 + 1 * 2. + 0.4 + 2 * 2. + 3 * 2.}, weighted_counts)
 
     def test_co_occurrence_score_sentences(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
@@ -418,13 +419,13 @@ class CooccurrenceTest(unittest.TestCase):
                                                                   document_weight=15.0, paragraph_weight=0,
                                                                   sentence_weight=1.0)
 
-        self.assertDictEqual({('--D', 'A'): 15. + 15.4,
+        self.assertDictEqual({('--D', 'A'): 15. + 15.44,
                               ('B', 'C'): 15.,
-                              'A': 15. + 15.4,
-                              '--D': 15. + 15.4,
+                              'A': 15. + 15.44,
+                              '--D': 15. + 15.44,
                               'B': 15.,
                               'C': 15.,
-                              None: 15. + 15.4 + 15.}, weighted_counts)
+                              None: 15. + 15.44 + 15.}, weighted_counts)
 
     def test_co_occurrence_score_matches_document_level_comentions_file(self):
         sentence_scores = co_occurrence_score.load_sentence_score_file(self.sentence_score_file_path)
