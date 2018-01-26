@@ -99,37 +99,19 @@ def load_document_score_iterator(score_dict):
             yield pmid, entity_1, entity_2, {}, {}
 
 
-def get_max_sentence_score(scores, sentence_co_mentions, pmid, entity_1, entity_2):
-    sentence_scores = [0.0]
-    for paragraph, sentence in sentence_co_mentions:
-        key = (pmid, paragraph, sentence)
-        if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
-            sentence_scores.append(scores[(entity_1, entity_2)][key])
-        else:
-            # TODO return 0.5 and print message to debug logging if no sentence scores found?
-            pass
-    return max(sentence_scores)
-
-
-def get_max_paragraph_score(scores, paragraph_co_mentions, pmid, entity_1, entity_2):
-    paragraph_scores = [0.0]
-    for paragraph in paragraph_co_mentions:
-        key = (pmid, paragraph)
-        if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
-            paragraph_scores.append(scores[(entity_1, entity_2)][key])
-        else:
-            # TODO return 0.5 and print message to debug logging if no paragraph scores found?
-            pass
-    return max(paragraph_scores)
-
-
-def get_document_score(scores, pmid, entity_1, entity_2):
-    key = pmid
-    if (entity_1, entity_2) in scores and key in scores[(entity_1, entity_2)]:
-        return scores[(entity_1, entity_2)][key]
+def get_max_score(scores_dict, pmid, entity_1, entity_2):
+    if not (entity_1, entity_2) in scores_dict:
+        return 0.0
     else:
-        # TODO return 0.5 and print message to debug logging if no document scores found? 
-        pass
+        scores = [0.0]
+        for key, score in scores_dict[(entity_1, entity_2)].items():
+            if isinstance(key, tuple):
+                match_pmid = key[0]  # sentence and paragraphs scores are index with (pmid, paragraph[, sentence])
+            else:
+                match_pmid = key     # document scores are only index with pmid
+            if match_pmid == pmid:
+                scores.append(score)
+        return max(scores)
 
 
 def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, document_scores,
@@ -160,7 +142,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
         for matches in document_matches:
             pmid, entity_1, entity_2, sentence_co_mentions, paragraph_co_mentions = matches
             if isinstance(sentence_scores, dict) and not ignore_scores:
-                sentence_score = get_max_sentence_score(sentence_scores, sentence_co_mentions, pmid, entity_1, entity_2)
+                sentence_score = get_max_score(sentence_scores, pmid, entity_1, entity_2)
             else:
                 if len(sentence_co_mentions) > 0:
                     sentence_score = 1
@@ -168,8 +150,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                     sentence_score = 0
 
             if isinstance(paragraph_scores, dict) and not ignore_scores:
-                paragraph_score = get_max_paragraph_score(paragraph_scores, paragraph_co_mentions, pmid, entity_1,
-                                                          entity_2)
+                paragraph_score = get_max_score(paragraph_scores, pmid, entity_1, entity_2)
             else:
                 if len(paragraph_co_mentions) > 0:
                     paragraph_score = 1
@@ -177,7 +158,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                     paragraph_score = 0
 
             if isinstance(document_scores, dict) and not ignore_scores:
-                document_score = get_document_score(document_scores, pmid, entity_1, entity_2)
+                document_score = get_max_score(document_scores, pmid, entity_1, entity_2)
             else:
                 document_score = 1
 
