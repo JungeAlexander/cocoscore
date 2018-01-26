@@ -27,10 +27,12 @@ export PYTHONPATH="`pwd`:$PYTHONPATH"
 ```
 
 CoCoScore has been tested on Linux and Mac OS.
-We recommend installing all dependencies in a virtual environment as described in the next section.
+We recommend installing all dependencies in a virtual environment as described in the next section as this is the more convenient way.
 
 CoCoScore is written in Python and depends on a range of Python packages such as scikit-learn, nltk and gensim.
 Furthermore [fastText](https://github.com/facebookresearch/fastText) is a dependency.
+
+If you decide not to setup a virtual environment using conda, please build fastText as described [here](https://github.com/facebookresearch/fastText#building-fasttext) and make sure the `fasttext` binary is discoverable via your `$PATH` environment variable.
 The complete list of dependencies and version numbers CoCoScore has been tested with can be found in [environment.yml](environment.yml).
 
 
