@@ -8,6 +8,12 @@
 Text mining of the biomedical literature has been successful in retrieving interactions between proteins, non-coding RNAs, and chemicals as well as in determining tissue-specific expression and subcellular localization. Simple co-occurrence-based scoring schemes can uncover such associations by finding entity pairs that are frequently mentioned together but ignore the textual context of each co-occurrence.
 
 CoCoScore implements an improved context-aware co-occurrence scoring scheme that uses textual context to assess whether an association is described or not. CoCoScore achieves an area under the ROC curve of 0.94, compared to 0.92 for previous approaches, based on a dataset of curated disease-gene associations. 
+
+## Quick start
+
+1. Follow the [installation instructions](#installation).
+2. Download the [files](#example-usage) needed to run through the example.
+3. Run through the [example](doc/example/example.md) to learn how to apply CoCoScore to your own data.
  
 ## Installation
 
