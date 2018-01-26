@@ -137,16 +137,23 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                         document_weight, paragraph_weight, sentence_weight,
                         ignore_scores=False, silent=False):
     pair_scores = collections.defaultdict(float)
+    matches_iter = None
     if matches_file_path is not None:
         matches_iter = load_matches_file(matches_file_path, entities_file, first_type, second_type)
     else:
-        if sentence_scores is not None:
-            my_iterator = load_sentence_score_iterator(sentence_scores)
+        # since document-level co-mentions are a superset of paragraph-level co-mentions which are a superset of
+        # sentence-level co-mentions, prefer the scores in this order
+        my_iterator = None
+        if document_scores is not None:
+            my_iterator = load_document_score_iterator(document_scores)
         elif paragraph_scores is not None:
             my_iterator = load_paragraph_score_iterator(paragraph_scores)
-        else:
-            my_iterator = load_document_score_iterator(document_scores)
-        matches_iter = [my_iterator]
+        elif sentence_scores is not None:
+            my_iterator = load_sentence_score_iterator(sentence_scores)
+        if my_iterator is not None:
+            matches_iter = [my_iterator]
+    assert matches_iter is not None, \
+        'No iterator available; matches files and sentence/paragraph/document scores missing?'
     for i, document_matches in enumerate(matches_iter):
         if i > 0 and i % 100000 == 0 and not silent:
             print('Document', i)
@@ -253,6 +260,10 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
     :param silent: If True, no progress updates are printed
     :return: a dictionary mapping entity pairs to their co-occurrence scores
     """
+    if matches_file_path is None and sentence_score_file_path is None and \
+            paragraph_score_file_path is None and document_score_file_path is None:
+        raise ValueError('matches_file_path or sentence_score_file_path or paragraph_score_file_path '
+                         'or document_score_file_path must be specified.')
     if sentence_score_file_path is None:
         sentence_scores = None
     else:
