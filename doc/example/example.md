@@ -237,9 +237,9 @@ To compute co-occurrence scores using your own model and hyperparameter settings
 
 Distant supervision is an approach to label a large amount of data without manually inspecting each element
 in the dataset to assign a label.
-The approach is based on an curated *knowledge base* that contains known associations of interest.
+The approach is based on a curated *knowledge base* that contains known associations of interest.
  
-In this example, the knowledge base consists of two known disease-gene associations:
+In this example, the knowledge base consists of two disease-gene associations:
 
 | disease             | gene  |
 | ------------------- | ----- |
@@ -263,6 +263,7 @@ is assumed to be a positive example.
 Every sentence where both disease and gene appear in the knowledge base but *not* their association is assumed to be
 a negative example.
 Sentences where either disease or gene do not appear in the knowledge base are removed from the dataset.
+
 This leaves us with the following labelled set of sentences:
 
 | sentence                                                        | label  |
@@ -273,7 +274,7 @@ This leaves us with the following labelled set of sentences:
 | PINK1 is not associated with Parkinson's disease.               | 1      |
 
 Note that distant supervision results in a *noisy labelling*.
-For instance, sentence four describes the absence of an association but is still marked as a positive example because
+For instance, sentence four clearly describes the absence of an association but is still marked as a positive example because
 the association Parkinson's disease-PINK1 appears in the knowledge base.
 Applying distant supervision will usually result in a noisy but a much larger dataset than we could label by hand.
 In our experience, this excess of training data allows the distantly supervised model to pick up subtle differences
