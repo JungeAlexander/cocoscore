@@ -182,8 +182,12 @@ def load_score_file(score_file_path, paragraph_level=False, document_level=False
             entity_key = tuple(sorted((entity_1, entity_2)))
             if paragraph_level:
                 score_key = (int(pmid), int(paragraph))
+                if sentence != '-1':
+                    raise ValueError('Sentence must be -1 when loading paragraph-level scores.')
             elif document_level:
                 score_key = int(pmid)
+                if sentence != '-1' or paragraph != '-1':
+                    raise ValueError('Sentence and paragraph must be -1 when loading document-level scores.')
             else:
                 score_key = (int(pmid), int(paragraph), int(sentence))
             score_dict[entity_key][score_key] = float(score)
