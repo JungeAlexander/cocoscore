@@ -11,13 +11,13 @@ def get_entity_pairs(type_name_set, first_type, second_type):
     first_type_names = set()
     second_type_names = set()
     for type_name in type_name_set:
-        mytype, name = type_name
-        if mytype == first_type:
+        my_type, name = type_name
+        if my_type == first_type:
             first_type_names.add(type_name)
-        elif mytype == second_type:
+        elif my_type == second_type:
             second_type_names.add(type_name)
         else:
-            raise ValueError("Encountered unknown type {:d}.".format(mytype))
+            raise ValueError("Encountered unknown type {:d}.".format(my_type))
     if first_type != second_type:
         return itertools.product(first_type_names, second_type_names)
     else:
@@ -31,9 +31,9 @@ def process_current_pmid_score_lines(current_pmid_lines, serial_to_type_entity, 
     type_entity_to_sentences = collections.defaultdict(set)
     type_entity_to_paragraphs = collections.defaultdict(set)
     for current_line in current_pmid_lines:
-        _, paragraph, sentence, _, _, _, mytype, serial = current_line
+        _, paragraph, sentence, _, _, _, my_type, serial = current_line
         type_entity = serial_to_type_entity[int(serial)]
-        assert int(mytype) == type_entity[0]
+        assert int(my_type) == type_entity[0]
         type_entities.add(type_entity)
         type_entity_to_sentences[type_entity].add((int(paragraph), int(sentence)))
         type_entity_to_paragraphs[type_entity].add(int(paragraph))
@@ -171,7 +171,8 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
     return dict(pair_scores)
 
 
-def load_sentence_score_file(score_file_path):
+def load_score_file(score_file_path, paragraph_level=False, document_level=False):
+    assert not (paragraph_level and document_level), 'Impossible load both paragraph- and document-level scores.'
     compression = score_file_path.endswith('.gz')
     score_file = get_file_handle(score_file_path, compression)
     score_dict = collections.defaultdict(dict)
@@ -179,35 +180,13 @@ def load_sentence_score_file(score_file_path):
         for line in score_file:
             pmid, paragraph, sentence, entity_1, entity_2, score = line.rstrip().split('\t')
             entity_key = tuple(sorted((entity_1, entity_2)))
-            score_dict[entity_key][(int(pmid), int(paragraph), int(sentence))] = float(score)
-    finally:
-        score_file.close()
-    return dict(score_dict)
-
-
-def load_paragraph_score_file(score_file_path):
-    compression = score_file_path.endswith('.gz')
-    score_file = get_file_handle(score_file_path, compression)
-    score_dict = collections.defaultdict(dict)
-    try:
-        for line in score_file:
-            pmid, paragraph, entity_1, entity_2, score = line.rstrip().split('\t')
-            entity_key = tuple(sorted((entity_1, entity_2)))
-            score_dict[entity_key][(int(pmid), int(paragraph))] = float(score)
-    finally:
-        score_file.close()
-    return dict(score_dict)
-
-
-def load_document_score_file(score_file_path):
-    compression = score_file_path.endswith('.gz')
-    score_file = get_file_handle(score_file_path, compression)
-    score_dict = collections.defaultdict(dict)
-    try:
-        for line in score_file:
-            pmid, entity_1, entity_2, score = line.rstrip().split('\t')
-            entity_key = tuple(sorted((entity_1, entity_2)))
-            score_dict[entity_key][int(pmid)] = float(score)
+            if paragraph_level:
+                score_key = (int(pmid), int(paragraph))
+            elif document_level:
+                score_key = int(pmid)
+            else:
+                score_key = (int(pmid), int(paragraph), int(sentence))
+            score_dict[entity_key][score_key] = float(score)
     finally:
         score_file.close()
     return dict(score_dict)
@@ -248,15 +227,15 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
     if sentence_score_file_path is None:
         sentence_scores = None
     else:
-        sentence_scores = load_sentence_score_file(sentence_score_file_path)
+        sentence_scores = load_score_file(sentence_score_file_path)
     if paragraph_score_file_path is None:
         paragraph_scores = None
     else:
-        paragraph_scores = load_paragraph_score_file(paragraph_score_file_path)
+        paragraph_scores = load_score_file(paragraph_score_file_path, paragraph_level=True)
     if document_score_file_path is None:
         document_scores = None
     else:
-        document_scores = load_document_score_file(document_score_file_path)
+        document_scores = load_score_file(document_score_file_path, document_level=True)
     co_occurrence_scores = {}
     weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=sentence_scores,
                                           paragraph_scores=paragraph_scores, document_scores=document_scores,
