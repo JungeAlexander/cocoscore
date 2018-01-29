@@ -75,11 +75,20 @@ class CooccurrenceTest(unittest.TestCase):
                                              (3333, 2): 0.4},
                               ('B', 'C'): {(2222, 1): 0}}, paragraph_scores)
 
+    def test_load_paragraph_scores_with_sentence_scores(self):
+        with self.assertRaises(ValueError):
+            co_occurrence_score.load_score_file(self.sentence_score_file_path, paragraph_level=True)
+
     def test_load_document_scores(self):
         document_scores = co_occurrence_score.load_score_file(self.document_score_file_path, document_level=True)
         self.assertDictEqual({('--D', 'A'): {1111: 1,
                                              3333: 2},
                               ('B', 'C'): {2222: 3}}, document_scores)
+
+    def test_load_document_scores_with_paragraph_scores(self):
+        with self.assertRaises(ValueError):
+            co_occurrence_score.load_score_file(self.paragraph_score_file_path, document_level=True)
+
 
     def test_weighted_counts_sentences(self):
         sentence_scores = co_occurrence_score.load_score_file(self.sentence_score_file_path)
