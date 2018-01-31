@@ -171,8 +171,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
     return dict(pair_scores)
 
 
-def load_score_file(score_file_path, paragraph_level=False, document_level=False):
-    assert not (paragraph_level and document_level), 'Impossible load both paragraph- and document-level scores.'
+def load_score_file(score_file_path):
     compression = score_file_path.endswith('.gz')
     score_file = get_file_handle(score_file_path, compression)
     score_dict = collections.defaultdict(dict)
@@ -180,24 +179,23 @@ def load_score_file(score_file_path, paragraph_level=False, document_level=False
         for line in score_file:
             pmid, paragraph, sentence, entity_1, entity_2, score = line.rstrip().split('\t')
             entity_key = tuple(sorted((entity_1, entity_2)))
-            if paragraph_level:
-                score_key = (int(pmid), int(paragraph))
-                if sentence != '-1':
-                    raise ValueError('Sentence must be -1 when loading paragraph-level scores.')
-            elif document_level:
-                score_key = int(pmid)
-                if sentence != '-1' or paragraph != '-1':
-                    raise ValueError('Sentence and paragraph must be -1 when loading document-level scores.')
-            else:
+            if sentence != '-1':                          # sentence-level score
                 score_key = (int(pmid), int(paragraph), int(sentence))
+            elif sentence == '-1' and paragraph != '-1':  # paragraph-level score
+                score_key = (int(pmid), int(paragraph))
+            else:                                         # document-level score
+                score_key = int(pmid)
             score_dict[entity_key][score_key] = float(score)
     finally:
         score_file.close()
     return dict(score_dict)
 
 
-def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_score_file_path,
-                        document_score_file_path,
+def split_scores(score_dict):
+    # return None if dicts are empty
+    return None, None, None
+
+def co_occurrence_score(matches_file_path, score_file_path,
                         entities_file, first_type, second_type,
                         document_weight=15.0, paragraph_weight=0.0,
                         sentence_weight=1.0, weighting_exponent=0.6, ignore_scores=False, silent=False):
@@ -228,10 +226,17 @@ def co_occurrence_score(matches_file_path, sentence_score_file_path, paragraph_s
             paragraph_score_file_path is None and document_score_file_path is None:
         raise ValueError('matches_file_path or sentence_score_file_path or paragraph_score_file_path '
                          'or document_score_file_path must be specified.')
+    if score_file_path is not None:
+        scores = load_score_file(score_file_path)
+        sentence_scores, paragraph_scores, document_scores = split_scores(scores)
+    else:
+        sentence_scores, paragraph_scores, document_scores = None, None, None
+
+
     if sentence_score_file_path is None:
         sentence_scores = None
     else:
-        sentence_scores = load_score_file(sentence_score_file_path)
+
     if paragraph_score_file_path is None:
         paragraph_scores = None
     else:
