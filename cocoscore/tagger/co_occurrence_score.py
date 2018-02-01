@@ -192,8 +192,28 @@ def load_score_file(score_file_path):
 
 
 def split_scores(score_dict):
-    # return None if dicts are empty
-    return None, None, None
+    sentence_scores = collections.defaultdict(dict)
+    paragraph_scores = collections.defaultdict(dict)
+    document_scores = collections.defaultdict(dict)
+
+    for entity_pair, match_to_score in score_dict.items():
+        for match, score in match_to_score.items():
+            if isinstance(match, tuple):
+                assert 1 < len(match) < 4, 'Unknown match length.'
+                if len(match) == 3:  # sentence-level match
+                    sentence_scores[entity_pair][match] = score
+                else:                # paragraph-level match
+                    paragraph_scores[entity_pair][match] = score
+            else:
+                document_scores[entity_pair][match] = score
+
+    sentence_scores.default_factory, paragraph_scores.default_factory, document_scores.default_factory = \
+        None, None, None
+    # instead of returning empty dictionaries, return None in such cases
+    sentence_scores, paragraph_scores, document_scores = (d if len(d) > 0 else None for d
+                                                          in (sentence_scores, paragraph_scores, document_scores))
+    return sentence_scores, paragraph_scores, document_scores
+
 
 def co_occurrence_score(matches_file_path, score_file_path,
                         entities_file, first_type, second_type,
@@ -205,12 +225,9 @@ def co_occurrence_score(matches_file_path, score_file_path,
 
     :param matches_file_path: matches file as produced by tagger. Used to define co-occurring terms.
     If this is None, co-occurrences are extracted from score_file_path.
-    :param sentence_score_file_path: sentence score file (tsv formatted) with five columns: pmid, paragraph number,
-    sentence number, first entity, second entity, sentence score
-    :param paragraph_score_file_path: paragraph score file (tsv formatted) with five columns: pmid, paragraph number,
-    first entity, second entity, sentence score
-    :param document_score_file_path: sentence score file (tsv formatted) with five columns: pmid, first entity,
-    second entity, sentence score
+    :param score_file_path: score file (tsv formatted) with five columns: pmid, paragraph number,
+    sentence number, first entity, second entity, sentence score. For document-level scores, set paragraph number and
+    sentence number to -1. For paragraph-level scores, set sentence number to -1.
     :param entities_file: entities file as used by tagger
     :param first_type: int, type of the first entity class to be scored
     :param second_type: int, type of the second entity class to be scored
@@ -222,29 +239,15 @@ def co_occurrence_score(matches_file_path, score_file_path,
     :param silent: If True, no progress updates are printed
     :return: a dictionary mapping entity pairs to their co-occurrence scores
     """
-    if matches_file_path is None and sentence_score_file_path is None and \
-            paragraph_score_file_path is None and document_score_file_path is None:
-        raise ValueError('matches_file_path or sentence_score_file_path or paragraph_score_file_path '
-                         'or document_score_file_path must be specified.')
+    if matches_file_path is None and score_file_path is None:
+        raise ValueError('matches_file_path or score_file_path must be specified.')
     if score_file_path is not None:
         scores = load_score_file(score_file_path)
         sentence_scores, paragraph_scores, document_scores = split_scores(scores)
+        del scores  # hint to GC as this may be large
     else:
         sentence_scores, paragraph_scores, document_scores = None, None, None
 
-
-    if sentence_score_file_path is None:
-        sentence_scores = None
-    else:
-
-    if paragraph_score_file_path is None:
-        paragraph_scores = None
-    else:
-        paragraph_scores = load_score_file(paragraph_score_file_path, paragraph_level=True)
-    if document_score_file_path is None:
-        document_scores = None
-    else:
-        document_scores = load_score_file(document_score_file_path, document_level=True)
     co_occurrence_scores = {}
     weighted_counts = get_weighted_counts(matches_file_path=matches_file_path, sentence_scores=sentence_scores,
                                           paragraph_scores=paragraph_scores, document_scores=document_scores,
@@ -268,8 +271,7 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
                                  sentence_weight=0.2,
                                  weighting_exponent=0.6,
                                  silent=False):
-    return co_occurrence_score(matches_file_path=matches_file_path, sentence_score_file_path=None,
-                               paragraph_score_file_path=None, document_score_file_path=None,
+    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None,
                                entities_file=entities_file,
                                first_type=9606, second_type=-26,
                                document_weight=document_weight,
@@ -280,8 +282,7 @@ def co_occurrence_score_diseases(matches_file_path, entities_file, document_weig
 
 def co_occurrence_score_string(matches_file_path, entities_file, entity_type, document_weight=1.0, paragraph_weight=2.0,
                                sentence_weight=0.2, weighting_exponent=0.6, silent=False):
-    return co_occurrence_score(matches_file_path=matches_file_path, sentence_score_file_path=None,
-                               paragraph_score_file_path=None, document_score_file_path=None,
+    return co_occurrence_score(matches_file_path=matches_file_path, score_file_path=None,
                                entities_file=entities_file,
                                first_type=entity_type, second_type=entity_type,
                                document_weight=document_weight, paragraph_weight=paragraph_weight,
