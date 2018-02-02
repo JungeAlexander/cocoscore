@@ -96,7 +96,7 @@ def load_document_score_iterator(score_dict):
     for entity_pair, pmid_dict in score_dict.items():
         entity_1, entity_2 = entity_pair
         for pmid in pmid_dict.keys():
-            yield pmid, entity_1, entity_2, {}, {}
+            yield pmid, entity_1, entity_2, set(), set()
 
 
 def get_max_score(scores_dict, pmid, entity_1, entity_2):
@@ -141,9 +141,16 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
             print('Document', i)
         for matches in document_matches:
             pmid, entity_1, entity_2, sentence_co_mentions, paragraph_co_mentions = matches
+
             if isinstance(sentence_scores, dict) and not ignore_scores:
                 sentence_score = get_max_score(sentence_scores, pmid, entity_1, entity_2)
             else:
+                # make sure all sentence-level co-mentions are considered as this is not the case when iterating
+                # over document or paragraph scores
+                if isinstance(sentence_scores, dict) and (entity_1, entity_2) in sentence_scores:
+                    for pmid_paragraph_sentence in sentence_scores[(entity_1, entity_2)].keys():
+                        if pmid_paragraph_sentence[0] == pmid:
+                            sentence_co_mentions.add(pmid_paragraph_sentence[1:])
                 if len(sentence_co_mentions) > 0:
                     sentence_score = 1
                 else:
@@ -152,6 +159,12 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
             if isinstance(paragraph_scores, dict) and not ignore_scores:
                 paragraph_score = get_max_score(paragraph_scores, pmid, entity_1, entity_2)
             else:
+                # make sure all paragraph-level co-mentions are considered as this is not the case when iterating
+                # over document scores
+                if isinstance(paragraph_scores, dict) and (entity_1, entity_2) in paragraph_scores:
+                    for pmid_paragraph in paragraph_scores[(entity_1, entity_2)].keys():
+                        if pmid_paragraph[0] == pmid:
+                            paragraph_co_mentions.add(pmid_paragraph[1])
                 if len(paragraph_co_mentions) > 0:
                     paragraph_score = 1
                 else:

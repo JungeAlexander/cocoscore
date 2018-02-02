@@ -62,6 +62,8 @@ class CooccurrenceTest(unittest.TestCase):
     paragraph_sentence_score_file_path = 'tests/tagger/paragraph_sentence_scores_file.tsv'
     document_paragraph_sentence_score_file_path = 'tests/tagger/document_paragraph_sentence_scores_file.tsv'
     document_paragraph_score_file_path = 'tests/tagger/document_paragraph_scores_file.tsv'
+    precedence_document_paragraph_sentence_score_file_path = \
+        'tests/tagger/precedence_document_paragraph_sentence_scores_file.tsv'
     entity_file_path = 'tests/tagger/entities2.tsv.gz'
     entity_fantasy_types_file_path = 'tests/tagger/entities2_fantasy_types.tsv.gz'
     entity_file_same_type_path = 'tests/tagger/entities2_same_type.tsv.gz'
@@ -257,6 +259,25 @@ class CooccurrenceTest(unittest.TestCase):
         s_b_c = c_b_c ** weighting_exponent * ((c_b_c * c_all) / (c_b * c_c)) ** (1 - weighting_exponent)
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
         self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
+
+    def test_co_occurrence_score_precedence_sentences_paragraphs_documents(self):
+        scores = co_occurrence_score.load_score_file(self.precedence_document_paragraph_sentence_score_file_path)
+        sentence_scores, paragraph_scores, document_scores = co_occurrence_score.split_scores(scores)
+        document_weight = 2.0
+        paragraph_weight = 1.0
+        sentence_weight = 1.0
+        weighted_counts = co_occurrence_score.get_weighted_counts(None, sentence_scores, paragraph_scores,
+                                                                  document_scores, None,
+                                                                  first_type=9606, second_type=-26,
+                                                                  document_weight=document_weight,
+                                                                  paragraph_weight=paragraph_weight,
+                                                                  sentence_weight=sentence_weight,
+                                                                  ignore_scores=True)
+        weight_sum = document_weight + paragraph_weight + sentence_weight
+        self.assertDictEqual({('B', 'C'): weight_sum,
+                              'B': weight_sum,
+                              'C': weight_sum,
+                              None: weight_sum}, weighted_counts)
 
     def test_weighted_counts_sentences_only_diseases(self):
         sentence_scores = co_occurrence_score.load_score_file(self.sentence_score_file_path)
