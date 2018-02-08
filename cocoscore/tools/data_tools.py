@@ -32,4 +32,60 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
 
 
 def fill_missing_paragraph_document_scores(data):
-    pass
+    """
+    Fill missing paragraph- and document-level scores for all sentence-level matches and fill all
+    missing document-level scores for all document-level matches.
+
+    Filled matches receive a score of 0.
+    :param data: the scored DataFrame to fill
+    :return: a new DataFrame with missing scores filled in
+    """
+    text = ''
+    distance = -1
+    predicted = 0
+    filled_dfs = []
+    for _, group_df in data.groupby(['entity1', 'entity2']):
+        group_df = group_df.copy()
+        if group_df.ndim == 1:
+            group_df = group_df.to_frame()
+        entity1 = group_df.loc[:, 'entity1'].iloc[0]
+        entity2 = group_df.loc[:, 'entity2'].iloc[0]
+        current_class = group_df.loc[:, 'class'].iloc[0]
+
+        sentence_level = {tuple(x)
+                          for x in group_df.loc[:, ['pmid', 'paragraph', 'sentence']].to_records(index=False)
+                          if x[1] != -1 and x[2] != -1}
+        paragraph_level = {tuple(x)
+                           for x in group_df.loc[:, ['pmid', 'paragraph', 'sentence']].to_records(index=False)
+                           if x[1] != -1 and x[2] == -1}
+        document_level = {tuple(x)
+                          for x in group_df.loc[:, ['pmid', 'paragraph', 'sentence']].to_records(index=False)
+                          if x[1] == -1 and x[2] == -1}
+
+        add_tuples = set()
+        for sentence in sentence_level:
+            expected_paragraph = (sentence[0], sentence[1], -1)
+            expected_document = (sentence[0], -1, -1)
+            if expected_paragraph not in paragraph_level:
+                add_tuples.add(expected_paragraph)
+            if expected_document not in document_level:
+                add_tuples.add(expected_document)
+        for paragraph in paragraph_level:
+            expected_document = (paragraph[0], -1, -1)
+            if expected_document not in document_level:
+                add_tuples.add(expected_document)
+
+        new_rows = []
+        for add_tuple in add_tuples:
+            new_rows.append(list(add_tuple) + [entity1, entity2, text, current_class, distance, predicted])
+        if len(new_rows) > 1:
+            new_df = pd.DataFrame.from_records(new_rows)
+            new_df.columns = group_df.columns
+            new_df = pd.concat([group_df, new_df], axis=0, ignore_index=True)
+            filled_dfs.append(new_df)
+        else:
+            filled_dfs.append(group_df)
+    filled_df = pd.concat(filled_dfs, axis=0, ignore_index=True)
+    filled_df.sort_values(['pmid', 'paragraph', 'sentence'], axis=0, inplace=True, kind='mergesort')
+    filled_df.reset_index(inplace=True, drop=True)
+    return filled_df
