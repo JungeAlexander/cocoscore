@@ -60,7 +60,7 @@ class DistanceScoreTest(unittest.TestCase):
 
     expected_dict = {
         'class': {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0},
-        'distance': {0: -1, 1: 1, 2: 1, 3: -1, 4: 35, 5: -1, 6: 40, 7: -1, 8: -1, 9: -1, 10: -1},
+        'distance': {0: 1, 1: 1, 2: -1, 3: -1, 4: 35, 5: -1, 6: -1, 7: -1, 8: -1, 9: -1, 10: 40},
         'entity1': {0: 'DOID:1612',
                     1: 'DOID:1612',
                     2: 'DOID:1612',
@@ -83,57 +83,57 @@ class DistanceScoreTest(unittest.TestCase):
                     8: 'ENSP00000348234',
                     9: 'ENSP00000348234',
                     10: 'ENSP00000348234'},
-        'paragraph': {0: 1, 1: 1, 2: -1, 3: 1, 4: 1, 5: 1, 6: 2, 7: -1, 8: 1, 9: -1, 10: -1},
+        'paragraph': {0: -1, 1: 1, 2: 1, 3: -1, 4: 1, 5: 1, 6: -1, 7: 1, 8: 1, 9: -1, 10: 2},
         'pmid': {0: 8726,
                  1: 8726,
                  2: 8726,
                  3: 13795,
                  4: 13795,
-                 5: 15997,
-                 6: 17084,
-                 7: 13795,
+                 5: 13795,
+                 6: 15997,
+                 7: 15997,
                  8: 15997,
-                 9: 15997,
+                 9: 17084,
                  10: 17084},
-        'predicted': {0: 0.449219,
+        'predicted': {0: 1.0,
                       1: 1.0,
-                      2: 1.0,
-                      3: 0.201172,
+                      2: 0.449219,
+                      3: 0.0,
                       4: 0.02857142857142857,
-                      5: 0.00781252,
-                      6: 0.025,
+                      5: 0.201172,
+                      6: 0.0,
                       7: 0.0,
-                      8: 0.0,
+                      8: 0.00781252,
                       9: 0.0,
-                      10: 0.0},
-        'sentence': {0: 1, 1: -1, 2: -1, 3: 1, 4: -1, 5: 1, 6: -1, 7: -1, 8: -1, 9: -1, 10: -1},
-        'text': {0: 'Identification of MYDISEASETOKEN MYGENETOKEN and its inhibitory role in '
-                    'cell-mediated immunity.',
+                      10: 0.025},
+        'sentence': {0: -1, 1: -1, 2: 1, 3: -1, 4: -1, 5: 1, 6: -1, 7: -1, 8: 1, 9: -1, 10: -1},
+        'text': {0: '',
                  1: 'Identification of MYDISEASETOKEN MYGENETOKEN and its inhibitory role in '
                     'cell-mediated immunity.',
-                 2: '',
-                 3: 'Inhibition by ultraviolet irradiation of the glucocorticoid induction of MYGENETOKEN '
-                    'in bromodeoxyuridine-treated H-35 MYDISEASETOKEN.',
+                 2: 'Identification of MYDISEASETOKEN MYGENETOKEN and its inhibitory role in '
+                    'cell-mediated immunity.',
+                 3: '',
                  4: 'Inhibition by ultraviolet irradiation of the glucocorticoid induction of MYGENETOKEN '
                     'in bromodeoxyuridine-treated H-35 MYDISEASETOKEN.',
-                 5: 'Effect of concanavalin A on MYGENETOKEN in rat MYDISEASETOKEN tissue culture cells.',
-                 6: 'The effect(s) of lack of dietary pyridoxine (PX) on the growth of Morris '
-                    'MYDISEASETOKEN no. 7288Ctc was studied. Buffalo strain female rats were fed a diet '
-                    'lacking PX. Pair-fed controls were fed the same diet with PX added. Animals were '
-                    'inoculated with no. 7288Ctc hepatoma cells at 21 days and were sacrificed 16 days '
-                    'later. Host livers and tumors were removed, weights recorded and the activity of '
-                    'MYGENETOKEN (TAT; MYGENETOKEN, MYGENETOKEN) was determined in both host liver and '
-                    'MYDISEASETOKEN. The average weight of 30 hepatomas grown in pair-fed control rats '
-                    'was 11.61 +/- 1.5 g while the average weight of the same number of hepatomas grown '
-                    'in animals fed the PX free diet was 4.73 +/- 0.7 g (P less than 0.001). Further TAT '
-                    'specific activity levels were 39% and 32% higher in host livers and tumors from '
-                    'deficient animals, respectively. The results show that availability of dietary '
-                    'pyridoxine stimulates the growth of this MYDISEASETOKEN and, in addition, exercises '
-                    'a type of control over the expression of TAT activity.',
+                 5: 'Inhibition by ultraviolet irradiation of the glucocorticoid induction of MYGENETOKEN '
+                    'in bromodeoxyuridine-treated H-35 MYDISEASETOKEN.',
+                 6: '',
                  7: '',
-                 8: '',
+                 8: 'Effect of concanavalin A on MYGENETOKEN in rat MYDISEASETOKEN tissue culture cells.',
                  9: '',
-                 10: ''}
+                 10: 'The effect(s) of lack of dietary pyridoxine (PX) on the growth of Morris '
+                     'MYDISEASETOKEN no. 7288Ctc was studied. Buffalo strain female rats were fed a diet '
+                     'lacking PX. Pair-fed controls were fed the same diet with PX added. Animals were '
+                     'inoculated with no. 7288Ctc hepatoma cells at 21 days and were sacrificed 16 days '
+                     'later. Host livers and tumors were removed, weights recorded and the activity of '
+                     'MYGENETOKEN (TAT; MYGENETOKEN, MYGENETOKEN) was determined in both host liver and '
+                     'MYDISEASETOKEN. The average weight of 30 hepatomas grown in pair-fed control rats '
+                     'was 11.61 +/- 1.5 g while the average weight of the same number of hepatomas grown '
+                     'in animals fed the PX free diet was 4.73 +/- 0.7 g (P less than 0.001). Further TAT '
+                     'specific activity levels were 39% and 32% higher in host livers and tumors from '
+                     'deficient animals, respectively. The results show that availability of dietary '
+                     'pyridoxine stimulates the growth of this MYDISEASETOKEN and, in addition, exercises '
+                     'a type of control over the expression of TAT activity.'}
     }
 
     def test_paragraph_scores_reciprocal(self):
@@ -146,5 +146,5 @@ class DistanceScoreTest(unittest.TestCase):
         expected_df = pd.DataFrame.from_dict(self.expected_dict)
         expected_df = expected_df.loc[:, column_order]
 
-        fill_missing_paragraph_document_scores(input_df)
-        pd.testing.assert_frame_equal(input_df, expected_df)
+        filled_df = fill_missing_paragraph_document_scores(input_df)
+        pd.testing.assert_frame_equal(filled_df, expected_df)
