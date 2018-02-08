@@ -29,3 +29,7 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     if data_df.isnull().sum().sum() != 0:
         raise ValueError(f'Encountered missing values while loading data from {data_frame_path}.')
     return data_df
+
+
+def fill_missing_paragraph_document_scores(data):
+    pass
