@@ -7,6 +7,14 @@ from ..tools.file_tools import get_file_handle
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
 
 
+def get_hyperparameter_distributions(random_seed=None):
+    """
+    :param random_seed: int to seed numpy RandomState to use while initiating parameter distributions to sample from
+    :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
+    """
+    pass
+
+
 def get_entity_pairs(type_name_set, first_type, second_type):
     first_type_names = set()
     second_type_names = set()
@@ -301,3 +309,31 @@ def co_occurrence_score_string(matches_file_path, entities_file, entity_type, do
                                document_weight=document_weight, paragraph_weight=paragraph_weight,
                                sentence_weight=sentence_weight, weighting_exponent=weighting_exponent,
                                ignore_scores=True, silent=silent)
+
+
+def cocoscore_cv_independent_associations(data_df,
+                                          param_dict,
+                                          fasttext_function,
+                                          cv_folds=5,
+                                          entity_columns=('entity1', 'entity2'),
+                                          random_state=None,
+                                          ):
+    """
+    A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
+    CV fold and returns training and validation AUROC & AUPRC for each fold, mean and standard variation of
+    AUROC & AUPRC across folds along with various other dataset statistics.
+
+    :param data_df: the DataFrame to be split up into CV folds
+    :param param_dict: dictionary mapping co-occurrence score hyperparameters to their values
+    :param fasttext_function: wrapper function to run fasttext on a cross-validation fold.
+           Takes two arguments: training dataset as pandas DataFrame; validation dataset as pandas DataFrame.
+           Returns: predicted scores for each instance.
+    :param cv_folds: int, the number of CV folds to generate
+    :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
+    :param random_state: numpy RandomState to use while splitting into folds
+    :return: a pandas DataFrame with cross validation results
+    """
+    # see fasttext_cv_independent_associations
+    # run fasttext_function on sentence subset (move CV train/validation logic to separate function that to be used here
+    # run distance scoring on paragraph/document subset
+    pass
