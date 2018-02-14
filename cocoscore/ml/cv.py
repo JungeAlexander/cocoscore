@@ -334,12 +334,14 @@ def get_random_parameter_sampler(param_distributions, n_iter):
 
 def random_cv(dataset, cv_function, cv_iterations, param_dict, param_distribution, random_seed):
     """
-    Performs a cross-validation over randomly sampled paramter values for a given dataset and cross-validation function.
-
+    Performs a cross-validation over randomly sampled parameter values for a given dataset and
+    a given cross-validation function.
 
     :param dataset: DataFrame, the data set to be cross-validated
-    :param cv_function: function that takes two arguments: the dataset DataFrame and a param_dict dictionary. Performs
-           a single cross-validation run.
+    :param cv_function: function that takes three arguments:
+           the dataset as a pandas DataFrame, a parameter dictionary, and a numpy RandomState
+           to seed the cross-validation. The function is then to perform a single cross-validation run
+           and returns cross-validation results for the given parameter settings.
     :param cv_iterations: int, the number of random parameter assignments to try out
     :param param_dict: dict specifying parameters and values that are to be kept fixed
     :param param_distribution: dict mapping parameters to distributions to sample parameters from
