@@ -120,6 +120,15 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
         fout.write(predictions)
 
 
+def fasttext_fit_predict_default(training_set, test_set):
+    fasttext_path = 'fasttext',
+    thread = 1
+    compress_model = True
+    param_dict = {}
+    pass
+
+
+
 def _compute_auroc(dataset_file_path, prob_file_path):
     labels = load_labels(dataset_file_path)
     predicted = load_fasttext_class_probabilities(prob_file_path)

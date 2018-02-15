@@ -67,7 +67,6 @@ class CooccurrenceTest(unittest.TestCase):
     entity_file_path = 'tests/tagger/entities2.tsv.gz'
     entity_fantasy_types_file_path = 'tests/tagger/entities2_fantasy_types.tsv.gz'
     entity_file_same_type_path = 'tests/tagger/entities2_same_type.tsv.gz'
-    cv_test_path = 'tests/tagger/simple_cv.txt'
 
     def test_load_sentence_scores(self):
         sentence_scores = co_occurrence_score.load_score_file(self.sentence_score_file_path)

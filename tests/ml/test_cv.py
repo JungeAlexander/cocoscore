@@ -17,6 +17,7 @@ class CVTest(unittest.TestCase):
 
     ft_path = 'fasttext'
     ft_cv_test_path = 'tests/ml/ft_simple_cv.txt'
+    cos_cv_test_path = 'tests/ml/cos_simple_cv.txt'
 
     def test_reproducibility(self):
         run1 = cv.cv_independent_entities(self.testcase_df, random_state=np.random.RandomState(0))
@@ -182,7 +183,7 @@ class CVTest(unittest.TestCase):
         sample2 = generator.__next__()
         self.assertNotEqual(sample1, sample2)
 
-    def test_random_cv(self):
+    def test_fth_random_cv(self):
         bucket = 1000
         dim = 20
         cv_folds = 2
@@ -266,6 +267,93 @@ class CVTest(unittest.TestCase):
             [20] * cv_iterations,
             [0.5] * cv_iterations,
             [20] * cv_iterations,
+            [0.5] * cv_iterations,
+        ]
+        expected_df = pandas.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
+                                       columns=expected_col_names)
+        results_test_df = cv_results.drop(random_col_names + ignore_params, axis=1)
+        expected_test_df = expected_df.drop(random_col_names + ignore_params, axis=1)
+        assert_frame_equal(results_test_df, expected_test_df)
+
+    def test_cos_random_cv(self):
+        paragraph_score = 3
+        cv_folds = 2
+        cv_iterations = 2
+
+        def cv_function(data_df, params, random_state):
+            return cos.cocoscore_cv_independent_associations(data_df, params,
+                                                             cv_folds=cv_folds, random_state=random_state)
+
+        test_df = data_tools.load_data_frame(self.cos_cv_test_path)
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
+        cv_results = cv.random_cv(test_df, cv_function, cv_iterations, {'paragraph_score': paragraph_score},
+                                  cos.get_hyperparameter_distributions(), 3)
+
+        expected_col_names = [
+            'document_weight',
+            'paragraph_weight',
+            'sentence_weight',
+            'weighting_exponent',
+            'mean_test_score',
+            'stdev_test_score',
+            'mean_train_score',
+            'stdev_train_score',
+            'split_0_test_score',
+            'split_0_train_score',
+            'split_0_n_test',
+            'split_0_pos_test',
+            'split_0_n_train',
+            'split_0_pos_train',
+            'split_1_test_score',
+            'split_1_train_score',
+            'split_1_n_test',
+            'split_1_pos_test',
+            'split_1_n_train',
+            'split_1_pos_train',
+        ]
+        self.assertListEqual(expected_col_names, list(cv_results.columns))
+        # following parameters are chosen randomly and hence cannot be tested but only that they differ between the CV
+        # runs
+        random_col_names = [
+            'document_weight',
+            'sentence_weight',
+            'weighting_exponent',
+        ]
+        for rand in random_col_names:
+            self.assertNotEqual(cv_results.loc[0, rand], cv_results.loc[1, rand])
+
+        # ignore columns that are linked to test performance since this cannot be tested for random parameter choices
+        ignore_params = [
+            'mean_test_score',
+            'stdev_test_score',
+            'mean_train_score',
+            'stdev_train_score',
+            'split_0_test_score',
+            'split_0_train_score',
+            'split_1_test_score',
+            'split_1_train_score',
+        ]
+
+        expected_values = [
+            [.111] * cv_iterations,
+            [paragraph_score] * cv_iterations,
+            [.111] * cv_iterations,
+            [.222] * cv_iterations,
+            [1.0] * cv_iterations,
+            [0.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [0.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [60] * cv_iterations,
+            [0.5] * cv_iterations,
+            [60] * cv_iterations,
+            [0.5] * cv_iterations,
+            [1.0] * cv_iterations,
+            [1.0] * cv_iterations,
+            [60] * cv_iterations,
+            [0.5] * cv_iterations,
+            [60] * cv_iterations,
             [0.5] * cv_iterations,
         ]
         expected_df = pandas.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},

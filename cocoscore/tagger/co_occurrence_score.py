@@ -4,6 +4,7 @@ import itertools
 import numpy as np
 
 from .entity_mappers import get_serial_to_taxid_name_mapper
+from ..ml.fasttext_helpers import fasttext_fit_predict_default
 from ..ml.tools import get_uniform, get_log_uniform
 from ..tools.file_tools import get_file_handle
 
@@ -327,14 +328,15 @@ def co_occurrence_score_string(matches_file_path, entities_file, entity_type, do
 
 def cocoscore_cv_independent_associations(data_df,
                                           param_dict,
-                                          fasttext_function,
+                                          fasttext_function=
+                                          lambda train, valid: fasttext_fit_predict_default(train, valid),
                                           cv_folds=5,
                                           entity_columns=('entity1', 'entity2'),
                                           random_state=None,
                                           ):
     """
     A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
-    CV fold and returns training and validation AUROC & AUPRC for each fold, mean and standard variation of
+    CV fold and returns training and validation AUROC for each fold, mean and standard variation of
     AUROC & AUPRC across folds along with various other dataset statistics.
 
     :param data_df: the DataFrame to be split up into CV folds
@@ -348,6 +350,7 @@ def cocoscore_cv_independent_associations(data_df,
     :return: a pandas DataFrame with cross validation results
     """
     # see fasttext_cv_independent_associations
-    # run fasttext_function on sentence subset (move CV train/validation logic to separate function that to be used here
+    # run fasttext_function on sentence subset (move CV train/validation logic to separate function that is to be
+    #   used here); can this be given as a default argument
     # run distance scoring on paragraph/document subset
     pass
