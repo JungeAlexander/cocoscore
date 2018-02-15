@@ -1,33 +1,16 @@
+import gzip
+import os
+import subprocess
+from statistics import mean, stdev
+
+import numpy as np
+import pandas as pd
+from gensim import utils
+from sklearn.metrics import roc_auc_score
+
+from ml.tools import get_uniform_int, get_log_uniform
 from .cv import compute_cv_fold_stats, cv_independent_associations
 from ..tools.file_tools import get_file_handle
-from gensim import utils
-import gzip
-import numpy as np
-import os
-import pandas as pd
-from sklearn.metrics import roc_auc_score
-from statistics import mean, stdev
-import subprocess
-
-
-def get_uniform(low, high, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: float('%.3g' % random_state.uniform(low, high))
-
-
-def get_uniform_int(low, high, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: random_state.randint(low, high)
-
-
-def get_log_uniform(low, high, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: float('%.3g' % np.power(10, random_state.uniform(low, high)))
-
-
-def get_discrete_uniform(values, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: values[random_state.randint(len(values))]
 
 
 def get_hyperparameter_distributions(random_seed=None):

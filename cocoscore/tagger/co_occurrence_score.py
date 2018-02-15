@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 
 from .entity_mappers import get_serial_to_taxid_name_mapper
-from ..ml.fasttext_helpers import get_log_uniform, get_uniform
+from ml.tools import get_uniform, get_log_uniform
 from ..tools.file_tools import get_file_handle
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
