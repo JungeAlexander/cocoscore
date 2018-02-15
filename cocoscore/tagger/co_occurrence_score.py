@@ -1,7 +1,10 @@
 import collections
 import itertools
 
+import numpy as np
+
 from .entity_mappers import get_serial_to_taxid_name_mapper
+from ..ml.fasttext_helpers import get_log_uniform, get_uniform
 from ..tools.file_tools import get_file_handle
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
@@ -12,7 +15,18 @@ def get_hyperparameter_distributions(random_seed=None):
     :param random_seed: int to seed numpy RandomState to use while initiating parameter distributions to sample from
     :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
     """
-    pass
+    if random_seed is None:
+        seeds = [13, 24, 43, 56]
+    else:
+        random_state = np.random.RandomState(random_seed)
+        seeds = random_state.randint(100000, size=4)
+    param_dict = {
+        'document_weight': get_uniform(0, 10, seeds[0]),
+        'paragraph_weight': get_uniform(0, 10, seeds[1]),
+        'sentence_weight': get_uniform(0, 10, seeds[2]),
+        'weighting_exponent': get_log_uniform(-3, 0, seeds[3]),
+    }
+    return param_dict
 
 
 def get_entity_pairs(type_name_set, first_type, second_type):
