@@ -5,6 +5,7 @@ import unittest
 
 import cocoscore.ml.cv as cv
 import cocoscore.ml.fasttext_helpers as fth
+import cocoscore.tagger.co_occurrence_score as cos
 import cocoscore.tools.data_tools as data_tools
 
 
@@ -125,29 +126,57 @@ class CVTest(unittest.TestCase):
                 except AssertionError:
                     attempt += 1
 
-    def test_random_parameter_sampler_reproducibility(self):
+    def test_random_fth_parameter_sampler_reproducibility(self):
         dist1 = fth.get_hyperparameter_distributions()
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions()
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
         self.assertEqual(sample1, sample2)
 
-    def test_random_parameter_sampler_reproducibility_seed_argument(self):
+    def test_random_fth_parameter_sampler_reproducibility_seed_argument(self):
         dist1 = fth.get_hyperparameter_distributions(1)
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions(1)
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
         self.assertEqual(sample1, sample2)
 
-    def test_random_parameter_sampler_random_seed_argument(self):
+    def test_random_fth_parameter_sampler_random_seed_argument(self):
         dist1 = fth.get_hyperparameter_distributions(1)
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions(12)
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
         self.assertNotEqual(sample1, sample2)
 
-    def test_random_parameter_sampler_random(self):
+    def test_random_fth_parameter_sampler_random(self):
         dist = fth.get_hyperparameter_distributions()
+        generator = cv.get_random_parameter_sampler(dist, 3)
+        sample1 = generator.__next__()
+        sample2 = generator.__next__()
+        self.assertNotEqual(sample1, sample2)
+
+    def test_random_cos_parameter_sampler_reproducibility(self):
+        dist1 = cos.get_hyperparameter_distributions()
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = cos.get_hyperparameter_distributions()
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertEqual(sample1, sample2)
+
+    def test_random_cos_parameter_sampler_reproducibility_seed_argument(self):
+        dist1 = cos.get_hyperparameter_distributions(1)
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = cos.get_hyperparameter_distributions(1)
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertEqual(sample1, sample2)
+
+    def test_random_cos_parameter_sampler_random_seed_argument(self):
+        dist1 = cos.get_hyperparameter_distributions(1)
+        sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
+        dist2 = fth.get_hyperparameter_distributions(12)
+        sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
+        self.assertNotEqual(sample1, sample2)
+
+    def test_random_cos_parameter_sampler_random(self):
+        dist = cos.get_hyperparameter_distributions()
         generator = cv.get_random_parameter_sampler(dist, 3)
         sample1 = generator.__next__()
         sample2 = generator.__next__()
