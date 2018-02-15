@@ -8,8 +8,8 @@ import pandas as pd
 from gensim import utils
 from sklearn.metrics import roc_auc_score
 
-from ml.tools import get_uniform_int, get_log_uniform
 from .cv import compute_cv_fold_stats, cv_independent_associations
+from .tools import get_uniform_int, get_log_uniform
 from ..tools.file_tools import get_file_handle
 
 
