@@ -167,8 +167,8 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
         fasttext_predict(model_file, train_path, fasttext_path, train_prob_file_path)
         fasttext_predict(model_file, test_path, fasttext_path, test_prob_file_path)
         os.remove(model_file)
-        train_roc, _ = _compute_auroc(train_path, train_prob_file_path)
-        test_roc, _ = _compute_auroc(test_path, test_prob_file_path)
+        train_roc, train_scores = _compute_auroc(train_path, train_prob_file_path)
+        test_roc, test_scores = _compute_auroc(test_path, test_prob_file_path)
     except subprocess.CalledProcessError:
         # fastText may fail (e.g. segfault) for some parameter combinations
         raise IOError('fasttext failed in _fasttext_fit_predict.')
@@ -177,7 +177,7 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
         os.remove(test_path)
         os.remove(train_prob_file_path)
         os.remove(test_prob_file_path)
-    return train_roc, test_roc
+    return train_roc, train_scores, test_roc, test_scores
 
 
 def _compute_auroc(dataset_file_path, prob_file_path):
@@ -226,15 +226,15 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
         train_df = data_df.iloc[train_indices, :]
         test_df = data_df.iloc[test_indices, :]
         try:
-            train_roc, test_roc = _fasttext_fit_predict(train_df['text'].str.lower(),
-                                                        get_fasttext_classes(train_df),
-                                                        test_df['text'].str.lower(),
-                                                        get_fasttext_classes(test_df),
-                                                        param_dict,
-                                                        fasttext_path,
-                                                        thread,
-                                                        compress_model,
-                                                        pretrained_vectors_path)
+            train_roc, _, test_roc, _ = _fasttext_fit_predict(train_df['text'].str.lower(),
+                                                              get_fasttext_classes(train_df),
+                                                              test_df['text'].str.lower(),
+                                                              get_fasttext_classes(test_df),
+                                                              param_dict,
+                                                              fasttext_path,
+                                                              thread,
+                                                              compress_model,
+                                                              pretrained_vectors_path)
             train_rocs.append(train_roc)
             test_rocs.append(test_roc)
         except IOError:
