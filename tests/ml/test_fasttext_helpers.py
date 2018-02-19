@@ -138,7 +138,5 @@ class CVTest(unittest.TestCase):
                                    columns=expected_col_names)
         assert_frame_equal(cv_results, expected_df)
 
-
-
 if __name__ == '__main__':
     unittest.main()
