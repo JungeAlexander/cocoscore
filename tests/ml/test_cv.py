@@ -281,8 +281,8 @@ class CVTest(unittest.TestCase):
         cv_iterations = 2
 
         def cv_function(data_df, params, random_state):
-            return cos.cocoscore_cv_independent_associations(data_df, params,
-                                                             cv_folds=cv_folds, random_state=random_state)
+            return cos.cv_independent_associations(data_df, params,
+                                                   cv_folds=cv_folds, random_state=random_state)
 
         test_df = data_tools.load_data_frame(self.cos_cv_test_path)
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
