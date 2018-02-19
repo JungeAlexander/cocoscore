@@ -167,8 +167,8 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
         fasttext_predict(model_file, train_path, fasttext_path, train_prob_file_path)
         fasttext_predict(model_file, test_path, fasttext_path, test_prob_file_path)
         os.remove(model_file)
-        train_roc = _compute_auroc(train_path, train_prob_file_path)
-        test_roc = _compute_auroc(test_path, test_prob_file_path)
+        train_roc, _ = _compute_auroc(train_path, train_prob_file_path)
+        test_roc, _ = _compute_auroc(test_path, test_prob_file_path)
     except subprocess.CalledProcessError:
         # fastText may fail (e.g. segfault) for some parameter combinations
         raise IOError('fasttext failed in _fasttext_fit_predict.')
@@ -184,7 +184,7 @@ def _compute_auroc(dataset_file_path, prob_file_path):
     labels = load_labels(dataset_file_path)
     predicted = load_fasttext_class_probabilities(prob_file_path)
     roc = roc_auc_score(labels, predicted)
-    return roc
+    return roc, predicted
 
 
 def get_fasttext_classes(dataframe):
