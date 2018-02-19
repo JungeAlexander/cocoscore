@@ -276,7 +276,7 @@ class CVTest(unittest.TestCase):
         assert_frame_equal(results_test_df, expected_test_df)
 
     def test_cos_random_cv(self):
-        paragraph_score = 3
+        paragraph_weight = 3
         cv_folds = 2
         cv_iterations = 2
 
@@ -286,7 +286,7 @@ class CVTest(unittest.TestCase):
 
         test_df = data_tools.load_data_frame(self.cos_cv_test_path)
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
-        cv_results = cv.random_cv(test_df, cv_function, cv_iterations, {'paragraph_score': paragraph_score},
+        cv_results = cv.random_cv(test_df, cv_function, cv_iterations, {'paragraph_weight': paragraph_weight},
                                   cos.get_hyperparameter_distributions(), 3)
 
         expected_col_names = [
@@ -336,7 +336,7 @@ class CVTest(unittest.TestCase):
 
         expected_values = [
             [.111] * cv_iterations,
-            [paragraph_score] * cv_iterations,
+            [paragraph_weight] * cv_iterations,
             [.111] * cv_iterations,
             [.222] * cv_iterations,
             [1.0] * cv_iterations,
