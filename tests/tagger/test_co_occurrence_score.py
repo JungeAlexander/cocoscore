@@ -1,8 +1,13 @@
 import unittest
 
 import numpy
+import pandas
+
+from pandas.util.testing import assert_frame_equal
+
 
 import cocoscore.tagger.co_occurrence_score as co_occurrence_score
+import cocoscore.tools.data_tools as dt
 
 
 def assert_deep_almost_equal(test_case, expected, actual, *args, **kwargs):
@@ -67,6 +72,8 @@ class CooccurrenceTest(unittest.TestCase):
     entity_file_path = 'tests/tagger/entities2.tsv.gz'
     entity_fantasy_types_file_path = 'tests/tagger/entities2_fantasy_types.tsv.gz'
     entity_file_same_type_path = 'tests/tagger/entities2_same_type.tsv.gz'
+
+    cos_cv_test_path = 'tests/ml/cos_simple_cv.txt'
 
     def test_load_sentence_scores(self):
         sentence_scores = co_occurrence_score.load_score_file(self.sentence_score_file_path)
@@ -744,3 +751,58 @@ class CooccurrenceTest(unittest.TestCase):
         self.assertAlmostEqual(s_a_d, scores[('--D', 'A')])
         self.assertAlmostEqual(s_b_c, scores[('B', 'C')])
         self.assertAlmostEqual(s_d_b, scores[('--D', 'B')])
+
+    def test_cocoscore_cv_independent_associations(self):
+        sentence_weight = 1
+        paragraph_weight = 1
+        document_weight = 1
+        cv_folds = 2
+        test_df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
+        cv_results = co_occurrence_score.cocoscore_cv_independent_associations(test_df,
+                                                                               {'sentence_weight': sentence_weight,
+                                                                                'paragraph_weight': paragraph_weight,
+                                                                                'document_weight': document_weight,
+                                                                                },
+                                                                               cv_folds=cv_folds,
+                                                                               random_state=numpy.random.RandomState(3))
+        expected_col_names = [
+            'mean_test_score',
+            'stdev_test_score',
+            'mean_train_score',
+            'stdev_train_score',
+            'split_0_test_score',
+            'split_0_train_score',
+            'split_0_n_test',
+            'split_0_pos_test',
+            'split_0_n_train',
+            'split_0_pos_train',
+            'split_1_test_score',
+            'split_1_train_score',
+            'split_1_n_test',
+            'split_1_pos_test',
+            'split_1_n_train',
+            'split_1_pos_train',
+        ]
+        cv_runs = 1
+        expected_values = [
+            [1.0] * cv_runs,
+            [0.0] * cv_runs,
+            [1.0] * cv_runs,
+            [0.0] * cv_runs,
+            [1.0] * cv_runs,
+            [1.0] * cv_runs,
+            [60] * cv_runs,
+            [0.5] * cv_runs,
+            [60] * cv_runs,
+            [0.5] * cv_runs,
+            [1.0] * cv_runs,
+            [1.0] * cv_runs,
+            [60] * cv_runs,
+            [0.5] * cv_runs,
+            [60] * cv_runs,
+            [0.5] * cv_runs,
+        ]
+        expected_df = pandas.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
+                                       columns=expected_col_names)
+        assert_frame_equal(cv_results, expected_df)
