@@ -7,6 +7,8 @@ from statistics import mean, stdev
 import numpy as np
 import pandas as pd
 
+from sklearn import metrics
+
 from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
 from ..ml.distance_scores import reciprocal_distance
@@ -332,6 +334,23 @@ def co_occurrence_score_string(matches_file_path, entities_file, entity_type, do
                                ignore_scores=True, silent=silent)
 
 
+def _compute_auroc(score_dict, data_frame):
+    scores = []
+    classes = []
+    for _, group_df in data_frame.groupby(['entity1', 'entity2', 'class']):
+        if group_df.ndim == 1:
+            entity1, entity2, _class = group_df
+        else:
+            entity1, entity2, _class = group_df.iloc[0, :]
+        entity_pair = tuple(sorted((entity1, entity2)))
+        if entity_pair in score_dict:
+            scores.append(score_dict[entity_pair])
+        else:
+            raise ValueError(f'Missing score for entity pair {entity_pair}.')
+        classes.append(_class)
+    return metrics.roc_auc_score(classes, scores)
+
+
 def cv_independent_associations(data_df,
                                 param_dict,
                                 fasttext_function=
@@ -391,18 +410,27 @@ def cv_independent_associations(data_df,
             train_df.loc[non_sentence_rows_train, 'predicted'] = train_scores
             test_df.loc[non_sentence_rows_test, 'predicted'] = test_scores
 
-            # write combined score files for sentences/documents/paragraphs
+            # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
             score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
             cv_df = pd.concat([train_df, test_df], axis=0)
             with gzip.open(score_file_path, 'wt') as test_out:
                 cv_df.to_csv(test_out, sep='\t', header=False, index=False,
                              columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
-
-            # TODO compute cocoscores as well as training and validation AUROC - do two score files and cocoscore runs?
-            # remember to use parameters and other args to this
-            os.remove(score_file_path)
-
-            train_roc, test_roc = 0, 0
+            try:
+                score_dict = co_occurrence_score(matches_file_path=None,
+                                                 score_file_path=score_file_path,
+                                                 entities_file=None,
+                                                 first_type=0,
+                                                 second_type=0,
+                                                 ignore_scores=False,
+                                                 silent=True,
+                                                 **param_dict,
+                                                 )
+            finally:
+                os.remove(score_file_path)
+            train_roc = _compute_auroc(score_dict, train_df)
+            test_roc = _compute_auroc(score_dict, train_df)
+            # TODO get right of 'test' and continue below
             train_rocs.append(train_roc)
             test_rocs.append(test_roc)
         except IOError:
