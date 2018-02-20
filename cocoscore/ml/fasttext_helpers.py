@@ -120,18 +120,25 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
         fout.write(predictions)
 
 
-def fasttext_fit_predict_default(train_df, test_df):
+def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005, wordngrams=2, ws=5,
+                                 bucket=2000000):
     """
     Fit and predict fastText with default parameters for given training and test set.
 
     :param train_df: Training dataframe as returned by tools.data_tools.load_data_frame()
     :param test_df: Test dataframe as returned by tools.data_tools.load_data_frame()
+    :param dim: fasttext parameter
+    :param epochs: fasttext parameter
+    :param lr: fasttext parameter
+    :param wordngrams: fasttext parameter
+    :param ws: fasttext parameter
+    :param bucket: fasttext parameter
     :return: tuple of training AUROC, test AUROC
     """
     fasttext_path = 'fasttext'
     thread = 1
     compress_model = True
-    param_dict = {'-dim': 300, '-epoch': 50, '-lr': 0.005, '-wordNgrams': 2, '-ws': 5}
+    param_dict = {'-dim': dim, '-epoch': epochs, '-lr': lr, '-wordNgrams': wordngrams, '-ws': ws, '-bucket': bucket}
     pretrained_vectors_path = None
     return _fasttext_fit_predict(train_df['text'].str.lower(),
                                  get_fasttext_classes(train_df),

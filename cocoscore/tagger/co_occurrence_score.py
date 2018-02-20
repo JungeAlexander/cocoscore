@@ -353,23 +353,36 @@ def _compute_auroc(score_dict, data_frame):
 
 def cv_independent_associations(data_df,
                                 param_dict,
-                                fasttext_function=
-                                          lambda train, valid: fasttext_fit_predict_default(train, valid),
-                                match_distance_function= lambda d: reciprocal_distance(d),
+                                fasttext_function=lambda train, valid, epochs, dim, bucket:
+                                fasttext_fit_predict_default(train, valid, epochs=epochs, dim=dim, bucket=bucket),
+                                fasttext_epochs=50,
+                                fasttext_dim=20,
+                                fasttext_bucket=1000,
+                                match_distance_function=lambda d: reciprocal_distance(d),
                                 cv_folds=5,
                                 entity_columns=('entity1', 'entity2'),
                                 random_state=None,
+
                                 ):
     """
     A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
     CV fold and returns training and validation AUROC for each fold, mean and standard variation of
-    AUROC & AUPRC across folds along with various other dataset statistics.
+    AUROC across folds along with various other dataset statistics.
 
-    :param data_df: the DataFrame to be split up into CV folds
+    :param data_df: the DataFrame to be split into CV folds
     :param param_dict: dictionary mapping co-occurrence score hyperparameters to their values
-    :param fasttext_function: wrapper function to run fasttext on a cross-validation fold.
-           Takes two arguments: training dataset as pandas DataFrame; validation dataset as pandas DataFrame.
+    :param fasttext_function: function to run fasttext on a cross-validation fold.
+           Takes three arguments: training dataset as pandas DataFrame; validation dataset as pandas DataFrame;
+           number of fasttext epochs to perform.
            Returns: predicted scores for each instance.
+    :param fasttext_epochs: int, number of fasttext epochs to perform. This is primarily used for testing and should
+    not be changed in production.
+    :param fasttext_dim: int, fasttext vector dimensionality. This is primarily used for testing and should
+    not be changed in production.
+    :param fasttext_bucket: int, number of fasttext buckets. This is primarily used for testing and should
+    not be changed in production.
+    :param match_distance_function: function to score match distances. Takes a pandas DataFrame loaded using
+    tools.data_tools.load_data_frame(..., match_distance=True). Returns a pandas Series of distance scores.
     :param cv_folds: int, the number of CV folds to generate
     :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
     :param random_state: numpy RandomState to use while splitting into folds
@@ -386,6 +399,7 @@ def cv_independent_associations(data_df,
 
         train_df = data_df.iloc[train_indices, :]
         test_df = data_df.iloc[test_indices, :]
+        score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
         try:
             sentence_rows_train = np.logical_and(train_df.loc[:, 'sentence'] != -1,
                                                  train_df.loc[:, 'paragraph'] != -1)
@@ -394,7 +408,9 @@ def cv_independent_associations(data_df,
             sentence_train_df = train_df.loc[sentence_rows_train, :]
             sentence_test_df = test_df.loc[sentence_rows_test, :]
             if len(sentence_train_df) > 0:
-                _, train_scores, _, test_scores = fasttext_function(sentence_train_df, sentence_test_df)
+                _, train_scores, _, test_scores = fasttext_function(sentence_train_df, sentence_test_df,
+                                                                    epochs=fasttext_epochs, dim=fasttext_dim,
+                                                                    bucket=fasttext_bucket)
             else:
                 train_scores = [0.0] * len(sentence_train_df)
                 test_scores = [0.0] * len(sentence_train_df)
@@ -411,26 +427,23 @@ def cv_independent_associations(data_df,
             test_df.loc[non_sentence_rows_test, 'predicted'] = test_scores
 
             # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
-            score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
             cv_df = pd.concat([train_df, test_df], axis=0)
             with gzip.open(score_file_path, 'wt') as test_out:
                 cv_df.to_csv(test_out, sep='\t', header=False, index=False,
                              columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
-            try:
-                score_dict = co_occurrence_score(matches_file_path=None,
-                                                 score_file_path=score_file_path,
-                                                 entities_file=None,
-                                                 first_type=0,
-                                                 second_type=0,
-                                                 ignore_scores=False,
-                                                 silent=True,
-                                                 **param_dict,
-                                                 )
-            finally:
-                os.remove(score_file_path)
+
+            score_dict = co_occurrence_score(matches_file_path=None,
+                                             score_file_path=score_file_path,
+                                             entities_file=None,
+                                             first_type=0,
+                                             second_type=0,
+                                             ignore_scores=False,
+                                             silent=True,
+                                             **param_dict,
+                                             )
+
             train_roc = _compute_auroc(score_dict, train_df)
-            test_roc = _compute_auroc(score_dict, train_df)
-            # TODO get right of 'test' and continue below
+            test_roc = _compute_auroc(score_dict, test_df)
             train_rocs.append(train_roc)
             test_rocs.append(test_roc)
         except IOError:
@@ -449,6 +462,9 @@ def cv_independent_associations(data_df,
                 results_df['split_' + cv_fold + '_n_train'] = [np.nan]
                 results_df['split_' + cv_fold + '_pos_train'] = [np.nan]
             return results_df
+        finally:
+            if os.path.isfile(score_file_path):
+                os.remove(score_file_path)
 
     # aggregate performance measures and fold statistics in result DataFrame
     results_df = pd.DataFrame()

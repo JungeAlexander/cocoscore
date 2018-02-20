@@ -761,11 +761,14 @@ class CooccurrenceTest(unittest.TestCase):
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
         cv_results = co_occurrence_score.cv_independent_associations(test_df,
                                                                      {'sentence_weight': sentence_weight,
-                                                                                'paragraph_weight': paragraph_weight,
-                                                                                'document_weight': document_weight,
-                                                                                },
+                                                                      'paragraph_weight': paragraph_weight,
+                                                                      'document_weight': document_weight,
+                                                                      },
                                                                      cv_folds=cv_folds,
-                                                                     random_state=numpy.random.RandomState(3))
+                                                                     random_state=numpy.random.RandomState(0),
+                                                                     fasttext_epochs=5,
+                                                                     fasttext_bucket=1000,
+                                                                     fasttext_dim=20)
         expected_col_names = [
             'mean_test_score',
             'stdev_test_score',
