@@ -1,10 +1,41 @@
 import collections
+import gzip
 import itertools
+import os
+from statistics import mean, stdev
+
+import numpy as np
+import pandas as pd
+
+from sklearn import metrics
 
 from .entity_mappers import get_serial_to_taxid_name_mapper
+from ..ml import cv
+from ..ml.distance_scores import reciprocal_distance
+from ..ml.fasttext_helpers import fasttext_fit_predict_default
+from ..ml.tools import get_uniform, get_log_uniform
 from ..tools.file_tools import get_file_handle
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
+
+
+def get_hyperparameter_distributions(random_seed=None):
+    """
+    :param random_seed: int to seed numpy RandomState to use while initiating parameter distributions to sample from
+    :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
+    """
+    if random_seed is None:
+        seeds = [13, 24, 43, 56]
+    else:
+        random_state = np.random.RandomState(random_seed)
+        seeds = random_state.randint(100000, size=4)
+    param_dict = {
+        'document_weight': get_uniform(0, 10, seeds[0]),
+        'paragraph_weight': get_uniform(0, 10, seeds[1]),
+        'sentence_weight': get_uniform(0, 10, seeds[2]),
+        'weighting_exponent': get_log_uniform(-3, 0, seeds[3]),
+    }
+    return param_dict
 
 
 def get_entity_pairs(type_name_set, first_type, second_type):
@@ -301,3 +332,152 @@ def co_occurrence_score_string(matches_file_path, entities_file, entity_type, do
                                document_weight=document_weight, paragraph_weight=paragraph_weight,
                                sentence_weight=sentence_weight, weighting_exponent=weighting_exponent,
                                ignore_scores=True, silent=silent)
+
+
+def _compute_auroc(score_dict, data_frame):
+    scores = []
+    classes = []
+    for _, group_df in data_frame.groupby(['entity1', 'entity2', 'class']):
+        if group_df.ndim == 1:
+            entity1, entity2, _class = group_df.loc[['entity1', 'entity2', 'class']]
+        else:
+            entity1, entity2, _class = group_df.iloc[0, :].loc[['entity1', 'entity2', 'class']]
+        entity_pair = tuple(sorted((entity1, entity2)))
+        if entity_pair in score_dict:
+            scores.append(score_dict[entity_pair])
+        else:
+            raise ValueError(f'Missing score for entity pair {entity_pair}.')
+        classes.append(_class)
+    return metrics.roc_auc_score(classes, scores)
+
+
+def cv_independent_associations(data_df,
+                                param_dict,
+                                fasttext_function=lambda train, valid, epochs, dim, bucket:
+                                fasttext_fit_predict_default(train, valid, epochs=epochs, dim=dim, bucket=bucket),
+                                fasttext_epochs=50,
+                                fasttext_dim=20,
+                                fasttext_bucket=1000,
+                                match_distance_function=lambda d: reciprocal_distance(d),
+                                cv_folds=5,
+                                entity_columns=('entity1', 'entity2'),
+                                random_state=None,
+
+                                ):
+    """
+    A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
+    CV fold and returns training and validation AUROC for each fold, mean and standard variation of
+    AUROC across folds along with various other dataset statistics.
+
+    :param data_df: the DataFrame to be split into CV folds
+    :param param_dict: dictionary mapping co-occurrence score hyperparameters to their values
+    :param fasttext_function: function to run fasttext on a cross-validation fold.
+           Takes three arguments: training dataset as pandas DataFrame; validation dataset as pandas DataFrame;
+           number of fasttext epochs to perform.
+           Returns: predicted scores for each instance.
+    :param fasttext_epochs: int, number of fasttext epochs to perform. This is primarily used for testing and should
+    not be changed in production.
+    :param fasttext_dim: int, fasttext vector dimensionality. This is primarily used for testing and should
+    not be changed in production.
+    :param fasttext_bucket: int, number of fasttext buckets. This is primarily used for testing and should
+    not be changed in production.
+    :param match_distance_function: function to score match distances. Takes a pandas DataFrame loaded using
+    tools.data_tools.load_data_frame(..., match_distance=True). Returns a pandas Series of distance scores.
+    :param cv_folds: int, the number of CV folds to generate
+    :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
+    :param random_state: numpy RandomState to use while splitting into folds
+    :return: a pandas DataFrame with cross validation results
+    """
+    cv_sets = list(cv.cv_independent_associations(data_df, cv_folds=cv_folds, random_state=random_state,
+                                                  entity_columns=entity_columns))
+    cv_stats_df = cv.compute_cv_fold_stats(data_df, cv_sets)
+
+    train_rocs = []
+    test_rocs = []
+    for cv_iter, train_test_indices in enumerate(cv_sets):
+        train_indices, test_indices = train_test_indices
+
+        train_df = data_df.iloc[train_indices, :].copy()
+        test_df = data_df.iloc[test_indices, :].copy()
+        score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
+        try:
+            sentence_rows_train = np.logical_and(train_df.loc[:, 'sentence'] != -1,
+                                                 train_df.loc[:, 'paragraph'] != -1)
+            sentence_rows_test = np.logical_and(test_df.loc[:, 'sentence'] != -1,
+                                                test_df.loc[:, 'paragraph'] != -1)
+            sentence_train_df = train_df.loc[sentence_rows_train, :]
+            sentence_test_df = test_df.loc[sentence_rows_test, :]
+            if len(sentence_train_df) > 0:
+                _, train_scores, _, test_scores = fasttext_function(sentence_train_df, sentence_test_df,
+                                                                    epochs=fasttext_epochs, dim=fasttext_dim,
+                                                                    bucket=fasttext_bucket)
+            else:
+                train_scores = [0.0] * len(sentence_train_df)
+                test_scores = [0.0] * len(sentence_train_df)
+            train_df.loc[sentence_rows_train, 'predicted'] = train_scores
+            test_df.loc[sentence_rows_test, 'predicted'] = test_scores
+
+            non_sentence_rows_train = train_df.loc[:, 'sentence'] == -1
+            non_sentence_rows_test = test_df.loc[:, 'sentence'] == -1
+            non_sentence_train_df = train_df.loc[non_sentence_rows_train, :]
+            non_sentence_test_df = test_df.loc[non_sentence_rows_test, :]
+            train_scores = match_distance_function(non_sentence_train_df)
+            test_scores = match_distance_function(non_sentence_test_df)
+            train_df.loc[non_sentence_rows_train, 'predicted'] = train_scores
+            test_df.loc[non_sentence_rows_test, 'predicted'] = test_scores
+
+            # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
+            cv_df = pd.concat([train_df, test_df], axis=0)
+            with gzip.open(score_file_path, 'wt') as test_out:
+                cv_df.to_csv(test_out, sep='\t', header=False, index=False,
+                             columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
+
+            score_dict = co_occurrence_score(matches_file_path=None,
+                                             score_file_path=score_file_path,
+                                             entities_file=None,
+                                             first_type=0,
+                                             second_type=0,
+                                             ignore_scores=False,
+                                             silent=True,
+                                             **param_dict,
+                                             )
+
+            train_roc = _compute_auroc(score_dict, train_df)
+            test_roc = _compute_auroc(score_dict, test_df)
+            train_rocs.append(train_roc)
+            test_rocs.append(test_roc)
+        except IOError:
+            # return missing results if fasttext failed for at least one CV fold
+            results_df = pd.DataFrame()
+            results_df['mean_test_score'] = [np.nan]
+            results_df['stdev_test_score'] = [np.nan]
+            results_df['mean_train_score'] = [np.nan]
+            results_df['stdev_train_score'] = [np.nan]
+            for stats_row in cv_stats_df.itertuples():
+                cv_fold = str(stats_row.fold)
+                results_df['split_' + cv_fold + '_test_score'] = [np.nan]
+                results_df['split_' + cv_fold + '_train_score'] = [np.nan]
+                results_df['split_' + cv_fold + '_n_test'] = [np.nan]
+                results_df['split_' + cv_fold + '_pos_test'] = [np.nan]
+                results_df['split_' + cv_fold + '_n_train'] = [np.nan]
+                results_df['split_' + cv_fold + '_pos_train'] = [np.nan]
+            return results_df
+        finally:
+            if os.path.isfile(score_file_path):
+                os.remove(score_file_path)
+
+    # aggregate performance measures and fold statistics in result DataFrame
+    results_df = pd.DataFrame()
+    results_df['mean_test_score'] = [mean(test_rocs)]
+    results_df['stdev_test_score'] = [stdev(test_rocs)]
+    results_df['mean_train_score'] = [mean(train_rocs)]
+    results_df['stdev_train_score'] = [stdev(train_rocs)]
+    for stats_row in cv_stats_df.itertuples():
+        cv_fold = str(stats_row.fold)
+        results_df['split_' + cv_fold + '_test_score'] = [test_rocs[int(cv_fold)]]
+        results_df['split_' + cv_fold + '_train_score'] = [test_rocs[int(cv_fold)]]
+        results_df['split_' + cv_fold + '_n_test'] = [stats_row.n_test]
+        results_df['split_' + cv_fold + '_pos_test'] = [stats_row.pos_test]
+        results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train]
+        results_df['split_' + cv_fold + '_pos_train'] = [stats_row.pos_train]
+    return results_df

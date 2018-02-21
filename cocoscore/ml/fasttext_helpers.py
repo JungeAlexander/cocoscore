@@ -1,33 +1,16 @@
-from .cv import compute_cv_fold_stats, cv_independent_associations
-from ..tools.file_tools import get_file_handle
-from gensim import utils
 import gzip
-import numpy as np
 import os
-import pandas as pd
-from sklearn.metrics import roc_auc_score
-from statistics import mean, stdev
 import subprocess
+from statistics import mean, stdev
 
+import numpy as np
+import pandas as pd
+from gensim import utils
+from sklearn.metrics import roc_auc_score
 
-def get_uniform(low, high, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: float('%.3g' % random_state.uniform(low, high))
-
-
-def get_uniform_int(low, high, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: random_state.randint(low, high)
-
-
-def get_log_uniform(low, high, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: float('%.3g' % np.power(10, random_state.uniform(low, high)))
-
-
-def get_discrete_uniform(values, random_seed):
-    random_state = np.random.RandomState(random_seed)
-    return lambda: values[random_state.randint(len(values))]
+from .cv import compute_cv_fold_stats, cv_independent_associations
+from .tools import get_uniform_int, get_log_uniform
+from ..tools.file_tools import get_file_handle
 
 
 def get_hyperparameter_distributions(random_seed=None):
@@ -137,11 +120,82 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
         fout.write(predictions)
 
 
+def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005, wordngrams=2, ws=5,
+                                 bucket=2000000):
+    """
+    Fit and predict fastText with default parameters for given training and test set.
+
+    :param train_df: Training dataframe as returned by tools.data_tools.load_data_frame()
+    :param test_df: Test dataframe as returned by tools.data_tools.load_data_frame()
+    :param dim: fasttext parameter
+    :param epochs: fasttext parameter
+    :param lr: fasttext parameter
+    :param wordngrams: fasttext parameter
+    :param ws: fasttext parameter
+    :param bucket: fasttext parameter
+    :return: tuple of training AUROC, test AUROC
+    """
+    fasttext_path = 'fasttext'
+    thread = 1
+    compress_model = True
+    param_dict = {'-dim': dim, '-epoch': epochs, '-lr': lr, '-wordNgrams': wordngrams, '-ws': ws, '-bucket': bucket}
+    pretrained_vectors_path = None
+    return _fasttext_fit_predict(train_df['text'].str.lower(),
+                                 get_fasttext_classes(train_df),
+                                 test_df['text'].str.lower(),
+                                 get_fasttext_classes(test_df),
+                                 param_dict,
+                                 fasttext_path,
+                                 thread,
+                                 compress_model,
+                                 pretrained_vectors_path)
+
+
+def _fasttext_fit_predict(train_text_series, train_class_series,
+                          test_text_series, test_class_series,
+                          param_dict, fasttext_path, thread, compress_model,
+                          pretrained_vectors_path):
+    # manual printing to file as to_csv complains about space as separator and spaces within sentences
+    train_path = 'tmp_ft_train.txt'
+    test_path = 'tmp_ft_test.txt'
+    for curr_file, text_class in zip([train_path, test_path],
+                                     [(train_text_series, train_class_series),
+                                      (test_text_series, test_class_series)]):
+        with open(curr_file, 'wt', encoding='utf-8') as fout:
+            for text, _class in zip(*text_class):
+                fout.write(str(_class) + ' ' + str(text) + os.linesep)
+
+    train_prob_file_path = 'tmp_ft_train-prob_iter_'
+    test_prob_file_path = 'tmp_ft_test-prob_iter_'
+    try:
+        model_file = fasttext_fit(train_path, param_dict, fasttext_path, thread=thread,
+                                  compress_model=compress_model,
+                                  pretrained_vectors_path=pretrained_vectors_path)
+        fasttext_predict(model_file, train_path, fasttext_path, train_prob_file_path)
+        fasttext_predict(model_file, test_path, fasttext_path, test_prob_file_path)
+        os.remove(model_file)
+        train_roc, train_scores = _compute_auroc(train_path, train_prob_file_path)
+        test_roc, test_scores = _compute_auroc(test_path, test_prob_file_path)
+    except subprocess.CalledProcessError:
+        # fastText may fail (e.g. segfault) for some parameter combinations
+        raise IOError('fasttext failed in _fasttext_fit_predict.')
+    finally:
+        os.remove(train_path)
+        os.remove(test_path)
+        os.remove(train_prob_file_path)
+        os.remove(test_prob_file_path)
+    return train_roc, train_scores, test_roc, test_scores
+
+
 def _compute_auroc(dataset_file_path, prob_file_path):
     labels = load_labels(dataset_file_path)
     predicted = load_fasttext_class_probabilities(prob_file_path)
     roc = roc_auc_score(labels, predicted)
-    return roc
+    return roc, predicted
+
+
+def get_fasttext_classes(dataframe):
+    return dataframe['class'].apply(lambda c: '__label__' + str(c))
 
 
 def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_folds=5,
@@ -165,46 +219,33 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
     :param pretrained_vectors_path: str, path to pre-trained `.vec` file with word embeddings
     :return: a pandas DataFrame with cross_validation results
     """
-    cv_data_df = data_df.copy()  # copy needed beceause labels column needs to be changed later
-    cv_sets = list(cv_independent_associations(cv_data_df, cv_folds=cv_folds, random_state=random_state,
+    cv_sets = list(cv_independent_associations(data_df, cv_folds=cv_folds, random_state=random_state,
                                                entity_columns=entity_columns))
-    cv_stats_df = compute_cv_fold_stats(cv_data_df, cv_sets)
-    cv_data_df['class'] = cv_data_df['class'].apply(lambda c: '__label__' + str(c))
+    cv_stats_df = compute_cv_fold_stats(data_df, cv_sets)
 
     # write temporary files for each CV train and test fold
-    cv_train_test_file_pairs = []
+    # then run fasttext and compute AUROC on each fold
+    train_rocs = []
+    test_rocs = []
     for cv_iter, train_test_indices in enumerate(cv_sets):
         train_indices, test_indices = train_test_indices
 
-        train_df = cv_data_df.iloc[train_indices, :].loc[:, ['class', 'text']]
-        test_df = cv_data_df.iloc[test_indices, :].loc[:, ['class', 'text']]
-
-        # manual printing to file as to_csv complains about space as separator and spaces within sentences
-        train_path = 'cv_train_' + str(cv_iter) + '.txt'
-        test_path = 'cv_test_' + str(cv_iter) + '.txt'
-        for curr_file, curr_df in zip([train_path, test_path],
-                                      [train_df, test_df]):
-            with open(curr_file, 'wt', encoding='utf-8') as fout:
-                for row in curr_df.itertuples():
-                    fout.write(str(row[1]) + ' ' + str(row[2]) + os.linesep)
-        cv_train_test_file_pairs.append((train_path, test_path))
-
-    # run fasttext and compute AUROC on each fold
-    train_rocs = []
-    test_rocs = []
-    for i, train_test_path in enumerate(cv_train_test_file_pairs):
-        train_file_path, test_file_path = train_test_path
-        train_prob_file_path = 'train_predict-prob_iter_' + str(i) + '_'
-        test_prob_file_path = 'test_predict-prob_iter_' + str(i) + '_'
+        train_df = data_df.iloc[train_indices, :]
+        test_df = data_df.iloc[test_indices, :]
         try:
-            model_file = fasttext_fit(train_file_path, param_dict, fasttext_path, thread=thread,
-                                      compress_model=compress_model,
-                                      pretrained_vectors_path=pretrained_vectors_path)
-            fasttext_predict(model_file, train_file_path, fasttext_path, train_prob_file_path)
-            fasttext_predict(model_file, test_file_path, fasttext_path, test_prob_file_path)
-            os.remove(model_file)
-        except subprocess.CalledProcessError:
-            # fastText may fail (e.g. segfault) for some parameter combinations, return missing values if this happens
+            train_roc, _, test_roc, _ = _fasttext_fit_predict(train_df['text'].str.lower(),
+                                                              get_fasttext_classes(train_df),
+                                                              test_df['text'].str.lower(),
+                                                              get_fasttext_classes(test_df),
+                                                              param_dict,
+                                                              fasttext_path,
+                                                              thread,
+                                                              compress_model,
+                                                              pretrained_vectors_path)
+            train_rocs.append(train_roc)
+            test_rocs.append(test_roc)
+        except IOError:
+            # return missing results if fasttext failed for at least one CV fold
             results_df = pd.DataFrame()
             results_df['mean_test_score'] = [np.nan]
             results_df['stdev_test_score'] = [np.nan]
@@ -219,12 +260,6 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
                 results_df['split_' + cv_fold + '_n_train'] = [np.nan]
                 results_df['split_' + cv_fold + '_pos_train'] = [np.nan]
             return results_df
-        train_roc = _compute_auroc(train_file_path, train_prob_file_path)
-        test_roc = _compute_auroc(test_file_path, test_prob_file_path)
-        train_rocs.append(train_roc)
-        test_rocs.append(test_roc)
-        os.remove(train_prob_file_path)
-        os.remove(test_prob_file_path)
 
     # aggregate performance measures and fold statistics in result DataFrame
     results_df = pd.DataFrame()
@@ -240,12 +275,6 @@ def fasttext_cv_independent_associations(data_df, param_dict, fasttext_path, cv_
         results_df['split_' + cv_fold + '_pos_test'] = [stats_row.pos_test]
         results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train]
         results_df['split_' + cv_fold + '_pos_train'] = [stats_row.pos_train]
-
-    # delete temporarily created CV dataset files
-    for train_file, test_file in cv_train_test_file_pairs:
-        os.remove(train_file)
-        os.remove(test_file)
-
     return results_df
 
 
