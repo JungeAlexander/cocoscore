@@ -397,8 +397,8 @@ def cv_independent_associations(data_df,
     for cv_iter, train_test_indices in enumerate(cv_sets):
         train_indices, test_indices = train_test_indices
 
-        train_df = data_df.iloc[train_indices, :]
-        test_df = data_df.iloc[test_indices, :]
+        train_df = data_df.iloc[train_indices, :].copy()
+        test_df = data_df.iloc[test_indices, :].copy()
         score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
         try:
             sentence_rows_train = np.logical_and(train_df.loc[:, 'sentence'] != -1,
