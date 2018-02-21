@@ -285,7 +285,7 @@ class CVTest(unittest.TestCase):
                                                    cv_folds=cv_folds, random_state=random_state, fasttext_epochs=5,
                                                    fasttext_bucket=1000, fasttext_dim=20)
 
-        test_df = data_tools.load_data_frame(self.cos_cv_test_path)
+        test_df = data_tools.load_data_frame(self.cos_cv_test_path, match_distance=True)
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
         cv_results = cv.random_cv(test_df, cv_function, cv_iterations, {'paragraph_weight': paragraph_weight},
                                   cos.get_hyperparameter_distributions(), 3)
@@ -346,15 +346,15 @@ class CVTest(unittest.TestCase):
             [0.0] * cv_iterations,
             [1.0] * cv_iterations,
             [1.0] * cv_iterations,
-            [60] * cv_iterations,
+            [24] * cv_iterations,
             [0.5] * cv_iterations,
-            [60] * cv_iterations,
+            [24] * cv_iterations,
             [0.5] * cv_iterations,
             [1.0] * cv_iterations,
             [1.0] * cv_iterations,
-            [60] * cv_iterations,
+            [24] * cv_iterations,
             [0.5] * cv_iterations,
-            [60] * cv_iterations,
+            [24] * cv_iterations,
             [0.5] * cv_iterations,
         ]
         expected_df = pandas.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
