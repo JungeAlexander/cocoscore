@@ -339,9 +339,9 @@ def _compute_auroc(score_dict, data_frame):
     classes = []
     for _, group_df in data_frame.groupby(['entity1', 'entity2', 'class']):
         if group_df.ndim == 1:
-            entity1, entity2, _class = group_df
+            entity1, entity2, _class = group_df.loc[['entity1', 'entity2', 'class']]
         else:
-            entity1, entity2, _class = group_df.iloc[0, :]
+            entity1, entity2, _class = group_df.iloc[0, :].loc[['entity1', 'entity2', 'class']]
         entity_pair = tuple(sorted((entity1, entity2)))
         if entity_pair in score_dict:
             scores.append(score_dict[entity_pair])
