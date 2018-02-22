@@ -3,6 +3,7 @@ import gzip
 import itertools
 import os
 from statistics import mean, stdev
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -346,7 +347,8 @@ def _compute_auroc(score_dict, data_frame):
         if entity_pair in score_dict:
             scores.append(score_dict[entity_pair])
         else:
-            raise ValueError(f'Missing score for entity pair {entity_pair}.')
+            warnings.warn(f'Missing score for entity pair {entity_pair}.')
+            scores.append(0.0)
         classes.append(_class)
     return metrics.roc_auc_score(classes, scores)
 
