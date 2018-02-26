@@ -18,3 +18,14 @@ def reciprocal_distance(data_df):
     :returns a pandas Series of distance scores
     """
     return _distance_scorer(data_df, score_function=lambda x: 1/x)
+
+
+def constant_distance(data_df):
+    """
+    Returns a constant distance score of 1 for a given DataFrame of co-mentions.
+
+    :param data_df: pandas DataFrame, the data set loaded using
+    tools.data_tools.load_data_frame(..., match_distance=True)
+    :returns a pandas Series of distance scores
+    """
+    return _distance_scorer(data_df, score_function=lambda x: 1.0)
