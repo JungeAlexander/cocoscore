@@ -55,9 +55,8 @@ def cv_independent_entities(data_df, cv_folds=5, entity_columns=('entity1', 'ent
         # random seeding
         random_state = np.random.RandomState()
     if treat_entity_columns_separately:
-        for cv_pair in _cv_independent_entities_treated_separately(data_df, cv_folds, entity_columns, random_state):
-            yield cv_pair
-            return
+        yield from _cv_independent_entities_treated_separately(data_df, cv_folds, entity_columns, random_state)
+        return
     entities = data_df[entity_columns[0]].append(data_df[entity_columns[1]]).unique()
     entities.sort()
     random_state.shuffle(entities)
