@@ -76,9 +76,9 @@ def fasttext_fit(train_file_path, param_dict, fasttext_path, thread=1, compress_
     """
     train_call, compress_call = get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_path, thread,
                                                          pretrained_vectors_path=pretrained_vectors_path)
-    utils.check_output(args=train_call)
+    utils.check_output(args=train_call, stderr=subprocess.DEVNULL)
     if compress_model:
-        utils.check_output(args=compress_call)
+        utils.check_output(args=compress_call, stderr=subprocess.DEVNULL)
     model_file = model_path + '.bin'
     # remove auxiliary vectors file
     os.remove(model_path + '.vec')
@@ -115,7 +115,7 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
         output written to this file will always be gzipped
     """
     predict_call = get_fasttext_test_calls(test_file_path, fasttext_path, trained_model_path)
-    predictions = utils.check_output(args=predict_call)
+    predictions = utils.check_output(args=predict_call, stderr=subprocess.DEVNULL)
     with gzip.open(probability_file_path, 'wb') as fout:
         fout.write(predictions)
 
