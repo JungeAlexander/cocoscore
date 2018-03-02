@@ -211,10 +211,12 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
 
             pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight + \
                                 document_score * document_weight
-            pair_scores[(entity_1, entity_2)] += pair_score_update
-            pair_scores[entity_1] += pair_score_update
-            pair_scores[entity_2] += pair_score_update
-            pair_scores[None] += pair_score_update
+            # skip zero scores since they could lead to ZeroDivisionErrors later on when computing final scores
+            if pair_score_update > 0:
+                pair_scores[(entity_1, entity_2)] += pair_score_update
+                pair_scores[entity_1] += pair_score_update
+                pair_scores[entity_2] += pair_score_update
+                pair_scores[None] += pair_score_update
     return dict(pair_scores)
 
 
