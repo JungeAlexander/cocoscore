@@ -1,4 +1,5 @@
 import collections
+import copy
 import gzip
 import itertools
 import os
@@ -26,15 +27,16 @@ def get_hyperparameter_distributions(random_seed=None):
     :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
     """
     if random_seed is None:
-        seeds = [13, 24, 43, 56]
+        seeds = [13, 24, 43, 56, 65]
     else:
         random_state = np.random.RandomState(random_seed)
-        seeds = random_state.randint(100000, size=4)
+        seeds = random_state.randint(100000, size=5)
     param_dict = {
         'document_weight': get_uniform(0, 10, seeds[0]),
         'paragraph_weight': get_uniform(0, 10, seeds[1]),
-        'sentence_weight': get_uniform(0, 10, seeds[2]),
+        # 'sentence_weight': get_uniform(0, 10, seeds[2]),
         'weighting_exponent': get_log_uniform(-3, 0, seeds[3]),
+        'decay_rate': get_uniform(0, 10, seeds[4]),
     }
     return param_dict
 
@@ -140,7 +142,7 @@ def get_max_score(scores_dict, pmid, entity_1, entity_2):
             if isinstance(key, tuple):
                 match_pmid = key[0]  # sentence and paragraphs scores are index with (pmid, paragraph[, sentence])
             else:
-                match_pmid = key     # document scores are only index with pmid
+                match_pmid = key  # document scores are only index with pmid
             if match_pmid == pmid:
                 scores.append(score)
         return max(scores)
@@ -207,8 +209,8 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
             else:
                 document_score = 1
 
-            pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight +\
-                document_score * document_weight
+            pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight + \
+                                document_score * document_weight
             pair_scores[(entity_1, entity_2)] += pair_score_update
             pair_scores[entity_1] += pair_score_update
             pair_scores[entity_2] += pair_score_update
@@ -224,11 +226,11 @@ def load_score_file(score_file_path):
         for line in score_file:
             pmid, paragraph, sentence, entity_1, entity_2, score = line.rstrip().split('\t')
             entity_key = tuple(sorted((entity_1, entity_2)))
-            if sentence != '-1':                          # sentence-level score
+            if sentence != '-1':  # sentence-level score
                 score_key = (int(pmid), int(paragraph), int(sentence))
             elif sentence == '-1' and paragraph != '-1':  # paragraph-level score
                 score_key = (int(pmid), int(paragraph))
-            else:                                         # document-level score
+            else:  # document-level score
                 score_key = int(pmid)
             score_dict[entity_key][score_key] = float(score)
     finally:
@@ -247,7 +249,7 @@ def split_scores(score_dict):
                 assert 1 < len(match) < 4, 'Unknown match length.'
                 if len(match) == 3:  # sentence-level match
                     sentence_scores[entity_pair][match] = score
-                else:                # paragraph-level match
+                else:  # paragraph-level match
                     paragraph_scores[entity_pair][match] = score
             else:
                 document_scores[entity_pair][match] = score
@@ -306,7 +308,7 @@ def co_occurrence_score(matches_file_path, score_file_path,
             continue
         entity_1, entity_2 = key
         co_occurrence = (score ** weighting_exponent) * \
-                        (((score * norm_factor)/(weighted_counts[entity_1] * weighted_counts[entity_2])) **
+                        (((score * norm_factor) / (weighted_counts[entity_1] * weighted_counts[entity_2])) **
                          (1 - weighting_exponent))
         co_occurrence_scores[key] = co_occurrence
     return co_occurrence_scores
@@ -360,7 +362,7 @@ def cv_independent_associations(data_df,
                                 fasttext_epochs=50,
                                 fasttext_dim=20,
                                 fasttext_bucket=1000,
-                                match_distance_function=lambda d: reciprocal_distance(d),
+                                match_distance_function=reciprocal_distance,
                                 cv_folds=5,
                                 entity_columns=('entity1', 'entity2'),
                                 random_state=None,
@@ -394,6 +396,16 @@ def cv_independent_associations(data_df,
                                                   entity_columns=entity_columns))
     cv_stats_df = cv.compute_cv_fold_stats(data_df, cv_sets)
 
+    param_dict = copy.deepcopy(param_dict)
+    if 'decay_rate' in param_dict:
+        decay_rate = param_dict['decay_rate']
+        del param_dict['decay_rate']
+
+        def new_match_distance_function(data_frame):
+            return match_distance_function(data_frame, decay_rate)
+    else:
+        new_match_distance_function = match_distance_function
+
     train_rocs = []
     test_rocs = []
     for cv_iter, train_test_indices in enumerate(cv_sets):
@@ -423,8 +435,8 @@ def cv_independent_associations(data_df,
             non_sentence_rows_test = test_df.loc[:, 'sentence'] == -1
             non_sentence_train_df = train_df.loc[non_sentence_rows_train, :]
             non_sentence_test_df = test_df.loc[non_sentence_rows_test, :]
-            train_scores = match_distance_function(non_sentence_train_df)
-            test_scores = match_distance_function(non_sentence_test_df)
+            train_scores = new_match_distance_function(non_sentence_train_df)
+            test_scores = new_match_distance_function(non_sentence_test_df)
             train_df.loc[non_sentence_rows_train, 'predicted'] = train_scores
             test_df.loc[non_sentence_rows_test, 'predicted'] = test_scores
 
