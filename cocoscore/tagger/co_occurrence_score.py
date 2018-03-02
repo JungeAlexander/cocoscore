@@ -210,7 +210,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                 document_score = 1
 
             pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight + \
-                                document_score * document_weight
+                document_score * document_weight
             # skip zero scores since they could lead to ZeroDivisionErrors later on when computing final scores
             if pair_score_update > 0:
                 pair_scores[(entity_1, entity_2)] += pair_score_update
@@ -339,7 +339,7 @@ def co_occurrence_score_string(matches_file_path, entities_file, entity_type, do
                                ignore_scores=True, silent=silent)
 
 
-def _compute_auroc(score_dict, data_frame):
+def _compute_auroc(score_dict, data_frame, warn=True):
     scores = []
     classes = []
     for _, group_df in data_frame.groupby(['entity1', 'entity2', 'class']):
@@ -351,7 +351,8 @@ def _compute_auroc(score_dict, data_frame):
         if entity_pair in score_dict:
             scores.append(score_dict[entity_pair])
         else:
-            warnings.warn(f'Missing score for entity pair {entity_pair}.')
+            if warn:
+                warnings.warn(f'Missing score for entity pair {entity_pair}.')
             scores.append(0.0)
         classes.append(_class)
     return metrics.roc_auc_score(classes, scores)
@@ -368,7 +369,7 @@ def cv_independent_associations(data_df,
                                 cv_folds=5,
                                 entity_columns=('entity1', 'entity2'),
                                 random_state=None,
-
+                                warn_missing_scores=True,
                                 ):
     """
     A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
@@ -392,6 +393,7 @@ def cv_independent_associations(data_df,
     :param cv_folds: int, the number of CV folds to generate
     :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
     :param random_state: numpy RandomState to use while splitting into folds
+    :param warn_missing_scores: boolean: if warnings should be issues during AUROC computation
     :return: a pandas DataFrame with cross validation results
     """
     cv_sets = list(cv.cv_independent_associations(data_df, cv_folds=cv_folds, random_state=random_state,
@@ -458,8 +460,8 @@ def cv_independent_associations(data_df,
                                              **param_dict,
                                              )
 
-            train_roc = _compute_auroc(score_dict, train_df)
-            test_roc = _compute_auroc(score_dict, test_df)
+            train_roc = _compute_auroc(score_dict, train_df, warn=warn_missing_scores)
+            test_roc = _compute_auroc(score_dict, test_df, warn=warn_missing_scores)
             train_rocs.append(train_roc)
             test_rocs.append(test_roc)
         except IOError:
