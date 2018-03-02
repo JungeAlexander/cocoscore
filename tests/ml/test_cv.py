@@ -291,9 +291,9 @@ class CVTest(unittest.TestCase):
                                   cos.get_hyperparameter_distributions(), 3)
 
         expected_col_names = [
+            'decay_rate',
             'document_weight',
             'paragraph_weight',
-            'sentence_weight',
             'weighting_exponent',
             'mean_test_score',
             'stdev_test_score',
@@ -316,8 +316,8 @@ class CVTest(unittest.TestCase):
         # following parameters are chosen randomly and hence cannot be tested but only that they differ between the CV
         # runs
         random_col_names = [
+            'decay_rate',
             'document_weight',
-            'sentence_weight',
             'weighting_exponent',
         ]
         for rand in random_col_names:
@@ -336,10 +336,10 @@ class CVTest(unittest.TestCase):
         ]
 
         expected_values = [
+            [.222] * cv_iterations,
             [.111] * cv_iterations,
             [paragraph_weight] * cv_iterations,
             [.111] * cv_iterations,
-            [.222] * cv_iterations,
             [1.0] * cv_iterations,
             [0.0] * cv_iterations,
             [1.0] * cv_iterations,
