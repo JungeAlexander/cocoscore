@@ -27,16 +27,17 @@ def get_hyperparameter_distributions(random_seed=None):
     :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
     """
     if random_seed is None:
-        seeds = [13, 24, 43, 56, 65]
+        seeds = [13, 24, 43, 56, 65, 123]
     else:
         random_state = np.random.RandomState(random_seed)
-        seeds = random_state.randint(100000, size=5)
+        seeds = random_state.randint(100000, size=6)
     param_dict = {
         'document_weight': get_uniform(0, 20, seeds[0]),
         'paragraph_weight': get_uniform(0, 20, seeds[1]),
         # 'sentence_weight': get_uniform(0, 10, seeds[2]),
         'weighting_exponent': get_uniform(0, 1, seeds[3]),
         'decay_rate': get_uniform(0, 2, seeds[4]),
+        'distance_offset': get_uniform(0, 1, seeds[5]),
     }
     return param_dict
 
@@ -401,12 +402,15 @@ def cv_independent_associations(data_df,
     cv_stats_df = cv.compute_cv_fold_stats(data_df, cv_sets)
 
     param_dict = copy.deepcopy(param_dict)
-    if 'decay_rate' in param_dict:
+    if 'decay_rate' in param_dict or 'distance_offset' in param_dict:
         decay_rate = param_dict['decay_rate']
         del param_dict['decay_rate']
 
+        distance_offset = param_dict['distance_offset']
+        del param_dict['distance_offset']
+
         def new_match_distance_function(data_frame):
-            return match_distance_function(data_frame, decay_rate)
+            return match_distance_function(data_frame, decay_rate, distance_offset)
     else:
         new_match_distance_function = match_distance_function
 
