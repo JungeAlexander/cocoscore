@@ -340,7 +340,7 @@ def co_occurrence_score_string(matches_file_path, entities_file, entity_type, do
                                ignore_scores=True, silent=silent)
 
 
-def _compute_auroc(score_dict, data_frame, warn=True):
+def _compute_metric(score_dict, data_frame, warn=True, metric='roc_auc_score'):
     scores = []
     classes = []
     for _, group_df in data_frame.groupby(['entity1', 'entity2', 'class']):
@@ -356,7 +356,12 @@ def _compute_auroc(score_dict, data_frame, warn=True):
                 warnings.warn(f'Missing score for entity pair {entity_pair}.')
             scores.append(0.0)
         classes.append(_class)
-    return metrics.roc_auc_score(classes, scores)
+    if metric == 'roc_auc_score':
+        return metrics.roc_auc_score(classes, scores)
+    elif metric == 'average_precision_score':
+        return metrics.average_precision_score(classes, scores)
+    else:
+        raise ValueError(f'Unknown scoring metric: {metric}')
 
 
 def cv_independent_associations(data_df,
@@ -371,6 +376,7 @@ def cv_independent_associations(data_df,
                                 entity_columns=('entity1', 'entity2'),
                                 random_state=None,
                                 warn_missing_scores=True,
+                                metric='roc_auc_score',
                                 ):
     """
     A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
@@ -395,6 +401,8 @@ def cv_independent_associations(data_df,
     :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
     :param random_state: numpy RandomState to use while splitting into folds
     :param warn_missing_scores: boolean: if warnings should be issues during AUROC computation
+    :param metric: performance metric used for evaluation - can be either 'roc_auc_score' (the default) or
+    'average_precision_score'
     :return: a pandas DataFrame with cross validation results
     """
     cv_sets = list(cv.cv_independent_associations(data_df, cv_folds=cv_folds, random_state=random_state,
@@ -414,8 +422,8 @@ def cv_independent_associations(data_df,
     else:
         new_match_distance_function = match_distance_function
 
-    train_rocs = []
-    test_rocs = []
+    train_performances = []
+    test_performances = []
     for cv_iter, train_test_indices in enumerate(cv_sets):
         train_indices, test_indices = train_test_indices
 
@@ -464,10 +472,10 @@ def cv_independent_associations(data_df,
                                              **param_dict,
                                              )
 
-            train_roc = _compute_auroc(score_dict, train_df, warn=warn_missing_scores)
-            test_roc = _compute_auroc(score_dict, test_df, warn=warn_missing_scores)
-            train_rocs.append(train_roc)
-            test_rocs.append(test_roc)
+            train_performance = _compute_metric(score_dict, train_df, warn=warn_missing_scores, metric=metric)
+            test_performance = _compute_metric(score_dict, test_df, warn=warn_missing_scores, metric=metric)
+            train_performances.append(train_performance)
+            test_performances.append(test_performance)
         except IOError:
             # return missing results if fasttext failed for at least one CV fold
             results_df = pd.DataFrame()
@@ -490,14 +498,14 @@ def cv_independent_associations(data_df,
 
     # aggregate performance measures and fold statistics in result DataFrame
     results_df = pd.DataFrame()
-    results_df['mean_test_score'] = [mean(test_rocs)]
-    results_df['stdev_test_score'] = [stdev(test_rocs)]
-    results_df['mean_train_score'] = [mean(train_rocs)]
-    results_df['stdev_train_score'] = [stdev(train_rocs)]
+    results_df['mean_test_score'] = [mean(test_performances)]
+    results_df['stdev_test_score'] = [stdev(test_performances)]
+    results_df['mean_train_score'] = [mean(train_performances)]
+    results_df['stdev_train_score'] = [stdev(train_performances)]
     for stats_row in cv_stats_df.itertuples():
         cv_fold = str(stats_row.fold)
-        results_df['split_' + cv_fold + '_test_score'] = [test_rocs[int(cv_fold)]]
-        results_df['split_' + cv_fold + '_train_score'] = [test_rocs[int(cv_fold)]]
+        results_df['split_' + cv_fold + '_test_score'] = [test_performances[int(cv_fold)]]
+        results_df['split_' + cv_fold + '_train_score'] = [test_performances[int(cv_fold)]]
         results_df['split_' + cv_fold + '_n_test'] = [stats_row.n_test]
         results_df['split_' + cv_fold + '_pos_test'] = [stats_row.pos_test]
         results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train]
