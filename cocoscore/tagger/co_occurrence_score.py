@@ -13,7 +13,7 @@ from sklearn import metrics
 
 from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
-from ..ml.distance_scores import reciprocal_distance
+from ..ml.distance_scores import constant_distance, reciprocal_distance
 from ..ml.fasttext_helpers import fasttext_fit_predict_default
 from ..ml.tools import get_uniform
 from ..tools.file_tools import get_file_handle
@@ -372,6 +372,7 @@ def cv_independent_associations(data_df,
                                 fasttext_dim=20,
                                 fasttext_bucket=1000,
                                 match_distance_function=reciprocal_distance,
+                                constant_scoring=None,
                                 cv_folds=5,
                                 entity_columns=('entity1', 'entity2'),
                                 random_state=None,
@@ -397,6 +398,9 @@ def cv_independent_associations(data_df,
     not be changed in production.
     :param match_distance_function: function to score match distances. Takes a pandas DataFrame loaded using
     tools.data_tools.load_data_frame(..., match_distance=True). Returns a pandas Series of distance scores.
+    :param constant_scoring: str - either 'paragraph' or 'document'. Indicates whether a constant scoring function is 
+    to be used for paragraph- or document-level co-mentions. If None (default), match_distance_function will be used to
+    score both paragraph- and document-level co-mentions.
     :param cv_folds: int, the number of CV folds to generate
     :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
     :param random_state: numpy RandomState to use while splitting into folds
@@ -453,6 +457,23 @@ def cv_independent_associations(data_df,
             non_sentence_test_df = test_df.loc[non_sentence_rows_test, :]
             train_scores = new_match_distance_function(non_sentence_train_df)
             test_scores = new_match_distance_function(non_sentence_test_df)
+            if constant_scoring is not None:
+                constant_train_scores = constant_distance(non_sentence_train_df)
+                constant_test_scores = constant_distance(non_sentence_test_df)
+                paragraph_rows_train = np.logical_and(non_sentence_train_df.loc[:, 'sentence'] == -1,
+                                                      non_sentence_train_df.loc[:, 'paragraph'] != -1)
+                paragraph_rows_test = np.logical_and(non_sentence_test_df.loc[:, 'sentence'] == -1,
+                                                     non_sentence_test_df.loc[:, 'paragraph'] != -1)
+                document_rows_train = np.logical_not(paragraph_rows_train)
+                document_rows_test = np.logical_not(paragraph_rows_test)
+                if constant_scoring == 'paragraph':
+                    train_scores[paragraph_rows_train, 'predicted'] = constant_train_scores[paragraph_rows_train]
+                    test_scores[paragraph_rows_test, 'predicted'] = constant_test_scores[paragraph_rows_test]
+                elif constant_scoring == 'document':
+                    train_scores[document_rows_train, 'predicted'] = constant_train_scores[document_rows_train]
+                    test_scores[document_rows_test, 'predicted'] = constant_test_scores[document_rows_test]
+                else:
+                    raise ValueError(f'Unknown constant_scoring parameter: {constant_scoring}')
             train_df.loc[non_sentence_rows_train, 'predicted'] = train_scores
             test_df.loc[non_sentence_rows_test, 'predicted'] = test_scores
 
