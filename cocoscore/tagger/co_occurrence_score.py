@@ -467,11 +467,11 @@ def cv_independent_associations(data_df,
                 document_rows_train = np.logical_not(paragraph_rows_train)
                 document_rows_test = np.logical_not(paragraph_rows_test)
                 if constant_scoring == 'paragraph':
-                    train_scores[paragraph_rows_train, 'predicted'] = constant_train_scores[paragraph_rows_train]
-                    test_scores[paragraph_rows_test, 'predicted'] = constant_test_scores[paragraph_rows_test]
+                    train_scores[paragraph_rows_train] = constant_train_scores[paragraph_rows_train]
+                    test_scores[paragraph_rows_test] = constant_test_scores[paragraph_rows_test]
                 elif constant_scoring == 'document':
-                    train_scores[document_rows_train, 'predicted'] = constant_train_scores[document_rows_train]
-                    test_scores[document_rows_test, 'predicted'] = constant_test_scores[document_rows_test]
+                    train_scores[document_rows_train] = constant_train_scores[document_rows_train]
+                    test_scores[document_rows_test] = constant_test_scores[document_rows_test]
                 else:
                     raise ValueError(f'Unknown constant_scoring parameter: {constant_scoring}')
             train_df.loc[non_sentence_rows_train, 'predicted'] = train_scores

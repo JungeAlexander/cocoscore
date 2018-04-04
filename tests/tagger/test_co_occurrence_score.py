@@ -2,9 +2,7 @@ import unittest
 
 import numpy
 import pandas
-
 from pandas.util.testing import assert_frame_equal
-
 
 import cocoscore.tagger.co_occurrence_score as co_occurrence_score
 import cocoscore.tools.data_tools as dt
@@ -809,3 +807,19 @@ class CooccurrenceTest(unittest.TestCase):
         expected_df = pandas.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
                                        columns=expected_col_names)
         assert_frame_equal(cv_results, expected_df)
+
+    def test_cocoscore_cv_independent_associations_bad_constant_scoring(self):
+        test_df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
+        with self.assertRaises(ValueError) as cm:
+            _ = co_occurrence_score.cv_independent_associations(test_df, {'sentence_weight': 1,
+                                                                          'paragraph_weight': 1,
+                                                                          'document_weight': 1,
+                                                                          },
+                                                                cv_folds=2,
+                                                                random_state=numpy.random.RandomState(3),
+                                                                fasttext_epochs=5,
+                                                                fasttext_bucket=1000,
+                                                                fasttext_dim=20,
+                                                                constant_scoring='documenti')
+        self.assertEqual(cm.exception.args[0], 'Unknown constant_scoring parameter: documenti')
