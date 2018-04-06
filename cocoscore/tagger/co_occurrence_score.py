@@ -3,12 +3,11 @@ import copy
 import gzip
 import itertools
 import os
-from statistics import mean, stdev
 import warnings
+from statistics import mean, stdev
 
 import numpy as np
 import pandas as pd
-
 from sklearn import metrics
 
 from .entity_mappers import get_serial_to_taxid_name_mapper
@@ -364,6 +363,55 @@ def _compute_metric(score_dict, data_frame, warn=True, metric='roc_auc_score'):
         raise ValueError(f'Unknown scoring metric: {metric}')
 
 
+def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
+                           match_distance_function, constant_scoring):
+    train_scores = pd.Series([0] * len(train_df), index=train_df.index)
+    test_scores = pd.Series([0] * len(test_df), index=test_df.index)
+    sentence_rows_train = np.logical_and(train_df.loc[:, 'sentence'] != -1,
+                                         train_df.loc[:, 'paragraph'] != -1)
+    sentence_rows_test = np.logical_and(test_df.loc[:, 'sentence'] != -1,
+                                        test_df.loc[:, 'paragraph'] != -1)
+    sentence_train_df = train_df.loc[sentence_rows_train, :]
+    sentence_test_df = test_df.loc[sentence_rows_test, :]
+
+    if len(sentence_train_df) > 0:
+        _, sentence_train_scores, _, sentence_test_scores = fasttext_function(sentence_train_df, sentence_test_df,
+                                                                              epochs=fasttext_epochs, dim=fasttext_dim,
+                                                                              bucket=fasttext_bucket)
+    else:
+        sentence_train_scores = [0.0] * len(sentence_train_df)
+        sentence_test_scores = [0.0] * len(sentence_train_df)
+    train_scores[sentence_rows_train] = sentence_train_scores
+    test_scores[sentence_rows_test] = sentence_test_scores
+
+    non_sentence_rows_train = train_df.loc[:, 'sentence'] == -1
+    non_sentence_rows_test = test_df.loc[:, 'sentence'] == -1
+    non_sentence_train_df = train_df.loc[non_sentence_rows_train, :]
+    non_sentence_test_df = test_df.loc[non_sentence_rows_test, :]
+    non_sentence_train_scores = match_distance_function(non_sentence_train_df)
+    non_sentence_test_scores = match_distance_function(non_sentence_test_df)
+    if constant_scoring is not None:
+        constant_train_scores = constant_distance(non_sentence_train_df)
+        constant_test_scores = constant_distance(non_sentence_test_df)
+        paragraph_rows_train = np.logical_and(non_sentence_train_df.loc[:, 'sentence'] == -1,
+                                              non_sentence_train_df.loc[:, 'paragraph'] != -1)
+        paragraph_rows_test = np.logical_and(non_sentence_test_df.loc[:, 'sentence'] == -1,
+                                             non_sentence_test_df.loc[:, 'paragraph'] != -1)
+        document_rows_train = np.logical_not(paragraph_rows_train)
+        document_rows_test = np.logical_not(paragraph_rows_test)
+        if constant_scoring == 'paragraph':
+            non_sentence_train_scores[paragraph_rows_train] = constant_train_scores[paragraph_rows_train]
+            non_sentence_test_scores[paragraph_rows_test] = constant_test_scores[paragraph_rows_test]
+        elif constant_scoring == 'document':
+            non_sentence_train_scores[document_rows_train] = constant_train_scores[document_rows_train]
+            non_sentence_test_scores[document_rows_test] = constant_test_scores[document_rows_test]
+        else:
+            raise ValueError(f'Unknown constant_scoring parameter: {constant_scoring}')
+    train_scores[non_sentence_rows_train] = non_sentence_train_scores
+    test_scores[non_sentence_rows_test] = non_sentence_test_scores
+    return train_scores, test_scores
+
+
 def cv_independent_associations(data_df,
                                 param_dict,
                                 fasttext_function=lambda train, valid, epochs, dim, bucket:
@@ -433,49 +481,15 @@ def cv_independent_associations(data_df,
 
         train_df = data_df.iloc[train_indices, :].copy()
         test_df = data_df.iloc[test_indices, :].copy()
+
         score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
         try:
-            sentence_rows_train = np.logical_and(train_df.loc[:, 'sentence'] != -1,
-                                                 train_df.loc[:, 'paragraph'] != -1)
-            sentence_rows_test = np.logical_and(test_df.loc[:, 'sentence'] != -1,
-                                                test_df.loc[:, 'paragraph'] != -1)
-            sentence_train_df = train_df.loc[sentence_rows_train, :]
-            sentence_test_df = test_df.loc[sentence_rows_test, :]
-            if len(sentence_train_df) > 0:
-                _, train_scores, _, test_scores = fasttext_function(sentence_train_df, sentence_test_df,
-                                                                    epochs=fasttext_epochs, dim=fasttext_dim,
-                                                                    bucket=fasttext_bucket)
-            else:
-                train_scores = [0.0] * len(sentence_train_df)
-                test_scores = [0.0] * len(sentence_train_df)
-            train_df.loc[sentence_rows_train, 'predicted'] = train_scores
-            test_df.loc[sentence_rows_test, 'predicted'] = test_scores
-
-            non_sentence_rows_train = train_df.loc[:, 'sentence'] == -1
-            non_sentence_rows_test = test_df.loc[:, 'sentence'] == -1
-            non_sentence_train_df = train_df.loc[non_sentence_rows_train, :]
-            non_sentence_test_df = test_df.loc[non_sentence_rows_test, :]
-            train_scores = new_match_distance_function(non_sentence_train_df)
-            test_scores = new_match_distance_function(non_sentence_test_df)
-            if constant_scoring is not None:
-                constant_train_scores = constant_distance(non_sentence_train_df)
-                constant_test_scores = constant_distance(non_sentence_test_df)
-                paragraph_rows_train = np.logical_and(non_sentence_train_df.loc[:, 'sentence'] == -1,
-                                                      non_sentence_train_df.loc[:, 'paragraph'] != -1)
-                paragraph_rows_test = np.logical_and(non_sentence_test_df.loc[:, 'sentence'] == -1,
-                                                     non_sentence_test_df.loc[:, 'paragraph'] != -1)
-                document_rows_train = np.logical_not(paragraph_rows_train)
-                document_rows_test = np.logical_not(paragraph_rows_test)
-                if constant_scoring == 'paragraph':
-                    train_scores[paragraph_rows_train] = constant_train_scores[paragraph_rows_train]
-                    test_scores[paragraph_rows_test] = constant_test_scores[paragraph_rows_test]
-                elif constant_scoring == 'document':
-                    train_scores[document_rows_train] = constant_train_scores[document_rows_train]
-                    test_scores[document_rows_test] = constant_test_scores[document_rows_test]
-                else:
-                    raise ValueError(f'Unknown constant_scoring parameter: {constant_scoring}')
-            train_df.loc[non_sentence_rows_train, 'predicted'] = train_scores
-            test_df.loc[non_sentence_rows_test, 'predicted'] = test_scores
+            train_scores, test_scores = _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs,
+                                                               fasttext_dim, fasttext_bucket,
+                                                               new_match_distance_function,
+                                                               constant_scoring)
+            train_df['predicted'] = train_scores
+            test_df['predicted'] = test_scores
 
             # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
             cv_df = pd.concat([train_df, test_df], axis=0)
