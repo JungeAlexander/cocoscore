@@ -4,6 +4,8 @@ import numpy
 import pandas
 from pandas.util.testing import assert_frame_equal
 
+from cocoscore.ml.distance_scores import polynomial_decay_distance
+from cocoscore.ml.fasttext_helpers import fasttext_fit_predict_default
 import cocoscore.tagger.co_occurrence_score as co_occurrence_score
 import cocoscore.tools.data_tools as dt
 
@@ -823,3 +825,51 @@ class CooccurrenceTest(unittest.TestCase):
                                                                 fasttext_dim=20,
                                                                 constant_scoring='documenti')
         self.assertEqual(cm.exception.args[0], 'Unknown constant_scoring parameter: documenti')
+
+    def test_cocoscore_constant_paragraph_scoring(self):
+        df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        df['text'] = df['text'].apply(lambda s: s.strip().lower())
+        train_df = df.copy()
+        test_df = df.copy()
+        fasttext_function = lambda train, valid, epochs, dim, bucket: fasttext_fit_predict_default(train, valid,
+                                                                                                   epochs=epochs,
+                                                                                                   dim=dim,
+                                                                                                   bucket=bucket)
+        def new_match_distance_function(data_frame):
+            return polynomial_decay_distance(data_frame, 0, -2)
+        train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
+                                                                               fasttext_epochs=5, fasttext_dim=20,
+                                                                               fasttext_bucket=1000,
+                                                                               match_distance_function=
+                                                                               new_match_distance_function,
+                                                                               constant_scoring='paragraph')
+
+        paragraph_matches = numpy.logical_and(df['sentence'] == -1, df['paragraph'] != -1)
+        document_matches = numpy.logical_and(df['sentence'] == -1, df['paragraph'] == -1)
+        for scores in (train_scores, test_scores):
+            self.assertTrue((scores[paragraph_matches] == 1).all())
+            self.assertTrue((scores[document_matches] == -1).all())
+
+    def test_cocoscore_constant_document_scoring(self):
+        df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        df['text'] = df['text'].apply(lambda s: s.strip().lower())
+        train_df = df.copy()
+        test_df = df.copy()
+        fasttext_function = lambda train, valid, epochs, dim, bucket: fasttext_fit_predict_default(train, valid,
+                                                                                                   epochs=epochs,
+                                                                                                   dim=dim,
+                                                                                                   bucket=bucket)
+        def new_match_distance_function(data_frame):
+            return polynomial_decay_distance(data_frame, 0, -2)
+        train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
+                                                                               fasttext_epochs=5, fasttext_dim=20,
+                                                                               fasttext_bucket=1000,
+                                                                               match_distance_function=
+                                                                               new_match_distance_function,
+                                                                               constant_scoring='document')
+
+        paragraph_matches = numpy.logical_and(df['sentence'] == -1, df['paragraph'] != -1)
+        document_matches = numpy.logical_and(df['sentence'] == -1, df['paragraph'] == -1)
+        for scores in (train_scores, test_scores):
+            self.assertTrue((scores[paragraph_matches] == -1).all())
+            self.assertTrue((scores[document_matches] == 1).all())
