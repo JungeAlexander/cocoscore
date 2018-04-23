@@ -375,9 +375,14 @@ def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs
     sentence_test_df = test_df.loc[sentence_rows_test, :]
 
     if len(sentence_train_df) > 0:
-        _, sentence_train_scores, _, sentence_test_scores = fasttext_function(sentence_train_df, sentence_test_df,
-                                                                              epochs=fasttext_epochs, dim=fasttext_dim,
-                                                                              bucket=fasttext_bucket)
+        if constant_scoring == 'sentence':
+            sentence_train_scores = constant_distance(sentence_train_df)
+            sentence_test_scores = constant_distance(sentence_test_df)
+        else:
+            _, sentence_train_scores, _, sentence_test_scores = fasttext_function(sentence_train_df, sentence_test_df,
+                                                                                  epochs=fasttext_epochs,
+                                                                                  dim=fasttext_dim,
+                                                                                  bucket=fasttext_bucket)
     else:
         sentence_train_scores = [0.0] * len(sentence_train_df)
         sentence_test_scores = [0.0] * len(sentence_train_df)
@@ -405,6 +410,8 @@ def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs
         elif constant_scoring == 'document':
             non_sentence_train_scores[document_rows_train] = constant_train_scores[document_rows_train]
             non_sentence_test_scores[document_rows_test] = constant_test_scores[document_rows_test]
+        elif constant_scoring == 'sentence':
+            pass  # already handled earlier when computing sentence-level scores
         else:
             raise ValueError(f'Unknown constant_scoring parameter: {constant_scoring}')
     train_scores[non_sentence_rows_train] = non_sentence_train_scores
@@ -446,9 +453,10 @@ def cv_independent_associations(data_df,
     not be changed in production.
     :param match_distance_function: function to score match distances. Takes a pandas DataFrame loaded using
     tools.data_tools.load_data_frame(..., match_distance=True). Returns a pandas Series of distance scores.
-    :param constant_scoring: str - either 'paragraph' or 'document'. Indicates whether a constant scoring function is 
-    to be used for paragraph- or document-level co-mentions. If None (default), match_distance_function will be used to
-    score both paragraph- and document-level co-mentions.
+    :param constant_scoring: str - either 'sentence', 'paragraph' or 'document'. Indicates whether a constant scoring
+    function is to be used for sentence-, paragraph- or document-level co-mentions.
+    If None (default), match_distance_function will be used to
+    score both paragraph- and document-level co-mentions and fastText scores to score sentence-level co-mentions.
     :param cv_folds: int, the number of CV folds to generate
     :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
     :param random_state: numpy RandomState to use while splitting into folds
