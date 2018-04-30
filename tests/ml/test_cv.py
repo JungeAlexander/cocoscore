@@ -275,6 +275,24 @@ class CVTest(unittest.TestCase):
         expected_test_df = expected_df.drop(random_col_names + ignore_params, axis=1)
         assert_frame_equal(results_test_df, expected_test_df)
 
+    def test_cos_random_cv_bad_param(self):
+        cv_folds = 2
+        cv_iterations = 2
+
+        def cv_function(data_df, params, random_state):
+            return cos.cv_independent_associations(data_df, params,
+                                                   cv_folds=cv_folds, random_state=random_state, fasttext_epochs=5,
+                                                   fasttext_bucket=1000, fasttext_dim=20)
+
+        test_df = data_tools.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
+        with self.assertRaises(TypeError) as cm:
+            _ = cv.random_cv(test_df, cv_function, cv_iterations, {'sentence_weightXXXX': 1},
+                            cos.get_hyperparameter_distributions(), 3)
+
+        self.assertEqual(cm.exception.args[0],
+                         "co_occurrence_score() got an unexpected keyword argument 'sentence_weightXXXX'")
+
     def test_cos_random_cv(self):
         paragraph_weight = 3
         cv_folds = 2

@@ -810,6 +810,24 @@ class CooccurrenceTest(unittest.TestCase):
                                        columns=expected_col_names)
         assert_frame_equal(cv_results, expected_df)
 
+    def test_cocoscore_cv_independent_associations_bad_param(self):
+        test_df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
+        with self.assertRaises(TypeError) as cm:
+            _ = co_occurrence_score.cv_independent_associations(test_df, {'sentence_weightXXXX': 1,
+                                                                          'paragraph_weight': 1,
+                                                                          'document_weight': 1,
+                                                                          },
+                                                                cv_folds=2,
+                                                                random_state=numpy.random.RandomState(3),
+                                                                fasttext_epochs=5,
+                                                                fasttext_bucket=1000,
+                                                                fasttext_dim=20,
+                                                                constant_scoring='document')
+        self.assertEqual(cm.exception.args[0],
+                         "co_occurrence_score() got an unexpected keyword argument 'sentence_weightXXXX'")
+
+
     def test_cocoscore_cv_independent_associations_bad_constant_scoring(self):
         test_df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
@@ -825,6 +843,29 @@ class CooccurrenceTest(unittest.TestCase):
                                                                 fasttext_dim=20,
                                                                 constant_scoring='documenti')
         self.assertEqual(cm.exception.args[0], 'Unknown constant_scoring parameter: documenti')
+
+    def test_cocoscore_constant_sentence_scoring(self):
+        df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        df['text'] = df['text'].apply(lambda s: s.strip().lower())
+        train_df = df.copy()
+        test_df = df.copy()
+        fasttext_function = lambda train, valid, epochs, dim, bucket: fasttext_fit_predict_default(train, valid,
+                                                                                                   epochs=epochs,
+                                                                                                   dim=dim,
+                                                                                                   bucket=bucket)
+        def new_match_distance_function(data_frame):
+            return polynomial_decay_distance(data_frame, 0, -2)
+        train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
+                                                                               fasttext_epochs=5, fasttext_dim=20,
+                                                                               fasttext_bucket=1000,
+                                                                               match_distance_function=
+                                                                               new_match_distance_function,
+                                                                               constant_scoring='sentence')
+        sentence_matches = numpy.logical_and(df['sentence'] != -1, df['paragraph'] != -1)
+        non_sentence_matches = numpy.logical_not(sentence_matches)
+        for scores in (train_scores, test_scores):
+            self.assertTrue((scores[sentence_matches] == 1).all())
+            self.assertTrue((scores[non_sentence_matches] == -1).all())
 
     def test_cocoscore_constant_paragraph_scoring(self):
         df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
