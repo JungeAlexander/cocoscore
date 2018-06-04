@@ -2,15 +2,18 @@ import pandas as pd
 
 
 def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, match_distance=False,
-                    allow_missing_text=False):
+                    allow_missing_text=False, quoting=3):
     """
     Load a dataset as pandas DataFrame from a given path.
 
     :param data_frame_path: the path to load the pandas DataFrame from
     :param sort_reindex: if True, the returned data frame will be sorted by PMID and reindex by 0, 1, 2, ...
-    :param class_labels: if True, the class label is assumed to be present as the second-to-last column
+    :param class_labels: if True, the class label is given after the mandatory text column
     :param match_distance: if True, the distance between the closest match is assumed to be present as the last column
     :param allow_missing_text: if True, missing text is replaced with empty strings
+    :param quoting: int, controls field quoting in pandas.read_csv():
+    "Use one of QUOTE_MINIMAL (0), QUOTE_ALL (1), QUOTE_NONNUMERIC (2) or QUOTE_NONE (3)."
+    See also: https://docs.python.org/3/library/csv.html#csv.QUOTE_NONE
     :return: a pandas DataFrame loaded from the given path
     :raises ValueError if missing data is encountered
     """
@@ -20,7 +23,7 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     if match_distance:
         column_names.append('distance')
     data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False,
-                          names=column_names)
+                          names=column_names, quoting=quoting)
     if sort_reindex:
         data_df.sort_values('pmid', axis=0, inplace=True, kind='mergesort')
         data_df.reset_index(inplace=True, drop=True)
