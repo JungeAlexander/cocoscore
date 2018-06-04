@@ -17,7 +17,7 @@ The dataset is expected to come as a tab-delimited file (no header) with the fol
 - sentence number (integer)
 - first co-mentioned entity (string, e.g. disease identifier)
 - second co-mentioned entity (string, e.g. gene identifier)
-- text co-mentioning the entities (string with names of entities blanked as described below)
+- text co-mentioning the entities (string with names of entities blanked as described below). Please make sure that the text column does not contain tab characters (`\t`) as this will make the text appear to span multiple columns in the input file. This can be fixed by replacing tabs with spaces.
 
 See `demo.tsv` for an example of a file in the correct format.
 The file contains sentence-level co-mentions of hemochromatosis (iron storage disorder) and different genes that were extracted from Medline abstracts and PMC Open Access articles.
