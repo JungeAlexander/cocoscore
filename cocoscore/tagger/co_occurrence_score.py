@@ -3,6 +3,7 @@ import copy
 import gzip
 import itertools
 import os
+import tempfile
 import warnings
 from statistics import mean, stdev
 
@@ -477,10 +478,10 @@ def cv_independent_associations(data_df,
         distance_offset = param_dict['distance_offset']
         del param_dict['distance_offset']
 
-        def new_match_distance_function(data_frame):
+        def nmdf(data_frame):
             return match_distance_function(data_frame, decay_rate, distance_offset)
     else:
-        new_match_distance_function = match_distance_function
+        nmdf = match_distance_function
 
     train_performances = []
     test_performances = []
@@ -491,34 +492,22 @@ def cv_independent_associations(data_df,
         test_df = data_df.iloc[test_indices, :].copy()
 
         score_file_path = 'cv_cos_' + str(cv_iter) + '.tsv.gz'
+
         try:
-            train_scores, test_scores = _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs,
-                                                               fasttext_dim, fasttext_bucket,
-                                                               new_match_distance_function,
-                                                               constant_scoring)
-            train_df['predicted'] = train_scores
-            test_df['predicted'] = test_scores
-
-            # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
-            cv_df = pd.concat([train_df, test_df], axis=0)
-            with gzip.open(score_file_path, 'wt') as test_out:
-                cv_df.to_csv(test_out, sep='\t', header=False, index=False,
-                             columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
-
-            score_dict = co_occurrence_score(matches_file_path=None,
-                                             score_file_path=score_file_path,
-                                             entities_file=None,
-                                             first_type=0,
-                                             second_type=0,
-                                             ignore_scores=False,
-                                             silent=True,
-                                             **param_dict,
-                                             )
-
-            train_performance = _compute_metric(score_dict, train_df, warn=warn_missing_scores, metric=metric)
-            test_performance = _compute_metric(score_dict, test_df, warn=warn_missing_scores, metric=metric)
+            train_performance, test_performance = _get_train_test_performance(train_df=train_df, test_df=test_df,
+                                                                              param_dict=param_dict,
+                                                                              fasttext_function=fasttext_function,
+                                                                              fasttext_epochs=fasttext_epochs,
+                                                                              fasttext_dim=fasttext_dim,
+                                                                              fasttext_bucket=fasttext_bucket,
+                                                                              match_distance_function=nmdf,
+                                                                              constant_scoring=constant_scoring,
+                                                                              warn_missing_scores=warn_missing_scores,
+                                                                              metric=metric,
+                                                                              tmp_file_path=score_file_path)
             train_performances.append(train_performance)
             test_performances.append(test_performance)
+
         except IOError:
             # return missing results if fasttext failed for at least one CV fold
             results_df = pd.DataFrame()
@@ -535,9 +524,6 @@ def cv_independent_associations(data_df,
                 results_df['split_' + cv_fold + '_n_train'] = [np.nan]
                 results_df['split_' + cv_fold + '_pos_train'] = [np.nan]
             return results_df
-        finally:
-            if os.path.isfile(score_file_path):
-                os.remove(score_file_path)
 
     # aggregate performance measures and fold statistics in result DataFrame
     results_df = pd.DataFrame()
@@ -554,3 +540,43 @@ def cv_independent_associations(data_df,
         results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train]
         results_df['split_' + cv_fold + '_pos_train'] = [stats_row.pos_train]
     return results_df
+
+
+def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function, fasttext_epochs,
+                                fasttext_dim, fasttext_bucket,
+                                match_distance_function,
+                                constant_scoring, warn_missing_scores, metric, tmp_file_path=None):
+    if tmp_file_path is None:
+        _, tmp_file_path = tempfile.mkstemp()
+    try:
+        train_scores, test_scores = _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs,
+                                                           fasttext_dim, fasttext_bucket,
+                                                           match_distance_function,
+                                                           constant_scoring)
+        train_df['predicted'] = train_scores
+        test_df['predicted'] = test_scores
+
+        # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
+        cv_df = pd.concat([train_df, test_df], axis=0)
+        with gzip.open(tmp_file_path, 'wt') as test_out:
+            cv_df.to_csv(test_out, sep='\t', header=False, index=False,
+                         columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
+
+        score_dict = co_occurrence_score(matches_file_path=None,
+                                         score_file_path=tmp_file_path,
+                                         entities_file=None,
+                                         first_type=0,
+                                         second_type=0,
+                                         ignore_scores=False,
+                                         silent=True,
+                                         **param_dict,
+                                         )
+
+        train_performance = _compute_metric(score_dict, train_df, warn=warn_missing_scores, metric=metric)
+        test_performance = _compute_metric(score_dict, test_df, warn=warn_missing_scores, metric=metric)
+        return train_performance, test_performance
+    except IOError as e:
+        raise e
+    finally:
+        if os.path.isfile(tmp_file_path):
+            os.remove(tmp_file_path)
