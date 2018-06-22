@@ -13,7 +13,7 @@ from sklearn import metrics
 
 from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
-from ..ml.distance_scores import constant_distance, reciprocal_distance
+from ..ml.distance_scores import constant_distance, polynomial_decay_distance, reciprocal_distance
 from ..ml.fasttext_helpers import fasttext_fit_predict_default
 from ..ml.tools import get_uniform
 from ..tools.file_tools import get_file_handle
@@ -211,7 +211,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                 document_score = 1
 
             pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight + \
-                document_score * document_weight
+                                document_score * document_weight
             # skip zero scores since they could lead to ZeroDivisionErrors later on when computing final scores
             if pair_score_update > 0:
                 pair_scores[(entity_1, entity_2)] += pair_score_update
@@ -542,10 +542,10 @@ def cv_independent_associations(data_df,
     return results_df
 
 
-def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function, fasttext_epochs,
-                                fasttext_dim, fasttext_bucket,
-                                match_distance_function,
-                                constant_scoring, warn_missing_scores, metric, tmp_file_path=None):
+def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_epochs,
+                    fasttext_dim, fasttext_bucket,
+                    match_distance_function,
+                    constant_scoring, tmp_file_path=None):
     if tmp_file_path is None:
         _, tmp_file_path = tempfile.mkstemp()
     try:
@@ -571,12 +571,50 @@ def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function
                                          silent=True,
                                          **param_dict,
                                          )
-
-        train_performance = _compute_metric(score_dict, train_df, warn=warn_missing_scores, metric=metric)
-        test_performance = _compute_metric(score_dict, test_df, warn=warn_missing_scores, metric=metric)
-        return train_performance, test_performance
+        return score_dict
     except IOError as e:
         raise e
     finally:
         if os.path.isfile(tmp_file_path):
             os.remove(tmp_file_path)
+
+
+def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function, fasttext_epochs,
+                                fasttext_dim, fasttext_bucket,
+                                match_distance_function,
+                                constant_scoring, warn_missing_scores, metric, tmp_file_path=None):
+    score_dict = _get_cocoscores(train_df=train_df, test_df=test_df, param_dict=param_dict,
+                                 fasttext_function=fasttext_function, fasttext_epochs=fasttext_epochs,
+                                 fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
+                                 match_distance_function=match_distance_function,
+                                 constant_scoring=constant_scoring, tmp_file_path=tmp_file_path)
+    train_performance = _compute_metric(score_dict, train_df, warn=warn_missing_scores, metric=metric)
+    test_performance = _compute_metric(score_dict, test_df, warn=warn_missing_scores, metric=metric)
+    return train_performance, test_performance
+
+
+def fit_score_default(train_df, test_df, pretrained_vectors_path=None):
+    """
+    Fit a CoCoScore model, using default parameters, to the given training data and
+    predict scores for the training and test sets.
+
+    :param train_df: pandas DataFrame holding the training data
+    :param test_df: pandas DataFrame holding the test data
+    :param pretrained_vectors_path: path to pre-trained word embeddings
+    :return: tuple of dictionaries mapping entitiy pairs in training and test set to their scores
+    """
+    match_distance_function = polynomial_decay_distance
+    decay_rate = 0.5
+    distance_offset = 0.02
+    return _fit_score(train_df=train_df, test_df=test_df, fasttext_fit_predict_function=fasttext_fit_predict_default)
+
+
+def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
+               match_distance_function, decay_rate, distance_offset, pretrained_vectors_path=None):
+    def mdf(data_frame):
+        return match_distance_function(data_frame, decay_rate, distance_offset)
+
+    def ffpf(train, test, epochs, dim, bucket):
+        return fasttext_fit_predict_function(train, test, epochs=epochs, dim=dim, bucket=bucket)
+
+    pass
