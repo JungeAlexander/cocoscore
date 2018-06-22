@@ -920,7 +920,10 @@ class CooccurrenceTest(unittest.TestCase):
         train_df = df.copy()
         test_df = df.copy()
         pairs = [('A', 'B'), ('C', 'D'), ('E', 'F'), ('G', 'H')]
-        train_scores, test_scores = co_occurrence_score.fit_score_default(train_df, test_df)
+        train_scores, test_scores = co_occurrence_score.fit_score_default(train_df, test_df,
+                                                                          fasttext_epochs=5,
+                                                                          fasttext_dim=20,
+                                                                          fasttext_bucket=1000)
         for pair in pairs:
             self.assertTrue(train_scores[pair] > 0)
             self.assertTrue(test_scores[pair] > 0)
