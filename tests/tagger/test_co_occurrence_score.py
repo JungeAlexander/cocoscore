@@ -914,3 +914,13 @@ class CooccurrenceTest(unittest.TestCase):
         for scores in (train_scores, test_scores):
             self.assertTrue((scores[paragraph_matches] == -1).all())
             self.assertTrue((scores[document_matches] == 1).all())
+
+    def test_fit_score_default(self):
+        df = dt.load_data_frame(self.cos_cv_test_path, match_distance=True)
+        train_df = df.copy()
+        test_df = df.copy()
+        pairs = [('A', 'B'), ('C', 'D'), ('E', 'F'), ('G', 'H')]
+        train_scores, test_scores = co_occurrence_score.fit_score_default(train_df, test_df)
+        for pair in pairs:
+            self.assertTrue(train_scores[pair] > 0)
+            self.assertTrue(test_scores[pair] > 0)
