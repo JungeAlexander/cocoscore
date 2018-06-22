@@ -211,7 +211,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
                 document_score = 1
 
             pair_score_update = sentence_score * sentence_weight + paragraph_score * paragraph_weight + \
-                                document_score * document_weight
+                document_score * document_weight
             # skip zero scores since they could lead to ZeroDivisionErrors later on when computing final scores
             if pair_score_update > 0:
                 pair_scores[(entity_1, entity_2)] += pair_score_update
@@ -547,7 +547,7 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
                     match_distance_function,
                     constant_scoring, tmp_file_path=None):
     if tmp_file_path is None:
-        _, tmp_file_path = tempfile.mkstemp()
+        _, tmp_file_path = tempfile.mkstemp(text=True, suffix='.gz')
     try:
         train_scores, test_scores = _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs,
                                                            fasttext_dim, fasttext_bucket,
@@ -575,6 +575,7 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
     except IOError as e:
         raise e
     finally:
+        #print(tmp_file_path)
         if os.path.isfile(tmp_file_path):
             os.remove(tmp_file_path)
 
@@ -593,28 +594,64 @@ def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function
     return train_performance, test_performance
 
 
-def fit_score_default(train_df, test_df, pretrained_vectors_path=None):
+def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
+                                fasttext_bucket=2000000, pretrained_vectors_path=None):
     """
     Fit a CoCoScore model, using default parameters, to the given training data and
     predict scores for the training and test sets.
 
     :param train_df: pandas DataFrame holding the training data
     :param test_df: pandas DataFrame holding the test data
+    :param fasttext_epochs: int, number of fasttext epochs to perform. This is primarily used for testing and should
+    not be changed in production.
+    :param fasttext_dim: int, fasttext vector dimensionality. This is primarily used for testing and should
+    not be changed in production.
+    :param fasttext_bucket: int, number of fasttext buckets. This is primarily used for testing and should
+    not be changed in production.
     :param pretrained_vectors_path: path to pre-trained word embeddings
-    :return: tuple of dictionaries mapping entitiy pairs in training and test set to their scores
+    :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
     """
     match_distance_function = polynomial_decay_distance
     decay_rate = 0.5
     distance_offset = 0.02
-    return _fit_score(train_df=train_df, test_df=test_df, fasttext_fit_predict_function=fasttext_fit_predict_default)
+    document_weight = 2.0
+    weighting_exponent = 0.5
+    paragraph_weight = 0.0
+    return _fit_score(train_df=train_df, test_df=test_df,
+                      fasttext_fit_predict_function=fasttext_fit_predict_default,
+                      fasttext_epochs=fasttext_epochs, fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
+                      match_distance_function=match_distance_function, decay_rate=decay_rate,
+                      distance_offset=distance_offset, document_weight=document_weight,
+                      paragraph_weight=paragraph_weight, weighting_exponent=weighting_exponent,
+                      constant_scoring=None,
+                      pretrained_vectors_path=pretrained_vectors_path)
+
+
+def _get_score_dict(scores, df):
+    pairs = (tuple(sorted([e1, e2])) for e1, e2 in zip(df['entity1'], df['entity2']))
+    pair_scores = {}
+    for p in pairs:
+        pair_scores[p] = scores[p]
+    return pair_scores
 
 
 def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
-               match_distance_function, decay_rate, distance_offset, pretrained_vectors_path=None):
+               match_distance_function, decay_rate, distance_offset, document_weight, paragraph_weight,
+               weighting_exponent, constant_scoring, pretrained_vectors_path=None):
     def mdf(data_frame):
         return match_distance_function(data_frame, decay_rate, distance_offset)
 
     def ffpf(train, test, epochs, dim, bucket):
-        return fasttext_fit_predict_function(train, test, epochs=epochs, dim=dim, bucket=bucket)
+        return fasttext_fit_predict_function(train, test, epochs=epochs,
+                                             dim=dim, bucket=bucket,
+                                             pretrained_vectors_path=pretrained_vectors_path)
 
-    pass
+    param_dict = {'document_weight': document_weight,
+                  'paragraph_weight': paragraph_weight,
+                  'weighting_exponent': weighting_exponent}
+
+    scores = _get_cocoscores(train_df=train_df, test_df=test_df, param_dict=param_dict,
+                             fasttext_function=ffpf, fasttext_epochs=fasttext_epochs,
+                             fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
+                             match_distance_function=mdf, constant_scoring=constant_scoring)
+    return _get_score_dict(scores, train_df), _get_score_dict(scores, test_df)
