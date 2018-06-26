@@ -575,7 +575,7 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
     except IOError as e:
         raise e
     finally:
-        #print(tmp_file_path)
+        # print(tmp_file_path)
         if os.path.isfile(tmp_file_path):
             os.remove(tmp_file_path)
 
@@ -595,7 +595,7 @@ def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function
 
 
 def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
-                                fasttext_bucket=2000000, pretrained_vectors_path=None):
+                      fasttext_bucket=2000000, pretrained_vectors_path=None):
     """
     Fit a CoCoScore model, using default parameters, to the given training data and
     predict scores for the training and test sets.
@@ -655,3 +655,37 @@ def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs
                              fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
                              match_distance_function=mdf, constant_scoring=constant_scoring)
     return _get_score_dict(scores, train_df), _get_score_dict(scores, test_df)
+
+
+def previous_scores_default(train_df, test_df):
+    """
+    Compute co-occurrence scores based on previous score model used e.g. in STRING v10.
+
+    :param train_df: pandas DataFrame holding the training data
+    :param test_df: pandas DataFrame holding the test data
+    :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
+    """
+    train_df['predicted'] = [1.0] * len(train_df)
+    test_df['predicted'] = [1.0] * len(test_df)
+    df = pd.concat([train_df, test_df], axis=0)
+    _, tmp_file_path = tempfile.mkstemp(text=True, suffix='.gz')
+    try:
+        with gzip.open(tmp_file_path, 'wt') as test_out:
+            df.to_csv(test_out, sep='\t', header=False, index=False,
+                      columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
+
+        old_scores_dict = co_occurrence_score(matches_file_path=None,
+                                              score_file_path=tmp_file_path,
+                                              entities_file=None,
+                                              first_type=0,
+                                              second_type=0,
+                                              document_weight=1.0,
+                                              paragraph_weight=2.0,
+                                              sentence_weight=0.2,
+                                              weighting_exponent=0.6,
+                                              ignore_scores=True,
+                                              silent=True)
+        _get_score_dict(old_scores_dict, train_df), _get_score_dict(old_scores_dict, test_df)
+    finally:
+        if os.path.isfile(tmp_file_path):
+            os.remove(tmp_file_path)
