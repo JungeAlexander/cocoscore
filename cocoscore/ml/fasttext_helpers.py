@@ -121,7 +121,7 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
 
 
 def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005, wordngrams=2, ws=5,
-                                 bucket=2000000, pretrained_vectors_path=None):
+                                 bucket=2000000, pretrained_vectors_path=None, thread=1):
     """
     Fit and predict fastText with default parameters for given training and test set.
 
@@ -134,10 +134,10 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
     :param ws: fasttext parameter
     :param bucket: fasttext parameter
     :param pretrained_vectors_path: pretrained word embeddings
+    :param thread: int, the number of threads to use by fastText
     :return: tuple of training and test performance
     """
     fasttext_path = 'fasttext'
-    thread = 1
     compress_model = True
     param_dict = {'-dim': dim, '-epoch': epochs, '-lr': lr, '-wordNgrams': wordngrams, '-ws': ws, '-bucket': bucket}
     return _fasttext_fit_predict(train_df['text'].str.lower(),

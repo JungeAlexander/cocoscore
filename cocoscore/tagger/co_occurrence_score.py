@@ -595,7 +595,7 @@ def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function
 
 
 def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
-                      fasttext_bucket=2000000, pretrained_vectors_path=None):
+                      fasttext_bucket=2000000, pretrained_vectors_path=None, thread=1):
     """
     Fit a CoCoScore model, using default parameters, to the given training data and
     predict scores for the training and test sets.
@@ -609,6 +609,7 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
     :param fasttext_bucket: int, number of fasttext buckets. This is primarily used for testing and should
     not be changed in production.
     :param pretrained_vectors_path: path to pre-trained word embeddings
+    :param thread: int, the number of threads to be used by fasttext
     :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
     """
     match_distance_function = polynomial_decay_distance
@@ -624,7 +625,8 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
                       distance_offset=distance_offset, document_weight=document_weight,
                       paragraph_weight=paragraph_weight, weighting_exponent=weighting_exponent,
                       constant_scoring=None,
-                      pretrained_vectors_path=pretrained_vectors_path)
+                      pretrained_vectors_path=pretrained_vectors_path,
+                      thread=thread)
 
 
 def _get_score_dict(scores, df):
@@ -637,14 +639,15 @@ def _get_score_dict(scores, df):
 
 def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
                match_distance_function, decay_rate, distance_offset, document_weight, paragraph_weight,
-               weighting_exponent, constant_scoring, pretrained_vectors_path=None):
+               weighting_exponent, constant_scoring, pretrained_vectors_path=None, thread=1):
     def mdf(data_frame):
         return match_distance_function(data_frame, decay_rate, distance_offset)
 
     def ffpf(train, test, epochs, dim, bucket):
         return fasttext_fit_predict_function(train, test, epochs=epochs,
                                              dim=dim, bucket=bucket,
-                                             pretrained_vectors_path=pretrained_vectors_path)
+                                             pretrained_vectors_path=pretrained_vectors_path,
+                                             thread=thread)
 
     param_dict = {'document_weight': document_weight,
                   'paragraph_weight': paragraph_weight,
