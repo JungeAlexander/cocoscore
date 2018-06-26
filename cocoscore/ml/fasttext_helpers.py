@@ -1,4 +1,5 @@
 import gzip
+import shutil
 import os
 import subprocess
 from statistics import mean, stdev
@@ -121,7 +122,7 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
 
 
 def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005, wordngrams=2, ws=5,
-                                 bucket=2000000, pretrained_vectors_path=None, thread=1):
+                                 bucket=2000000, pretrained_vectors_path=None, thread=1, output_model_path=None):
     """
     Fit and predict fastText with default parameters for given training and test set.
 
@@ -135,6 +136,7 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
     :param bucket: fasttext parameter
     :param pretrained_vectors_path: pretrained word embeddings
     :param thread: int, the number of threads to use by fastText
+    :param output_model_path: str, path to save the fitted model to. If None, the model is not saved.
     :return: tuple of training and test performance
     """
     fasttext_path = 'fasttext'
@@ -148,14 +150,16 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
                                  fasttext_path,
                                  thread,
                                  compress_model,
-                                 pretrained_vectors_path)
+                                 pretrained_vectors_path,
+                                 output_model_path=output_model_path)
 
 
 def _fasttext_fit_predict(train_text_series, train_class_series,
                           test_text_series, test_class_series,
                           param_dict, fasttext_path, thread, compress_model,
                           pretrained_vectors_path,
-                          metric='roc_auc_score'):
+                          metric='roc_auc_score',
+                          output_model_path=None):
     # manual printing to file as to_csv complains about space as separator and spaces within sentences
     train_path = 'tmp_ft_train.txt'
     test_path = 'tmp_ft_test.txt'
@@ -174,7 +178,10 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
                                   pretrained_vectors_path=pretrained_vectors_path)
         fasttext_predict(model_file, train_path, fasttext_path, train_prob_file_path)
         fasttext_predict(model_file, test_path, fasttext_path, test_prob_file_path)
-        os.remove(model_file)
+        if output_model_path is not None:
+            shutil.move(model_file, output_model_path)
+        else:
+            os.remove(model_file)
         train_metric, train_scores = _compute_metric(train_path, train_prob_file_path, metric=metric)
         test_metric, test_scores = _compute_metric(test_path, test_prob_file_path, metric=metric)
     except subprocess.CalledProcessError:
