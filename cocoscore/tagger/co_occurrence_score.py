@@ -422,8 +422,6 @@ def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs
 
 def cv_independent_associations(data_df,
                                 param_dict,
-                                fasttext_function=lambda train, valid, epochs, dim, bucket:
-                                fasttext_fit_predict_default(train, valid, epochs=epochs, dim=dim, bucket=bucket),
                                 fasttext_epochs=50,
                                 fasttext_dim=300,
                                 fasttext_bucket=2000000,
@@ -434,6 +432,7 @@ def cv_independent_associations(data_df,
                                 random_state=None,
                                 warn_missing_scores=True,
                                 metric='roc_auc_score',
+                                pretrained_vectors_path=None
                                 ):
     """
     A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
@@ -442,10 +441,6 @@ def cv_independent_associations(data_df,
 
     :param data_df: the DataFrame to be split into CV folds
     :param param_dict: dictionary mapping co-occurrence score hyperparameters to their values
-    :param fasttext_function: function to run fasttext on a cross-validation fold.
-           Takes three arguments: training dataset as pandas DataFrame; validation dataset as pandas DataFrame;
-           number of fasttext epochs to perform.
-           Returns: predicted scores for each instance.
     :param fasttext_epochs: int, number of fasttext epochs to perform. This is primarily used for testing and should
     not be changed in production.
     :param fasttext_dim: int, fasttext vector dimensionality. This is primarily used for testing and should
@@ -464,11 +459,18 @@ def cv_independent_associations(data_df,
     :param warn_missing_scores: boolean: if warnings should be issues during AUROC computation
     :param metric: performance metric used for evaluation - can be either 'roc_auc_score' (the default) or
     'average_precision_score'
+    :param pretrained_vectors_path: path to pre-trained word embeddings
     :return: a pandas DataFrame with cross validation results
     """
     cv_sets = list(cv.cv_independent_associations(data_df, cv_folds=cv_folds, random_state=random_state,
                                                   entity_columns=entity_columns))
     cv_stats_df = cv.compute_cv_fold_stats(data_df, cv_sets)
+
+    def ffpf(train, valid, epochs, dim, bucket):
+        return fasttext_fit_predict_default(train, valid, epochs=epochs,
+                                            dim=dim, bucket=bucket,
+                                            pretrained_vectors_path=pretrained_vectors_path,
+                                            )
 
     param_dict = copy.deepcopy(param_dict)
     if 'decay_rate' in param_dict or 'distance_offset' in param_dict:
@@ -496,7 +498,7 @@ def cv_independent_associations(data_df,
         try:
             train_performance, test_performance = _get_train_test_performance(train_df=train_df, test_df=test_df,
                                                                               param_dict=param_dict,
-                                                                              fasttext_function=fasttext_function,
+                                                                              fasttext_function=ffpf,
                                                                               fasttext_epochs=fasttext_epochs,
                                                                               fasttext_dim=fasttext_dim,
                                                                               fasttext_bucket=fasttext_bucket,
@@ -504,7 +506,8 @@ def cv_independent_associations(data_df,
                                                                               constant_scoring=constant_scoring,
                                                                               warn_missing_scores=warn_missing_scores,
                                                                               metric=metric,
-                                                                              tmp_file_path=score_file_path)
+                                                                              tmp_file_path=score_file_path,
+                                                                              )
             train_performances.append(train_performance)
             test_performances.append(test_performance)
 
@@ -583,7 +586,7 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
 def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function, fasttext_epochs,
                                 fasttext_dim, fasttext_bucket,
                                 match_distance_function,
-                                constant_scoring, warn_missing_scores, metric, tmp_file_path=None):
+                                constant_scoring, warn_missing_scores, metric, tmp_file_path=None,):
     score_dict = _get_cocoscores(train_df=train_df, test_df=test_df, param_dict=param_dict,
                                  fasttext_function=fasttext_function, fasttext_epochs=fasttext_epochs,
                                  fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
