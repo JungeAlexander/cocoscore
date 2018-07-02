@@ -548,7 +548,7 @@ def cv_independent_associations(data_df,
 def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_epochs,
                     fasttext_dim, fasttext_bucket,
                     match_distance_function,
-                    constant_scoring, tmp_file_path=None):
+                    constant_scoring, tmp_file_path=None, keep_scores_file=False):
     if tmp_file_path is None:
         _, tmp_file_path = tempfile.mkstemp(text=True, suffix='.gz')
     try:
@@ -579,7 +579,7 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
         raise e
     finally:
         # print(tmp_file_path)
-        if os.path.isfile(tmp_file_path):
+        if not keep_scores_file and os.path.isfile(tmp_file_path):
             os.remove(tmp_file_path)
 
 
@@ -598,7 +598,8 @@ def _get_train_test_performance(train_df, test_df, param_dict, fasttext_function
 
 
 def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
-                      fasttext_bucket=2000000, pretrained_vectors_path=None, thread=1, output_model_path=None):
+                      fasttext_bucket=2000000, pretrained_vectors_path=None, thread=1, output_model_path=None,
+                      output_score_path=None):
     """
     Fit a CoCoScore model, using default parameters, to the given training data and
     predict scores for the training and test sets.
@@ -614,6 +615,7 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
     :param pretrained_vectors_path: path to pre-trained word embeddings
     :param thread: int, the number of threads to be used by fasttext
     :param output_model_path: str, path to save the fitted fasttext model to. If None, the model is not saved.
+    :param output_score_path: str, path to save the co-mention scores to. If None, the scores are not saved.
     :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
     """
     match_distance_function = polynomial_decay_distance
@@ -630,7 +632,7 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
                       paragraph_weight=paragraph_weight, weighting_exponent=weighting_exponent,
                       constant_scoring=None,
                       pretrained_vectors_path=pretrained_vectors_path,
-                      thread=thread, output_model_path=output_model_path)
+                      thread=thread, output_model_path=output_model_path, output_score_path=output_score_path)
 
 
 def _get_score_dict(scores, df, warn=True):
@@ -649,7 +651,7 @@ def _get_score_dict(scores, df, warn=True):
 def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
                match_distance_function, decay_rate, distance_offset, document_weight, paragraph_weight,
                weighting_exponent, constant_scoring, pretrained_vectors_path=None, thread=1,
-               output_model_path=None):
+               output_model_path=None, output_score_path=None):
     def mdf(data_frame):
         return match_distance_function(data_frame, decay_rate, distance_offset)
 
@@ -667,7 +669,8 @@ def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs
     scores = _get_cocoscores(train_df=train_df, test_df=test_df, param_dict=param_dict,
                              fasttext_function=ffpf, fasttext_epochs=fasttext_epochs,
                              fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
-                             match_distance_function=mdf, constant_scoring=constant_scoring)
+                             match_distance_function=mdf, constant_scoring=constant_scoring,
+                             tmp_file_path=output_score_path, keep_scores_file=output_score_path is not None)
     return _get_score_dict(scores, train_df), _get_score_dict(scores, test_df)
 
 
