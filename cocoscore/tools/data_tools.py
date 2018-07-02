@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import warnings
 
 
 def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, match_distance=False,
@@ -28,15 +29,21 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
         column_names.append('distance')
         dtypes['distance'] = np.int32
     data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False,
-                          names=column_names, quoting=quoting, error_bad_lines=False,
+                          names=column_names, quoting=quoting,
                           dtype=dtypes)
+
+    if allow_missing_text:
+        data_df['text'] = data_df['text'].fillna('')
+        
+    nulls = data_df.isnull()
+    if nulls.sum().sum() != 0:
+        null_rows = list(set(np.where(nulls)[0]))
+        data_df.drop(data_df.index[null_rows], inplace=True)
+        warnings.warn(f'Encountered missing values while loading data from {data_frame_path} in rows: {null_rows}')
+
     if sort_reindex:
         data_df.sort_values('pmid', axis=0, inplace=True, kind='mergesort')
         data_df.reset_index(inplace=True, drop=True)
-    if allow_missing_text:
-        data_df['text'] = data_df['text'].fillna('')
-    if data_df.isnull().sum().sum() != 0:
-        raise ValueError(f'Encountered missing values while loading data from {data_frame_path}.')
     return data_df
 
 
