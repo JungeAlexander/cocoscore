@@ -699,7 +699,7 @@ def previous_scores_default(train_df, test_df):
                                               weighting_exponent=0.6,
                                               ignore_scores=True,
                                               silent=True)
-        _get_score_dict(old_scores_dict, train_df), _get_score_dict(old_scores_dict, test_df)
+        return _get_score_dict(old_scores_dict, train_df), _get_score_dict(old_scores_dict, test_df)
     finally:
         if os.path.isfile(tmp_file_path):
             os.remove(tmp_file_path)
