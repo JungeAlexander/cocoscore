@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -18,12 +19,17 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     :raises ValueError if missing data is encountered
     """
     column_names = ['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'text']
+    dtypes = {'pmid': np.int32, 'paragraph': np.int32, 'sentence': np.int32,
+              'entity1': object, 'entity2': object, 'text': object}
     if class_labels:
         column_names.append('class')
+        dtypes['class'] = np.int32
     if match_distance:
         column_names.append('distance')
+        dtypes['distance'] = np.int32
     data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False,
-                          names=column_names, quoting=quoting)
+                          names=column_names, quoting=quoting, error_bad_lines=False,
+                          dtype=dtypes)
     if sort_reindex:
         data_df.sort_values('pmid', axis=0, inplace=True, kind='mergesort')
         data_df.reset_index(inplace=True, drop=True)
