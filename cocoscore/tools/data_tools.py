@@ -29,8 +29,8 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
         column_names.append('distance')
         dtypes['distance'] = np.int32
     data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False, error_bad_lines=False,
-                          names=column_names, quoting=quoting)
-
+                          quoting=quoting)
+    data_df.columns = column_names
     if allow_missing_text:
         data_df['text'] = data_df['text'].fillna('')
 
