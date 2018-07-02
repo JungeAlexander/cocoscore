@@ -633,11 +633,16 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
                       thread=thread, output_model_path=output_model_path)
 
 
-def _get_score_dict(scores, df):
+def _get_score_dict(scores, df, warn=True):
     pairs = (tuple(sorted([e1, e2])) for e1, e2 in zip(df['entity1'], df['entity2']))
     pair_scores = {}
     for p in pairs:
-        pair_scores[p] = scores[p]
+        if p in scores:
+            pair_scores[p] = scores[p]
+        else:
+            pair_scores[p] = 0.0
+            if warn:
+                warnings.warn(f'Missing score for entity pair {p}.')
     return pair_scores
 
 
