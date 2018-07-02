@@ -28,7 +28,7 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     if match_distance:
         column_names.append('distance')
         dtypes['distance'] = np.int32
-    data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False,
+    data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False, error_bad_lines=False,
                           names=column_names, quoting=quoting)
 
     if allow_missing_text:
