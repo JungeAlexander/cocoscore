@@ -561,6 +561,7 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
 
         # write combined score file for sentences/documents/paragraphs and evaluate training and validation AUROC
         cv_df = pd.concat([train_df, test_df], axis=0)
+        cv_df['predicted'] = cv_df['predicted'].astype(np.float32)
         with gzip.open(tmp_file_path, 'wt') as test_out:
             cv_df.to_csv(test_out, sep='\t', header=False, index=False,
                          columns=['pmid', 'paragraph', 'sentence', 'entity1', 'entity2', 'predicted'])
