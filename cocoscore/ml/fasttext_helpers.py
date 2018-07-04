@@ -122,7 +122,8 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
 
 
 def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005, wordngrams=2, ws=5,
-                                 bucket=2000000, pretrained_vectors_path=None, thread=1, output_model_path=None):
+                                 bucket=2000000, pretrained_vectors_path=None, thread=1, output_model_path=None,
+                                 shuffle=True):
     """
     Fit and predict fastText with default parameters for given training and test set.
 
@@ -137,6 +138,7 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
     :param pretrained_vectors_path: pretrained word embeddings
     :param thread: int, the number of threads to use by fastText
     :param output_model_path: str, path to save the fitted model to. If None, the model is not saved.
+    :param shuffle: boolean, whether the texts should be shuffled prior to prediction
     :return: tuple of training and test performance
     """
     fasttext_path = 'fasttext'
@@ -151,7 +153,8 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
                                  thread,
                                  compress_model,
                                  pretrained_vectors_path,
-                                 output_model_path=output_model_path)
+                                 output_model_path=output_model_path,
+                                 shuffle=shuffle)
 
 
 def _fasttext_fit_predict(train_text_series, train_class_series,
@@ -159,7 +162,19 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
                           param_dict, fasttext_path, thread, compress_model,
                           pretrained_vectors_path,
                           metric='roc_auc_score',
-                          output_model_path=None):
+                          output_model_path=None,
+                          shuffle=False):
+    if shuffle:
+        p_train = np.random.permutation(len(train_text_series))
+        train_text_series = train_text_series.iloc[p_train]
+        train_class_series = train_class_series.iloc[p_train]
+        p_test = np.random.permutation(len(test_text_series))
+        test_text_series = test_text_series.iloc[p_test]
+        test_class_series = test_class_series.iloc[p_test]
+    else:
+        p_train = None
+        p_test = None
+
     # manual printing to file as to_csv complains about space as separator and spaces within sentences
     train_path = 'tmp_ft_train.txt'
     test_path = 'tmp_ft_test.txt'
@@ -184,6 +199,13 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
             os.remove(model_file)
         train_metric, train_scores = _compute_metric(train_path, train_prob_file_path, metric=metric)
         test_metric, test_scores = _compute_metric(test_path, test_prob_file_path, metric=metric)
+        if shuffle:
+            p_train_inv = np.argsort(p_train)
+            train_scores = [train_scores[i] for i in p_train_inv]
+
+            p_test_inv = np.argsort(p_test)
+            test_scores = [test_scores[i] for i in p_test_inv]
+
     except subprocess.CalledProcessError:
         # fastText may fail (e.g. segfault) for some parameter combinations
         raise IOError('fasttext failed in _fasttext_fit_predict.')
