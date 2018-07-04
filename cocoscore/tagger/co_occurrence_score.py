@@ -42,6 +42,25 @@ def get_hyperparameter_distributions(random_seed=None):
     return param_dict
 
 
+def get_previous_hyperparameter_distributions(random_seed=None):
+    """
+    :param random_seed: int to seed numpy RandomState to use while initiating parameter distributions to sample from
+    :return: a dictionary mapping previous co-occurrence score parameters to distributions to sample parameters from.
+    """
+    if random_seed is None:
+        seeds = [1, 2, 3]
+    else:
+        random_state = np.random.RandomState(random_seed)
+        seeds = random_state.randint(100000, size=6)
+    param_dict = {
+        'document_weight': get_uniform(0, 20, seeds[0]),
+        'paragraph_weight': get_uniform(0, 20, seeds[1]),
+        # 'sentence_weight': get_uniform(0, 10, seeds[2]),
+        'weighting_exponent': get_uniform(0, 1, seeds[3]),
+    }
+    return param_dict
+
+
 def get_entity_pairs(type_name_set, first_type, second_type):
     first_type_names = set()
     second_type_names = set()
@@ -675,14 +694,7 @@ def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs
     return _get_score_dict(scores, train_df), _get_score_dict(scores, test_df)
 
 
-def previous_scores_default(train_df, test_df):
-    """
-    Compute co-occurrence scores based on previous score model used e.g. in STRING v10.
-
-    :param train_df: pandas DataFrame holding the training data
-    :param test_df: pandas DataFrame holding the test data
-    :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
-    """
+def _previous_scores(train_df, test_df, document_weight, paragraph_weight, sentence_weight, weighting_exponent):
     train_df['predicted'] = [1.0] * len(train_df)
     test_df['predicted'] = [1.0] * len(test_df)
     df = pd.concat([train_df, test_df], axis=0)
@@ -697,13 +709,100 @@ def previous_scores_default(train_df, test_df):
                                               entities_file=None,
                                               first_type=0,
                                               second_type=0,
-                                              document_weight=1.0,
-                                              paragraph_weight=2.0,
-                                              sentence_weight=0.2,
-                                              weighting_exponent=0.6,
+                                              document_weight=document_weight,
+                                              paragraph_weight=paragraph_weight,
+                                              sentence_weight=sentence_weight,
+                                              weighting_exponent=weighting_exponent,
                                               ignore_scores=True,
                                               silent=True)
         return _get_score_dict(old_scores_dict, train_df), _get_score_dict(old_scores_dict, test_df)
     finally:
         if os.path.isfile(tmp_file_path):
             os.remove(tmp_file_path)
+
+
+def previous_scores_default(train_df, test_df):
+    """
+    Compute co-occurrence scores based on previous score model used e.g. in STRING v10.
+
+    :param train_df: pandas DataFrame holding the training data
+    :param test_df: pandas DataFrame holding the test data
+    :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
+    """
+    return _previous_scores(train_df, test_df, document_weight=1.0, paragraph_weight=2.0, sentence_weight=0.2,
+                            weighting_exponent=0.6)
+
+
+def previous_scores_cv_independent_associations(data_df,
+                                                param_dict,
+                                                cv_folds=5,
+                                                entity_columns=('entity1', 'entity2'),
+                                                random_state=None,
+                                                warn_missing_scores=True,
+                                                metric='roc_auc_score'):
+    """
+    A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes previous co-occurrences scores for each
+    CV fold and returns training and validation AUROC for each fold, mean and standard variation of
+    AUROC across folds along with various other dataset statistics.
+
+    :param data_df: the DataFrame to be split into CV folds
+    :param param_dict: dictionary mapping co-occurrence score hyperparameters to their values
+    :param cv_folds: int, the number of CV folds to generate
+    :param entity_columns: tuple of str, column names in data_df where interacting entities can be found
+    :param random_state: numpy RandomState to use while splitting into folds
+    :param warn_missing_scores: boolean: if warnings should be issues during AUROC computation
+    :param metric: performance metric used for evaluation - can be either 'roc_auc_score' (the default) or
+    'average_precision_score'
+    :return: a pandas DataFrame with cross validation results
+    """
+    cv_sets = list(cv.cv_independent_associations(data_df, cv_folds=cv_folds, random_state=random_state,
+                                                  entity_columns=entity_columns))
+    cv_stats_df = cv.compute_cv_fold_stats(data_df, cv_sets)
+
+    train_performances = []
+    test_performances = []
+    for cv_iter, train_test_indices in enumerate(cv_sets):
+        train_indices, test_indices = train_test_indices
+
+        train_df = data_df.iloc[train_indices, :].copy()
+        test_df = data_df.iloc[test_indices, :].copy()
+        try:
+            train_scores, test_scores = _previous_scores(train_df=train_df, test_df=test_df,
+                                                         **param_dict)
+            train_performance = _compute_metric(train_scores, train_df, warn=warn_missing_scores, metric=metric)
+            test_performance = _compute_metric(test_scores, test_df, warn=warn_missing_scores, metric=metric)
+            train_performances.append(train_performance)
+            test_performances.append(test_performance)
+
+        except IOError:
+            # return missing results if fasttext failed for at least one CV fold
+            results_df = pd.DataFrame()
+            results_df['mean_test_score'] = [np.nan]
+            results_df['stdev_test_score'] = [np.nan]
+            results_df['mean_train_score'] = [np.nan]
+            results_df['stdev_train_score'] = [np.nan]
+            for stats_row in cv_stats_df.itertuples():
+                cv_fold = str(stats_row.fold)
+                results_df['split_' + cv_fold + '_test_score'] = [np.nan]
+                results_df['split_' + cv_fold + '_train_score'] = [np.nan]
+                results_df['split_' + cv_fold + '_n_test'] = [np.nan]
+                results_df['split_' + cv_fold + '_pos_test'] = [np.nan]
+                results_df['split_' + cv_fold + '_n_train'] = [np.nan]
+                results_df['split_' + cv_fold + '_pos_train'] = [np.nan]
+            return results_df
+
+    # aggregate performance measures and fold statistics in result DataFrame
+    results_df = pd.DataFrame()
+    results_df['mean_test_score'] = [mean(test_performances)]
+    results_df['stdev_test_score'] = [stdev(test_performances)]
+    results_df['mean_train_score'] = [mean(train_performances)]
+    results_df['stdev_train_score'] = [stdev(train_performances)]
+    for stats_row in cv_stats_df.itertuples():
+        cv_fold = str(stats_row.fold)
+        results_df['split_' + cv_fold + '_test_score'] = [test_performances[int(cv_fold)]]
+        results_df['split_' + cv_fold + '_train_score'] = [test_performances[int(cv_fold)]]
+        results_df['split_' + cv_fold + '_n_test'] = [stats_row.n_test]
+        results_df['split_' + cv_fold + '_pos_test'] = [stats_row.pos_test]
+        results_df['split_' + cv_fold + '_n_train'] = [stats_row.n_train]
+        results_df['split_' + cv_fold + '_pos_train'] = [stats_row.pos_train]
+    return results_df
