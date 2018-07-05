@@ -444,6 +444,7 @@ def cv_independent_associations(data_df,
                                 fasttext_epochs=50,
                                 fasttext_dim=300,
                                 fasttext_bucket=2000000,
+                                fasttext_threads=1,
                                 match_distance_function=reciprocal_distance,
                                 constant_scoring=None,
                                 cv_folds=5,
@@ -451,7 +452,7 @@ def cv_independent_associations(data_df,
                                 random_state=None,
                                 warn_missing_scores=True,
                                 metric='roc_auc_score',
-                                pretrained_vectors_path=None
+                                pretrained_vectors_path=None,
                                 ):
     """
     A wrapper around `cv_independent_associations()` in `ml/cv.py` that computes co-occurrences scores for each
@@ -466,6 +467,7 @@ def cv_independent_associations(data_df,
     not be changed in production.
     :param fasttext_bucket: int, number of fasttext buckets. This is primarily used for testing and should
     not be changed in production.
+    :param fasttext_threads: int, number of threads to be used by fasttext.
     :param match_distance_function: function to score match distances. Takes a pandas DataFrame loaded using
     tools.data_tools.load_data_frame(..., match_distance=True). Returns a pandas Series of distance scores.
     :param constant_scoring: str - either 'sentence', 'paragraph' or 'document'. Indicates whether a constant scoring
@@ -489,6 +491,7 @@ def cv_independent_associations(data_df,
         return fasttext_fit_predict_default(train, valid, epochs=epochs,
                                             dim=dim, bucket=bucket,
                                             pretrained_vectors_path=pretrained_vectors_path,
+                                            thread=fasttext_threads
                                             )
 
     param_dict = copy.deepcopy(param_dict)
