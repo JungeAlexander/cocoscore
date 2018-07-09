@@ -28,9 +28,9 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     if match_distance:
         column_names.append('distance')
         dtypes['distance'] = np.int32
-    data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False, error_bad_lines=False,
-                          quoting=quoting)
-    data_df.columns = column_names
+
+    data_df = pd.read_csv(data_frame_path, sep='\t', header=None, index_col=False,
+                          quoting=quoting, dtype=dtypes, names=column_names)
     if allow_missing_text:
         data_df['text'] = data_df['text'].fillna('')
 
@@ -40,7 +40,6 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
         data_df.drop(data_df.index[null_rows], inplace=True)
         warnings.warn(f'Encountered missing values while loading data from {data_frame_path} in rows: {null_rows}')
 
-    data_df.astype(dtypes, copy=False)
     if sort_reindex:
         data_df.sort_values('pmid', axis=0, inplace=True, kind='mergesort')
         data_df.reset_index(inplace=True, drop=True)
