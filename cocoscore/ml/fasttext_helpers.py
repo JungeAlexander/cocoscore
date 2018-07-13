@@ -123,6 +123,7 @@ def fasttext_predict(trained_model_path, test_file_path, fasttext_path, probabil
 
 def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005, wordngrams=2, ws=5,
                                  bucket=2000000, pretrained_vectors_path=None, thread=1, output_model_path=None,
+                                 output_sentence_score_path=None,
                                  shuffle=True):
     """
     Fit and predict fastText with default parameters for given training and test set.
@@ -138,6 +139,8 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
     :param pretrained_vectors_path: pretrained word embeddings
     :param thread: int, the number of threads to use by fastText
     :param output_model_path: str, path to save the fitted model to. If None, the model is not saved.
+    :param output_sentence_score_path: str, path to save the test set sentence scores to, file will be gzipped. If None,
+    the sentence scores are not saved.
     :param shuffle: boolean, whether the texts should be shuffled prior to prediction
     :return: tuple of training and test performance
     """
@@ -154,6 +157,7 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
                                  compress_model,
                                  pretrained_vectors_path,
                                  output_model_path=output_model_path,
+                                 output_sentence_score_path=output_sentence_score_path,
                                  shuffle=shuffle)
 
 
@@ -163,6 +167,7 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
                           pretrained_vectors_path,
                           metric='roc_auc_score',
                           output_model_path=None,
+                          output_sentence_score_path=None,
                           shuffle=False):
     if shuffle:
         p_train = np.random.permutation(len(train_text_series))
@@ -211,9 +216,15 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
         raise IOError('fasttext failed in _fasttext_fit_predict.')
     finally:
         os.remove(train_path)
-        os.remove(test_path)
         os.remove(train_prob_file_path)
+        if output_sentence_score_path is not None:
+            with gzip.open(test_prob_file_path, "rt", encoding="utf-8") as f2,\
+                gzip.open(test_path, "rt", encoding="utf-8") as f1,\
+                    gzip.open(output_sentence_score_path, "wt", encoding="utf-8") as fout:
+                for l1, l2 in zip(f1, f2):
+                    fout.write(l1.rstrip() + "\t" + l2)
         os.remove(test_prob_file_path)
+        os.remove(test_path)
     return train_metric, train_scores, test_metric, test_scores
 
 
