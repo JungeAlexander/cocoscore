@@ -218,8 +218,8 @@ def _fasttext_fit_predict(train_text_series, train_class_series,
         os.remove(train_path)
         os.remove(train_prob_file_path)
         if output_sentence_score_path is not None:
-            with gzip.open(test_prob_file_path, "rt", encoding="utf-8") as f2,\
-                gzip.open(test_path, "rt", encoding="utf-8") as f1,\
+            with open(test_prob_file_path, "rt", encoding="utf-8") as f2,\
+                open(test_path, "rt", encoding="utf-8") as f1,\
                     gzip.open(output_sentence_score_path, "wt", encoding="utf-8") as fout:
                 for l1, l2 in zip(f1, f2):
                     fout.write(l1.rstrip() + "\t" + l2)
