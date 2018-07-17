@@ -15,7 +15,7 @@ from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
 from ..ml.distance_scores import constant_distance, polynomial_decay_distance, reciprocal_distance
 from ..ml.fasttext_helpers import fasttext_fit_predict_default
-from ..ml.tools import get_uniform
+from ..ml.tools import get_uniform, get_log_uniform
 from ..tools.file_tools import get_file_handle
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
@@ -32,12 +32,12 @@ def get_hyperparameter_distributions(random_seed=None):
         random_state = np.random.RandomState(random_seed)
         seeds = random_state.randint(100000, size=6)
     param_dict = {
-        'document_weight': get_uniform(0, 20, seeds[0]),
+        'document_weight': get_log_uniform(-5, 0, seeds[0]),
         'paragraph_weight': get_uniform(0, 20, seeds[1]),
         # 'sentence_weight': get_uniform(0, 10, seeds[2]),
-        'weighting_exponent': get_uniform(0, 1, seeds[3]),
-        'decay_rate': get_uniform(0, 2, seeds[4]),
-        'distance_offset': get_uniform(0, 1, seeds[5]),
+        'weighting_exponent': get_uniform(0.2, 0.8, seeds[3]),
+        'decay_rate': get_uniform(0, 1, seeds[4]),
+        'distance_offset': get_uniform(0, .5, seeds[5]),
     }
     return param_dict
 
