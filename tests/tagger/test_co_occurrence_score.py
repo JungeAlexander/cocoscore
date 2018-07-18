@@ -854,7 +854,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                                                                    dim=dim,
                                                                                                    bucket=bucket)
         def new_match_distance_function(data_frame):
-            return polynomial_decay_distance(data_frame, 0, -2)
+            return polynomial_decay_distance(data_frame, 0, -2, 1)
         train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
                                                                                fasttext_epochs=5, fasttext_dim=20,
                                                                                fasttext_bucket=1000,
@@ -877,7 +877,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                                                                    dim=dim,
                                                                                                    bucket=bucket)
         def new_match_distance_function(data_frame):
-            return polynomial_decay_distance(data_frame, 0, -2)
+            return polynomial_decay_distance(data_frame, 0, -2, 1)
         train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
                                                                                fasttext_epochs=5, fasttext_dim=20,
                                                                                fasttext_bucket=1000,
@@ -901,7 +901,7 @@ class CooccurrenceTest(unittest.TestCase):
                                                                                                    dim=dim,
                                                                                                    bucket=bucket)
         def new_match_distance_function(data_frame):
-            return polynomial_decay_distance(data_frame, 0, -2)
+            return polynomial_decay_distance(data_frame, 0, -2, 1)
         train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
                                                                                fasttext_epochs=5, fasttext_dim=20,
                                                                                fasttext_bucket=1000,

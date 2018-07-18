@@ -27,10 +27,10 @@ def get_hyperparameter_distributions(random_seed=None):
     :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
     """
     if random_seed is None:
-        seeds = [13, 24, 43, 56, 65, 123]
+        seeds = [13, 24, 43, 56, 65, 123, 12]
     else:
         random_state = np.random.RandomState(random_seed)
-        seeds = random_state.randint(100000, size=6)
+        seeds = random_state.randint(100000, size=7)
     param_dict = {
         'document_weight': get_log_uniform(-3, 1, seeds[0]),
         'paragraph_weight': get_uniform(0, 20, seeds[1]),
@@ -38,6 +38,7 @@ def get_hyperparameter_distributions(random_seed=None):
         'weighting_exponent': get_uniform(0.2, 0.8, seeds[3]),
         'decay_rate': get_uniform(0.2, 0.8, seeds[4]),
         'distance_offset': get_uniform(0, .5, seeds[5]),
+        'distance_ceiling': get_uniform(0, .5, seeds[6]),
     }
     return param_dict
 
@@ -495,15 +496,18 @@ def cv_independent_associations(data_df,
                                             )
 
     param_dict = copy.deepcopy(param_dict)
-    if 'decay_rate' in param_dict or 'distance_offset' in param_dict:
+    if 'decay_rate' in param_dict or 'distance_offset' in param_dict or 'distance_ceiling' in param_dict:
         decay_rate = param_dict['decay_rate']
         del param_dict['decay_rate']
 
         distance_offset = param_dict['distance_offset']
         del param_dict['distance_offset']
 
+        distance_ceiling = param_dict['distance_ceiling']
+        del param_dict['distance_ceiling']
+
         def nmdf(data_frame):
-            return match_distance_function(data_frame, decay_rate, distance_offset)
+            return match_distance_function(data_frame, decay_rate, distance_offset, distance_ceiling)
     else:
         nmdf = match_distance_function
 
@@ -649,11 +653,13 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
     document_weight = 2.0
     weighting_exponent = 0.5
     paragraph_weight = 0.0
+    distance_ceiling = 9999
     return _fit_score(train_df=train_df, test_df=test_df,
                       fasttext_fit_predict_function=fasttext_fit_predict_default,
                       fasttext_epochs=fasttext_epochs, fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
                       match_distance_function=match_distance_function, decay_rate=decay_rate,
-                      distance_offset=distance_offset, document_weight=document_weight,
+                      distance_offset=distance_offset, distance_ceiling=distance_ceiling,
+                      document_weight=document_weight,
                       paragraph_weight=paragraph_weight, weighting_exponent=weighting_exponent,
                       constant_scoring=None,
                       pretrained_vectors_path=pretrained_vectors_path,
@@ -675,11 +681,11 @@ def _get_score_dict(scores, df, warn=True):
 
 
 def _fit_score(train_df, test_df, fasttext_fit_predict_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
-               match_distance_function, decay_rate, distance_offset, document_weight, paragraph_weight,
+               match_distance_function, decay_rate, distance_offset, distance_ceiling, document_weight, paragraph_weight,
                weighting_exponent, constant_scoring, pretrained_vectors_path=None, thread=1,
                output_model_path=None, output_score_path=None, output_sentence_score_path=None):
     def mdf(data_frame):
-        return match_distance_function(data_frame, decay_rate, distance_offset)
+        return match_distance_function(data_frame, decay_rate, distance_offset, distance_ceiling)
 
     def ffpf(train, test, epochs, dim, bucket):
         return fasttext_fit_predict_function(train, test, epochs=epochs,

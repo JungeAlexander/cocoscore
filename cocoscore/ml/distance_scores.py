@@ -20,7 +20,7 @@ def reciprocal_distance(data_df, *_):
     tools.data_tools.load_data_frame(..., match_distance=True)
     :returns a pandas Series of distance scores
     """
-    return polynomial_decay_distance(data_df, 1, 0)
+    return polynomial_decay_distance(data_df, 1, 0, 9999999)
 
 
 def constant_distance(data_df, *_):
@@ -34,35 +34,37 @@ def constant_distance(data_df, *_):
     return _distance_scorer(data_df, score_function=lambda x: 1.0)
 
 
-def exponential_decay_distance(data_df, k, c):
+def exponential_decay_distance(data_df, k, c, m):
     """
     Computes exponentially decaying distance scores for a given DataFrame of co-mentions.
 
-    The exponentially decaying distance score is defined as exp(-k*x) + c where
+    The exponentially decaying distance score is defined as min(exp(-k*x) + c, m) where
     x is the the distance of the closest matches of an
-    entity pair of interest and k is a positive constant.
+    entity pair of interest and k, m are positive constants.
 
     :param data_df: pandas DataFrame, the data set loaded using
     tools.data_tools.load_data_frame(..., match_distance=True)
     :param k: float, a positive constant
     :param c: float, a positive constant
+    :param m: float, a positive constant
     :returns a pandas Series of distance scores
     """
-    return _distance_scorer(data_df, lambda x: exp(-k * x) + c)
+    return _distance_scorer(data_df, lambda x: min(exp(-k * x) + c, m))
 
 
-def polynomial_decay_distance(data_df, k, c):
+def polynomial_decay_distance(data_df, k, c, m):
     """
     Computes polynomially decaying distance scores for a given DataFrame of co-mentions.
 
-    The polynomially decaying distance score is defined as x^(-k) + c where
+    The polynomially decaying distance score is defined as min(x^(-k) + c, m)where
     x is the the distance of the closest matches of an
-    entity pair of interest and k is a positive constant.
+    entity pair of interest and k, m are positive constants.
 
     :param data_df: pandas DataFrame, the data set loaded using
     tools.data_tools.load_data_frame(..., match_distance=True)
     :param k: float, a positive constant
     :param c: float, a positive constant
+    :param m: float, a positive constant
     :returns a pandas Series of distance scores
     """
-    return _distance_scorer(data_df, lambda x: x ** (-k) + c)
+    return _distance_scorer(data_df, lambda x: min(x ** (-k) + c, m))

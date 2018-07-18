@@ -310,6 +310,7 @@ class CVTest(unittest.TestCase):
 
         expected_col_names = [
             'decay_rate',
+            'distance_ceiling',
             'distance_offset',
             'document_weight',
             'paragraph_weight',
@@ -336,6 +337,7 @@ class CVTest(unittest.TestCase):
         # runs
         random_col_names = [
             'decay_rate',
+            'distance_ceiling',
             'distance_offset',
             'document_weight',
             'weighting_exponent',
@@ -356,6 +358,7 @@ class CVTest(unittest.TestCase):
         ]
 
         expected_values = [
+            [.444] * cv_iterations,
             [.333] * cv_iterations,
             [.222] * cv_iterations,
             [.111] * cv_iterations,
