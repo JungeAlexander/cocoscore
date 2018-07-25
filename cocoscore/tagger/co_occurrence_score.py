@@ -35,7 +35,7 @@ def get_hyperparameter_distributions(random_seed=None):
         'document_weight': get_log_uniform(-3, 1, seeds[0]),
         'paragraph_weight': get_uniform(0, 20, seeds[1]),
         # 'sentence_weight': get_uniform(0, 10, seeds[2]),
-        'weighting_exponent': get_uniform(0.2, 0.8, seeds[3]),
+        'weighting_exponent': get_uniform(0, 1, seeds[3]),
         'decay_rate': get_uniform(0.2, 0.8, seeds[4]),
         'distance_offset': get_uniform(0, .5, seeds[5]),
         'distance_ceiling': get_uniform(0, .5, seeds[6]),
