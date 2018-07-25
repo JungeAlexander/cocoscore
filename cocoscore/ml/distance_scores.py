@@ -49,7 +49,7 @@ def exponential_decay_distance(data_df, k, c, m):
     :param m: float, a positive constant
     :returns a pandas Series of distance scores
     """
-    return _distance_scorer(data_df, lambda x: min(exp(-k * x) + c, m))
+    return _distance_scorer(data_df, lambda x: min(exp(-k * max(x, 1)) + c, m))
 
 
 def polynomial_decay_distance(data_df, k, c, m):
@@ -67,4 +67,4 @@ def polynomial_decay_distance(data_df, k, c, m):
     :param m: float, a positive constant
     :returns a pandas Series of distance scores
     """
-    return _distance_scorer(data_df, lambda x: min(x ** (-k) + c, m))
+    return _distance_scorer(data_df, lambda x: min(max(x, 1) ** (-k) + c, m))
