@@ -648,12 +648,15 @@ def fit_score_default(train_df, test_df, fasttext_epochs=50, fasttext_dim=300,
     :return: tuple of dictionaries mapping entity pairs in training and test set to their scores
     """
     match_distance_function = polynomial_decay_distance
+    weighting_exponent = 0.65
+
+    # if paragraph and document weights are 0.0, all remaining parameters below do not matter
+    document_weight = 0.0
+    paragraph_weight = 0.0
     decay_rate = 0.5
     distance_offset = 0.02
-    document_weight = 2.0
-    weighting_exponent = 0.5
-    paragraph_weight = 0.0
     distance_ceiling = 9999
+
     return _fit_score(train_df=train_df, test_df=test_df,
                       fasttext_fit_predict_function=fasttext_fit_predict_default,
                       fasttext_epochs=fasttext_epochs, fasttext_dim=fasttext_dim, fasttext_bucket=fasttext_bucket,
