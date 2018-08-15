@@ -15,7 +15,7 @@ from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
 from ..ml.distance_scores import constant_distance, polynomial_decay_distance, reciprocal_distance
 from ..ml.fasttext_helpers import fasttext_fit_predict_default
-from ..ml.tools import get_uniform, get_log_uniform, get_uniform_int
+from ..ml.tools import get_uniform, get_log_uniform
 from ..tools.file_tools import get_file_handle
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
@@ -27,10 +27,10 @@ def get_hyperparameter_distributions(random_seed=None):
     :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
     """
     if random_seed is None:
-        seeds = [13, 24, 43, 56, 65, 123, 12, 4]
+        seeds = [13, 24, 43, 56, 65, 123, 12]
     else:
         random_state = np.random.RandomState(random_seed)
-        seeds = random_state.randint(100000, size=8)
+        seeds = random_state.randint(100000, size=7)
     param_dict = {
         'document_weight': get_log_uniform(-3, 1, seeds[0]),
         'paragraph_weight': get_uniform(0, 20, seeds[1]),
@@ -39,7 +39,6 @@ def get_hyperparameter_distributions(random_seed=None):
         'decay_rate': get_uniform(0.2, 0.8, seeds[4]),
         'distance_offset': get_uniform(0, .5, seeds[5]),
         'distance_ceiling': get_uniform(0, .5, seeds[6]),
-        'wordNgrams': get_uniform_int(1, 3, seeds[2]),
     }
     return param_dict
 
@@ -489,20 +488,14 @@ def cv_independent_associations(data_df,
                                                   entity_columns=entity_columns))
     cv_stats_df = cv.compute_cv_fold_stats(data_df, cv_sets)
 
-    param_dict = copy.deepcopy(param_dict)
-    if 'wordNgrams' in param_dict:
-        wordngrams = param_dict['wordNgrams']
-        del param_dict['wordNgrams']
-    else:
-        wordngrams = 2
-
     def ffpf(train, valid, epochs, dim, bucket):
         return fasttext_fit_predict_default(train, valid, epochs=epochs,
                                             dim=dim, bucket=bucket,
                                             pretrained_vectors_path=pretrained_vectors_path,
-                                            thread=fasttext_threads, wordngrams=wordngrams,
+                                            thread=fasttext_threads
                                             )
 
+    param_dict = copy.deepcopy(param_dict)
     if 'decay_rate' in param_dict or 'distance_offset' in param_dict or 'distance_ceiling' in param_dict:
         decay_rate = param_dict['decay_rate']
         del param_dict['decay_rate']
