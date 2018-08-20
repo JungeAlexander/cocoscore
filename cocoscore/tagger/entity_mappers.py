@@ -25,9 +25,9 @@ def lowercase_strip_str(string):
 
 def get_file_handle(file_path, compression):
     if compression:
-        return gzip.open(file_path, 'rt', encoding='utf-8', errors='strict')
+        return gzip.open(file_path, 'rt', encoding='utf-8', errors='replace')
     else:
-        return open(file_path, 'rt', encoding='utf-8', errors='strict')
+        return open(file_path, 'rt', encoding='utf-8', errors='replace')
 
 
 def get_serial_to_taxid_name_mapper(entity_file, taxids=(9606, -26), compressed=True):
