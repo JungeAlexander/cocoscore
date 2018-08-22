@@ -51,8 +51,8 @@ def precision_recall_reweighted(scores, labels, class_balance_original, class_ba
     precisions.append(1.0)
     recalls.append(0.0)
 
-    precision_recall_points = sorted(zip(recalls, precisions), reverse=False)
-    precisions, recalls = zip(*precision_recall_points)
+    rps = sorted(zip(recalls, precisions), reverse=False)
+    recalls, precisions = zip(*rps)
     # calculates the area using the trapezoidal rule
     area_under_pr_curve = sklearn.metrics.auc(recalls, precisions)
-    return precisions, recalls, best_f_score, area_under_pr_curve
+    return precisions[::-1], recalls[::-1], best_f_score, area_under_pr_curve
