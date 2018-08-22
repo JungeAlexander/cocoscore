@@ -1,18 +1,18 @@
 import sklearn.metrics
 
-def precision_recall_reweighted(scores, labels, class_balance):
-    """
-    NOTE: untested
 
+def precision_recall_reweighted(scores, labels, class_balance_original, class_balance_target):
+    """
     Compute precisions, recalls, best F1 score, area under precision-recall curve
     taking class imbalance into account by re-weighting precision.
 
-    See paper by Lever et al. [Bioinformatics, btx613, 2017, doi:10.1093/bioinformatics/btx613]
+    See, e.g., paper by Lever et al. [Bioinformatics, btx613, 2017, doi:10.1093/bioinformatics/btx613]
     for motivation behind the re-weighting.
 
     :param scores: iterable of predicted scores
     :param labels: iterable true class labels: 1 for positives; 0 for negatives
-    :param class_balance: float to use for re-weighting
+    :param class_balance_original: float positive fraction in original dataset
+    :param class_balance_target: float positive fraction in target dataset
     :return: precisions, recalls, best F1 score, area under precision-recall curve
     """
     score_label = sorted(zip(scores, labels), reverse=True)
@@ -23,6 +23,8 @@ def precision_recall_reweighted(scores, labels, class_balance):
     best_f_score = -1.0
     precisions = []
     recalls = []
+    tp_factor = class_balance_target/class_balance_original
+    fp_factor = (1 - class_balance_target)/(1 - class_balance_original)
     for _, label in score_label:
         if label == 1:
             tp += 1
@@ -34,7 +36,7 @@ def precision_recall_reweighted(scores, labels, class_balance):
 
         precision, recall, f_score = 0, 0, 0
         if tp + fp != 0:
-            precision = class_balance * tp / float(class_balance * tp + (1 - class_balance) * fp)
+            precision = tp_factor * tp / float(tp_factor * tp + fp_factor * fp)
         if tp + fn != 0:
             recall = tp / float(tp + fn)
         if precision + recall != 0:
