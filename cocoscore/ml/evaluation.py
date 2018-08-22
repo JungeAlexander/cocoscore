@@ -47,9 +47,11 @@ def precision_recall_reweighted(scores, labels, class_balance_original, class_ba
         if f_score > best_f_score:
             best_f_score = f_score
 
-    precision_recall_points = sorted(zip(recalls, precisions), reverse=True)
     # add graph points at top left
-    precision_recall_points.append((0, 1))
+    precisions.append(1.0)
+    recalls.append(0.0)
+
+    precision_recall_points = sorted(zip(recalls, precisions), reverse=False)
     precisions, recalls = zip(*precision_recall_points)
     # calculates the area using the trapezoidal rule
     area_under_pr_curve = sklearn.metrics.auc(recalls, precisions)
