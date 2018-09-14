@@ -108,7 +108,7 @@ with open(scores_path, 'wt') as fout:
 
 ## Advanced use case: Training and applying a custom scoring model to your own dataset
 
-We now describe how you can train your own fastText model to score sentence-level co-occurrences. This step is necessary if other co-mentions than disease-gene co-mentions are to be scored or if you prefer to the model on your own corpus.
+We now describe how you can train your own fastText model to score sentence-level co-occurrences. This step is necessary if other co-mentions than disease-gene co-mentions are to be scored or if you prefer to fit a model to your own corpus.
 Please note that this section assumes a basic understanding of machine learning approaches such as the motivation behind training-test set splitting and cross-validation.
 
 ### Label column
