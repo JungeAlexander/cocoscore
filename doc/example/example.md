@@ -13,7 +13,7 @@ cd doc/example
 The dataset is expected to come as a tab-delimited file (no header) with the following columns:
 
 - document identifier (integer, e.g. PubMed ID)
-- paragaph number (integer)
+- paragraph number (integer)
 - sentence number (integer)
 - first co-mentioned entity (string, e.g. disease identifier)
 - second co-mentioned entity (string, e.g. gene identifier)
