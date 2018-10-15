@@ -108,8 +108,8 @@ with open(scores_path, 'wt') as fout:
 
 ## Advanced use case: Training and applying a custom scoring model to your own dataset
 
-We now describe how you can train your own fastText model to score sentence-level co-occurrences. This step is necessary if other co-mentions than disease-gene co-mentions are to be scored or if you prefer to fit a model to your own corpus.
-Please note that this section assumes a basic understanding of machine learning approaches such as the motivation behind training-test set splitting and cross-validation.
+We now describe how you can train your own fastText model to score sentence-level co-occurrences. This step is necessary if you would like to to fit a model to your own set of co-mentions instead of using our pretrained Supplementary scoring models.
+Please note that this section assumes a basic understanding of machine learning approaches such as the motivation behind training-test dataset splitting and cross-validation.
 
 ### Label column
 
@@ -202,7 +202,7 @@ with open(output_path, 'wt') as fout:
     cv_results.to_csv(fout, sep='\t')
 ```
 
-This will produce temporary cross-validation datasets, compute train and test error (i.e. validation error) on each fold and report these errors for different parameter choices.
+After running for about one minute, this will produce temporary cross-validation datasets, compute train and test error (i.e. validation error) on each fold and report these errors for different parameter choices.
 Note that the dimensionality of the word embeddings is fixed to 300 in the example above (the `dim` variable).
 This means that the `-dim` parameter of fastText will not be subjected to cross-validation.
 Fixing parameters like this allows to incorporate prior knowledge into the model training.
