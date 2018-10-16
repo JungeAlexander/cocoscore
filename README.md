@@ -10,6 +10,12 @@ Text mining of the biomedical literature has been successful in retrieving inter
 CoCoScore implements an improved context-aware co-occurrence scoring scheme that uses textual context to assess whether an association is described in a given sentence or not. CoCoScore achieves superior performance compared to previous approaches that rely on constant sentence scores, based on datasets of disease-gene, tissue-gene, and protein-protein associations. 
 In our research, we use [distant supervision](doc/example/example.md#appendix-distant-supervision) to create an automatic, but noisy, labelling of a large dataset of sentences co-mentioning two entities of interest.
 
+## Preprint manuscript 
+
+A preprint manuscript describing CoCoScore and its performance on eight datasets, compared to a baseline co-occurrence scoring model, is available here: [https://www.biorxiv.org/content/early/2018/10/16/444398](https://www.biorxiv.org/content/early/2018/10/16/444398)
+
+Supplementary data described in the manuscript can be downloaded from: \href{https://doi.org/10.6084/m9.figshare.7198280.v1}{https://doi.org/10.6084/m9.figshare.7198280.v1}.
+
 ## Quick start
 
 1. Follow the [installation instructions](#installation).
@@ -53,17 +59,14 @@ source activate cocoscore
 
 ## Example usage
 
-Before running the examples, please download the following files:
+Before running the examples, please download the following file and save it to `doc/example/`:
 
-- [Pre-trained fastText model](http://download.jensenlab.org/BLAH4/demo.ftz)
-- [Training set](http://download.jensenlab.org/BLAH4/medlinepmcoa_train_ghr.tsv.gz) of sentences co-mentioning diseases and genes derived from Medline abstracts and PubMed Central Open Access articles
-- [Test set](http://download.jensenlab.org/BLAH4/medlinepmcoa_test_ghr.tsv.gz) corresponding to the training set above
+- [Example pre-trained fastText model](http://download.jensenlab.org/BLAH4/demo.ftz)
 
 The files are downloaded and placed in the correct directories by executing:
 
 ```shell
 wget -P doc/example/ http://download.jensenlab.org/BLAH4/demo.ftz
-wget http://download.jensenlab.org/BLAH4/medlinepmcoa_train_ghr.tsv.gz http://download.jensenlab.org/BLAH4/medlinepmcoa_test_ghr.tsv.gz
 ```
 
 Afterwards, please see [here](doc/example/example.md) for usage examples.
