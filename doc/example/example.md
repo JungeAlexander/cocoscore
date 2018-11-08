@@ -142,12 +142,17 @@ params = {'-dim': 300, '-epoch': 10, '-lr': 0.01}
 fasttext_path = 'fasttext'
 
 model_file = fasttext_fit(train_path, params, fasttext_path, thread=1, compress_model=True,
-                                  model_path='mymodel')
+                          model_path='mymodel') # use the argument pretrained_vectors_path for pretrained embeddings
 print(model_file)
 # mymodel.ftz
 ```
 
 This trains a fastText model using the given hyperparameter settings.
+To use pretrained word embeddings while fitting a model, pass the path to an uncompressed embeddings file
+to `fasttext_fit()` via the `pretrained_vectors_path` argument, as indicated above.
+An uncompressed embeddings file can be obtained by running the `fasttext skipgram` command using a corpus of choice or
+by downloading [this](https://ndownloader.figshare.com/files/13254032) file,
+available as part of our [Supplementary Data](https://doi.org/10.6084/m9.figshare.7198280.v1), and decompressing it.
 The final model is written to `mymodel.ftz` and fastText's progress is written to the command line.
 The ending `.ftz` indicates that the model has been compressed using the`fasttext quantize` command.
 
