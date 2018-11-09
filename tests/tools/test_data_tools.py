@@ -1,11 +1,9 @@
-import unittest
-
 import pandas as pd
 
 from cocoscore.tools.data_tools import fill_missing_paragraph_document_scores
 
 
-class DistanceScoreTest(unittest.TestCase):
+class TestClass(object):
     input_dict = {
         'class': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 7: 0, 16: 0},
         'distance': {1: -1, 2: 1, 3: 1, 4: -1, 5: 35, 7: -1, 16: 40},

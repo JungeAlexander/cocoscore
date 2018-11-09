@@ -1,10 +1,9 @@
 import numpy as np
-import unittest
 
 from cocoscore.ml.feature.embedding_matrix import get_sentence_vector_array
 
 
-class CVTest(unittest.TestCase):
+class TestClass(object):
 
     sentence = [['this', 'is', 'a', 'test', '.', 'unknown']]
     vectors = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [0, 0, 0, 1]])

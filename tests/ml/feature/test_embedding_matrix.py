@@ -1,10 +1,9 @@
 import numpy as np
-import unittest
 
 from cocoscore.ml.feature import embedding_matrix, glove
 
 
-class GloVeTest(unittest.TestCase):
+class TestClass(object):
     test_vec_file = 'tests/ml/feature/vectors.txt.gz'
     test_vocab_file = 'tests/ml/feature/vocab.txt.gz'
     test_vec_file_dg = 'tests/ml/feature/vectors_disease_gene.txt.gz'

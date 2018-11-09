@@ -25,5 +25,5 @@ install:
   - source activate cocoscore
   #- conda env export 
 
-script: python -m unittest discover
+script: pytest
 

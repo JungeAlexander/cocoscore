@@ -2,13 +2,12 @@ import numpy as np
 import os
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
-import unittest
 
 import cocoscore.ml.fasttext_helpers as fth
 import cocoscore.tools.data_tools as dt
 
 
-class CVTest(unittest.TestCase):
+class TestClass(object):
     train_path = 'tests/ml/ft_simple_test.txt'
     ft_path = 'fasttext'
     model_path = 'fastText_test_model'
@@ -24,23 +23,23 @@ class CVTest(unittest.TestCase):
                                                                  pretrained_vectors_path=self.pretrained_vectors_path)
         expected_train_call = self.ft_path + ' supervised -input ' + self.train_path + ' -output ' + self.model_path + \
             ' -aaa 1.0 -thread 5 -pretrainedVectors ' + self.pretrained_vectors_path
-        self.assertEqual(' '.join(train_call), expected_train_call)
+        assert ' '.join(train_call) == expected_train_call
         expected_compress_call = self.ft_path + ' quantize -input ' + self.model_path + ' -output ' + self.model_path
-        self.assertEqual(' '.join(compress_call), expected_compress_call)
+        assert ' '.join(compress_call) == expected_compress_call
 
     def test_test_call_parameters(self):
         predict_call = fth.get_fasttext_test_calls(self.test_path, self.ft_path, self.model_path)
         expected_predict_call = self.ft_path + ' predict-prob ' + self.model_path + ' ' + self.test_path + ' ' + \
             str(2)
-        self.assertEqual(' '.join(predict_call), expected_predict_call)
+        assert ' '.join(predict_call) == expected_predict_call
 
     def test_fit(self):
         model_path = fth.fasttext_fit(self.train_path, {'-bucket': 1000}, self.ft_path,
                                       model_path=self.model_path, thread=1,
                                       compress_model=False)
         expected_model_path = self.model_path + '.bin'
-        self.assertEqual(model_path, expected_model_path)
-        self.assertTrue(os.path.isfile(model_path))
+        assert model_path == expected_model_path
+        assert os.path.isfile(model_path)
         os.remove(model_path)
 
     def test_fit_compressed(self):
@@ -48,8 +47,8 @@ class CVTest(unittest.TestCase):
                                       model_path=self.model_path, thread=1,
                                       compress_model=True)
         expected_model_path = self.model_path + '.ftz'
-        self.assertEqual(model_path, expected_model_path)
-        self.assertTrue(os.path.isfile(model_path))
+        assert model_path == expected_model_path
+        assert os.path.isfile(model_path)
         os.remove(model_path)
 
     def test_fit_pretrained_vectors(self):
@@ -57,8 +56,8 @@ class CVTest(unittest.TestCase):
                                       model_path=self.model_path, thread=1,
                                       compress_model=False, pretrained_vectors_path=self.pretrained_vectors_path)
         expected_model_path = self.model_path + '.bin'
-        self.assertEqual(model_path, expected_model_path)
-        self.assertTrue(os.path.isfile(model_path))
+        assert model_path == expected_model_path
+        assert os.path.isfile(model_path)
         os.remove(model_path)
 
     def test_predict(self):
@@ -66,7 +65,7 @@ class CVTest(unittest.TestCase):
                                       model_path=self.model_path, thread=1,
                                       compress_model=False)
         fth.fasttext_predict(model_path, self.test_path, self.ft_path, self.probability_path)
-        self.assertTrue(os.path.isfile(self.probability_path))
+        assert os.path.isfile(self.probability_path)
         os.remove(model_path)
         os.remove(self.probability_path)
 
@@ -76,17 +75,17 @@ class CVTest(unittest.TestCase):
                                       compress_model=False)
         fth.fasttext_predict(model_path, self.test_path, self.ft_path, self.probability_path)
         probabilities = fth.load_fasttext_class_probabilities(self.probability_path)
-        self.assertEqual(len(probabilities), 40)
-        self.assertTrue(all([x > 0.75 for x in probabilities[:20]]))
-        self.assertTrue(all([x < 0.25 for x in probabilities[20:]]))
+        assert len(probabilities) == 40
+        assert all([x > 0.75 for x in probabilities[:20]])
+        assert all([x < 0.25 for x in probabilities[20:]])
         os.remove(model_path)
         os.remove(self.probability_path)
 
     def test_fasttext_load_labels(self):
         labels = fth.load_labels(self.train_path, compression=False)
-        self.assertEqual(len(labels), 40)
-        self.assertTrue(all([x == 1 for x in labels[:20]]))
-        self.assertTrue(all([x == 0 for x in labels[20:]]))
+        assert len(labels) == 40
+        assert all([x == 1 for x in labels[:20]])
+        assert all([x == 0 for x in labels[20:]])
 
     def test_fasttext_cv_independent_associations(self):
         dim = 20
@@ -137,6 +136,3 @@ class CVTest(unittest.TestCase):
         expected_df = pd.DataFrame({col: values for col, values in zip(expected_col_names, expected_values)},
                                    columns=expected_col_names)
         assert_frame_equal(cv_results, expected_df)
-
-if __name__ == '__main__':
-    unittest.main()

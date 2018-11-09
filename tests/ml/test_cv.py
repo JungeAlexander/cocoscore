@@ -1,7 +1,7 @@
 import numpy as np
 import pandas
 from pandas.util.testing import assert_frame_equal
-import unittest
+from pytest import fail, raises
 
 import cocoscore.ml.cv as cv
 import cocoscore.ml.fasttext_helpers as fth
@@ -9,7 +9,7 @@ import cocoscore.tagger.co_occurrence_score as cos
 import cocoscore.tools.data_tools as data_tools
 
 
-class CVTest(unittest.TestCase):
+class TestClass(object):
     testcase_df = pandas.read_csv('tests/ml/test_df.tsv', sep='\t', header=0, index_col=None)
     testcase_cross_df = pandas.read_csv('tests/ml/test_cross_df.tsv', sep='\t', header=0, index_col=None)
     testcase_cv_fold_stats = pandas.read_csv('tests/ml/test_cv_fold_stats.csv', sep=',', header=0, index_col=None)
@@ -34,7 +34,7 @@ class CVTest(unittest.TestCase):
         attempt = 0
         while True:
             if attempt == max_attempts:
-                self.fail('Failed due since no randomness in shuffled splits found.')
+                fail('Failed due since no randomness in shuffled splits found.')
             else:
                 try:
                     run1 = cv.cv_independent_entities(self.testcase_df)
@@ -42,15 +42,15 @@ class CVTest(unittest.TestCase):
                     for first, second in zip(run1, run2):
                         train_first, test_first = first
                         train_second, test_second = second
-                        self.assertFalse(all([x in train_first for x in train_second]))
-                        self.assertFalse(all([x in test_first for x in test_second]))
+                        assert not all([x in train_first for x in train_second])
+                        assert not all([x in test_first for x in test_second])
                     break
                 except AssertionError:
                     attempt += 1
 
     def test_cv_fold_count(self):
         run = cv.cv_independent_entities(self.testcase_df, cv_folds=3)
-        self.assertEqual(3, sum([1 for _ in run]))
+        assert 3 == sum([1 for _ in run])
 
     def test_train_test_independence(self):
         _ = self.testcase_df['entity1'].unique()
@@ -63,8 +63,8 @@ class CVTest(unittest.TestCase):
             test_df = self.testcase_df.iloc[test, :]
             test_genes = test_df['entity1'].unique()
             test_diseases = test_df['entity2'].unique()
-            self.assertEqual(0, len(set(train_genes).intersection(set(test_genes))))
-            self.assertEqual(0, len(set(train_diseases).intersection(set(test_diseases))))
+            assert 0 == len(set(train_genes).intersection(set(test_genes)))
+            assert 0 == len(set(train_diseases).intersection(set(test_diseases)))
 
     def test_train_test_independence_completeness(self):
         all_genes = self.testcase_cross_df['entity1'].unique()
@@ -77,10 +77,10 @@ class CVTest(unittest.TestCase):
             test_df = self.testcase_cross_df.iloc[test, :]
             test_genes = test_df['entity1'].unique()
             test_diseases = test_df['entity2'].unique()
-            self.assertEqual(0, len(set(train_genes).intersection(set(test_genes))))
-            self.assertEqual(0, len(set(train_diseases).intersection(set(test_diseases))))
-            self.assertSetEqual(set(all_genes), set(train_genes).union(set(test_genes)))
-            self.assertSetEqual(set(all_diseases), set(train_diseases).union(set(test_diseases)))
+            assert 0 == len(set(train_genes).intersection(set(test_genes)))
+            assert 0 == len(set(train_diseases).intersection(set(test_diseases)))
+            assert set(all_genes) == set(train_genes).union(set(test_genes))
+            assert set(all_diseases) == set(train_diseases).union(set(test_diseases))
 
     def test_compute_cv_fold_stats(self):
         cv_splits = (([0, 1], [2, 3]), ([2, 3], [0, 1]))
@@ -101,10 +101,10 @@ class CVTest(unittest.TestCase):
             train_second, test_second = second
             np.testing.assert_array_equal(train_first, train_second)
             np.testing.assert_array_equal(test_first, test_second)
-            self.assertEqual(len(train_first), 4)
-            self.assertEqual(len(test_first), 2)
-            self.assertEqual(len(train_second), 4)
-            self.assertEqual(len(test_second), 2)
+            assert len(train_first) == 4
+            assert len(test_first) == 2
+            assert len(train_second) == 4
+            assert len(test_second) == 2
 
     def test_randomness_associations(self):
         test_case_df = data_tools.load_data_frame(self.test_case_df_path)
@@ -113,7 +113,7 @@ class CVTest(unittest.TestCase):
         attempt = 0
         while True:
             if attempt == max_attempts:
-                self.fail('Failed due since no randomness in shuffled splits found.')
+                fail('Failed due since no randomness in shuffled splits found.')
             else:
                 try:
                     run1 = cv.cv_independent_associations(test_case_df, cv_folds=3)
@@ -121,8 +121,8 @@ class CVTest(unittest.TestCase):
                     for first, second in zip(run1, run2):
                         train_first, test_first = first
                         train_second, test_second = second
-                        self.assertFalse(all([x in train_first for x in train_second]))
-                        self.assertFalse(all([x in test_first for x in test_second]))
+                        assert not all([x in train_first for x in train_second])
+                        assert not all([x in test_first for x in test_second])
                     break
                 except AssertionError:
                     attempt += 1
@@ -132,56 +132,56 @@ class CVTest(unittest.TestCase):
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions()
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
-        self.assertEqual(sample1, sample2)
+        assert sample1 == sample2
 
     def test_random_fth_parameter_sampler_reproducibility_seed_argument(self):
         dist1 = fth.get_hyperparameter_distributions(1)
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions(1)
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
-        self.assertEqual(sample1, sample2)
+        assert sample1 == sample2
 
     def test_random_fth_parameter_sampler_random_seed_argument(self):
         dist1 = fth.get_hyperparameter_distributions(1)
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions(12)
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
-        self.assertNotEqual(sample1, sample2)
+        assert sample1 != sample2
 
     def test_random_fth_parameter_sampler_random(self):
         dist = fth.get_hyperparameter_distributions()
         generator = cv.get_random_parameter_sampler(dist, 3)
         sample1 = generator.__next__()
         sample2 = generator.__next__()
-        self.assertNotEqual(sample1, sample2)
+        assert sample1 != sample2
 
     def test_random_cos_parameter_sampler_reproducibility(self):
         dist1 = cos.get_hyperparameter_distributions()
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = cos.get_hyperparameter_distributions()
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
-        self.assertEqual(sample1, sample2)
+        assert sample1 == sample2
 
     def test_random_cos_parameter_sampler_reproducibility_seed_argument(self):
         dist1 = cos.get_hyperparameter_distributions(1)
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = cos.get_hyperparameter_distributions(1)
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
-        self.assertEqual(sample1, sample2)
+        assert sample1 == sample2
 
     def test_random_cos_parameter_sampler_random_seed_argument(self):
         dist1 = cos.get_hyperparameter_distributions(1)
         sample1 = cv.get_random_parameter_sampler(dist1, 3).__next__()
         dist2 = fth.get_hyperparameter_distributions(12)
         sample2 = cv.get_random_parameter_sampler(dist2, 3).__next__()
-        self.assertNotEqual(sample1, sample2)
+        assert sample1 != sample2
 
     def test_random_cos_parameter_sampler_random(self):
         dist = cos.get_hyperparameter_distributions()
         generator = cv.get_random_parameter_sampler(dist, 3)
         sample1 = generator.__next__()
         sample2 = generator.__next__()
-        self.assertNotEqual(sample1, sample2)
+        assert sample1 != sample2
 
     def test_fth_random_cv(self):
         bucket = 1000
@@ -221,7 +221,7 @@ class CVTest(unittest.TestCase):
             'split_1_n_train',
             'split_1_pos_train',
         ]
-        self.assertListEqual(expected_col_names, list(cv_results.columns))
+        assert expected_col_names == list(cv_results.columns)
         # following parameters are chosen randomly and hence cannot be tested but only that they differ between the CV
         # runs
         random_col_names = [
@@ -231,7 +231,7 @@ class CVTest(unittest.TestCase):
             'ws',
         ]
         for rand in random_col_names:
-            self.assertNotEqual(cv_results.loc[0, rand], cv_results.loc[1, rand])
+            assert cv_results.loc[0, rand] != cv_results.loc[1, rand]
 
         # ignore columns that are linked to test performance since this cannot be tested for random parameter choices
         ignore_params = [
@@ -286,12 +286,9 @@ class CVTest(unittest.TestCase):
 
         test_df = data_tools.load_data_frame(self.cos_cv_test_path, match_distance=True)
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
-        with self.assertRaises(TypeError) as cm:
+        with raises(TypeError, match="got an unexpected keyword argument"):
             _ = cv.random_cv(test_df, cv_function, cv_iterations, {'sentence_weightXXXX': 1},
                             cos.get_hyperparameter_distributions(), 3)
-
-        self.assertEqual(cm.exception.args[0],
-                         "co_occurrence_score() got an unexpected keyword argument 'sentence_weightXXXX'")
 
     def test_cos_random_cv(self):
         paragraph_weight = 3
@@ -332,7 +329,7 @@ class CVTest(unittest.TestCase):
             'split_1_n_train',
             'split_1_pos_train',
         ]
-        self.assertListEqual(expected_col_names, list(cv_results.columns))
+        assert expected_col_names == list(cv_results.columns)
         # following parameters are chosen randomly and hence cannot be tested but only that they differ between the CV
         # runs
         random_col_names = [
@@ -343,7 +340,7 @@ class CVTest(unittest.TestCase):
             'weighting_exponent',
         ]
         for rand in random_col_names:
-            self.assertNotEqual(cv_results.loc[0, rand], cv_results.loc[1, rand])
+            assert cv_results.loc[0, rand] != cv_results.loc[1, rand]
 
         # ignore columns that are linked to test performance since this cannot be tested for random parameter choices
         ignore_params = [
@@ -386,7 +383,3 @@ class CVTest(unittest.TestCase):
         results_test_df = cv_results.drop(random_col_names + ignore_params, axis=1)
         expected_test_df = expected_df.drop(random_col_names + ignore_params, axis=1)
         assert_frame_equal(results_test_df, expected_test_df)
-
-
-if __name__ == '__main__':
-    unittest.main()
