@@ -9,6 +9,7 @@ dependencies:
 - nltk=3.2.4
 - numpy=1.13.3
 - pandas=0.20.3
+- pytest=3.10.0
 - python=3.6.1
 - scikit-learn=0.19.1
 - scipy=0.19.1
