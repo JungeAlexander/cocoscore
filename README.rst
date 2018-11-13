@@ -73,14 +73,6 @@ fastText v0.1.0 is also available via `conda-forge <https://anaconda.org/conda-f
    conda install -c conda-forge fasttext=0.1.0
 
 
-Preprint manuscript
-===========
-
-A preprint manuscript describing CoCoScore and its performance on eight datasets, compared to a baseline co-occurrence scoring model, is available `here <https://www.biorxiv.org/content/early/2018/10/16/444398>`_.
-
-Supplementary data described in the manuscript can be downloaded `here <https://doi.org/10.6084/m9.figshare.7198280.v1>`_.
-
-
 Quick start
 ===========
 
@@ -101,6 +93,14 @@ The files are downloaded and placed in the correct directories by executing:
 ::
 
     wget -P doc/example/ http://download.jensenlab.org/BLAH4/demo.ftz
+
+
+Preprint manuscript
+===========
+
+A preprint manuscript describing CoCoScore and its performance on eight datasets, compared to a baseline co-occurrence scoring model, is available `here <https://www.biorxiv.org/content/early/2018/10/16/444398>`_.
+
+Supplementary data described in the manuscript can be downloaded `here <https://doi.org/10.6084/m9.figshare.7198280.v1>`_.
 
 
 Contributors
