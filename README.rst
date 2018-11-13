@@ -78,7 +78,7 @@ Preprint manuscript
 
 A preprint manuscript describing CoCoScore and its performance on eight datasets, compared to a baseline co-occurrence scoring model, is available `here <https://www.biorxiv.org/content/early/2018/10/16/444398>`_.
 
-Supplementary data described in the manuscript can be downloaded `here <https://doi.org/10.6084/m9.figshare.7198280.v1](https://doi.org/10.6084/m9.figshare.7198280.v1>`_.
+Supplementary data described in the manuscript can be downloaded `here <https://doi.org/10.6084/m9.figshare.7198280.v1>`_.
 
 
 Quick start
@@ -116,6 +116,8 @@ Feedback
 
 Please open an issue here or write us:
 ``{alexander.junge,lars.juhl.jensen} AT cpr DOT ku DOT dk``
+
+See also: https://github.com/JungeAlexander/cocoscore/blob/master/CONTRIBUTING.rst
 
 
 Development
