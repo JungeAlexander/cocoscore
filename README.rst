@@ -1,5 +1,5 @@
 ========
-Overview
+CoCoScore: context-aware co-occurrence scores for text mining applications
 ========
 
 .. start-badges
@@ -43,9 +43,14 @@ Overview
 
 .. end-badges
 
-CoCoScore: context-aware co-occurrence scores for text mining applications
+Text mining of the biomedical literature has been successful in retrieving interactions between proteins, non-coding RNAs, and chemicals as well as in determining tissue-specific expression and subcellular localization. Simple co-occurrence-based scoring schemes can uncover such associations by finding entity pairs that are frequently mentioned together but ignore the textual context of each co-occurrence.
+
+CoCoScore implements an improved context-aware co-occurrence scoring scheme that uses textual context to assess whether an association is described in a given sentence or not. CoCoScore achieves superior performance compared to previous approaches that rely on constant sentence scores, based on datasets of disease-gene, tissue-gene, and protein-protein associations.
+In our research, we use `distant supervision <https://github.com/JungeAlexander/cocoscore/blob/master/doc/example/example.md#appendix-distant-supervision>`_ to create an automatic, but noisy, labelling of a large dataset of sentences co-mentioning two entities of interest.
 
 * Free software: MIT license
+
+.. image:: https://github.com/JungeAlexander/cocoscore/blob/master/doc/logos/CoCoScore-text-small.png
 
 Installation
 ============
