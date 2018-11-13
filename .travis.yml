@@ -24,6 +24,7 @@ install:
   - unzip v0.1.0.zip
   - cd fastText-0.1.0
   - make
+  - export PATH="`pwd`:$PATH"
   - pip install tox
   - virtualenv --version
   - easy_install --version
