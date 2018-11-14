@@ -1,6 +1,6 @@
-========
+================================================================================
 CoCoScore: context-aware co-occurrence scores for text mining applications
-========
+================================================================================
 
 .. start-badges
 
@@ -82,7 +82,7 @@ Quick start
 
 
 Example usage
-===========
+==============
 
 Before running the examples, please download the following file and save it to ``doc/example/``:
 
@@ -96,15 +96,15 @@ The files are downloaded and placed in the correct directories by executing:
 
 
 Preprint manuscript
-===========
+====================
 
-A preprint manuscript describing CoCoScore and its performance on eight datasets, compared to a baseline co-occurrence scoring model, is available `here <https://www.biorxiv.org/content/early/2018/10/16/444398>`_.
+A preprint manuscript describing CoCoScore and its performance on eight datasets, compared to a baseline co-occurrence scoring model, is available `via bioRxiv <https://www.biorxiv.org/content/early/2018/10/16/444398>`_.
 
-Supplementary data described in the manuscript can be downloaded `here <https://doi.org/10.6084/m9.figshare.7198280.v1>`_.
+Supplementary data described in the manuscript can be downloaded `via figshare <https://doi.org/10.6084/m9.figshare.7198280.v1>`_.
 
 
 Contributors
-===========
+=============
 
 CoCoScore is being developed by Alexander Junge and Lars Juhl Jensen at the
 Disease Systems Biology Program, Novo Nordisk Foundation Center for Protein Research,
