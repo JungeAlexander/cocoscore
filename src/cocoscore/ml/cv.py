@@ -113,7 +113,7 @@ def cv_independent_associations(data_df, cv_folds=5, entity_columns=('entity1', 
 def compute_cv_fold_stats(data_df, cv_splits):
     """
     Computes CV fold size and class proportions for a given CV splitting.
-    
+
     :param data_df: a DataFrame
     :param cv_splits: a given cv splitting as e.g. returned by cv_independent_associations()
     :return: a DataFrame that lists count and fraction of positives in each CV fold training and test set

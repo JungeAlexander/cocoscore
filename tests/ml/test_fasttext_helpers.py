@@ -114,7 +114,7 @@ class TestClass(object):
             'split_1_n_train',
             'split_1_pos_train',
         ]
-        cv_runs = 1 
+        cv_runs = 1
         expected_values = [
             [1.0] * cv_runs,
             [0.0] * cv_runs,

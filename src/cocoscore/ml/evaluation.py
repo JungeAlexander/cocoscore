@@ -31,7 +31,7 @@ def precision_recall_reweighted(scores, labels, class_balance_original, class_ba
         else:
             fp += 1
 
-        tn = negative_count - fp
+        _ = negative_count - fp
         fn = positive_count - tp
 
         precision, recall, f_score = 0, 0, 0

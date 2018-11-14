@@ -361,7 +361,7 @@ def load_labels(dataset_path, compression=False):
         true_labels = []
         for line in conn:
             true_labels.append(line.split()[0])
-        true_labels = [1 if l == '__label__1' else 0 for l in true_labels]
+        true_labels = [1 if ll == '__label__1' else 0 for ll in true_labels]
         return true_labels
     finally:
         conn.close()
