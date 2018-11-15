@@ -1,17 +1,21 @@
 import gzip
-import shutil
 import os
+import shutil
 import subprocess
-from statistics import mean, stdev
+from statistics import mean
+from statistics import stdev
 
 import numpy as np
 import pandas as pd
 from gensim import utils
-from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import roc_auc_score
 
-from .cv import compute_cv_fold_stats, cv_independent_associations
-from .tools import get_uniform_int, get_log_uniform
 from ..tools.file_tools import get_file_handle
+from .cv import compute_cv_fold_stats
+from .cv import cv_independent_associations
+from .tools import get_log_uniform
+from .tools import get_uniform_int
 
 
 def get_hyperparameter_distributions(random_seed=None):

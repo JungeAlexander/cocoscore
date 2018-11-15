@@ -1,6 +1,7 @@
 import numpy as np
 
-from cocoscore.ml.feature import embedding_matrix, glove
+from cocoscore.ml.feature import embedding_matrix
+from cocoscore.ml.feature import glove
 
 
 class TestClass(object):

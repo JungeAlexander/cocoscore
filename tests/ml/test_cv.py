@@ -1,7 +1,8 @@
 import numpy as np
 import pandas
 from pandas.util.testing import assert_frame_equal
-from pytest import fail, raises
+from pytest import fail
+from pytest import raises
 
 import cocoscore.ml.cv as cv
 import cocoscore.ml.fasttext_helpers as fth

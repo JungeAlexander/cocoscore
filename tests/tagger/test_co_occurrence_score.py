@@ -1,11 +1,13 @@
-import cocoscore.tagger.co_occurrence_score as co_occurrence_score
-import cocoscore.tools.data_tools as dt
 import numpy
 import pandas
+from pandas.util.testing import assert_frame_equal
+from pytest import approx
+from pytest import raises
+
+import cocoscore.tagger.co_occurrence_score as co_occurrence_score
+import cocoscore.tools.data_tools as dt
 from cocoscore.ml.distance_scores import polynomial_decay_distance
 from cocoscore.ml.fasttext_helpers import fasttext_fit_predict_default
-from pandas.util.testing import assert_frame_equal
-from pytest import approx, raises
 
 
 def fasttext_function(train, valid, epochs, dim, bucket):

@@ -1,8 +1,10 @@
 import logging
-import numpy as np
 import string
 
-from ...tools.constants import DISEASE_PLACEHOLDER, GENE_PLACEHOLDER
+import numpy as np
+
+from ...tools.constants import DISEASE_PLACEHOLDER
+from ...tools.constants import GENE_PLACEHOLDER
 
 module_logger = logging.getLogger(__name__)
 

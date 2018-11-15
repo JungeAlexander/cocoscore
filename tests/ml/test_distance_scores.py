@@ -1,7 +1,8 @@
 import pandas as pd
 from pytest import raises
 
-from cocoscore.ml.distance_scores import reciprocal_distance, _distance_scorer
+from cocoscore.ml.distance_scores import _distance_scorer
+from cocoscore.ml.distance_scores import reciprocal_distance
 from cocoscore.tools.data_tools import load_data_frame
 
 

@@ -5,18 +5,22 @@ import itertools
 import os
 import tempfile
 import warnings
-from statistics import mean, stdev
+from statistics import mean
+from statistics import stdev
 
 import numpy as np
 import pandas as pd
 from sklearn import metrics
 
-from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
-from ..ml.distance_scores import constant_distance, polynomial_decay_distance, reciprocal_distance
+from ..ml.distance_scores import constant_distance
+from ..ml.distance_scores import polynomial_decay_distance
+from ..ml.distance_scores import reciprocal_distance
 from ..ml.fasttext_helpers import fasttext_fit_predict_default
-from ..ml.tools import get_uniform, get_log_uniform
+from ..ml.tools import get_log_uniform
+from ..ml.tools import get_uniform
 from ..tools.file_tools import get_file_handle
+from .entity_mappers import get_serial_to_taxid_name_mapper
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
 

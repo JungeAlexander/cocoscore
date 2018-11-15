@@ -1,6 +1,7 @@
+import warnings
+
 import numpy as np
 import pandas as pd
-import warnings
 
 
 def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, match_distance=False,

@@ -1,13 +1,7 @@
 from collections import defaultdict
-# import gzip
+
 import numpy as np
-# import os
 import pandas as pd
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.feature_extraction.text import CountVectorizer
-# from sklearn.model_selection import GridSearchCV, ParameterGrid
-# from sklearn.pipeline import Pipeline
-# import xgboost as xgb
 
 
 def _cv_independent_entities_treated_separately(data_df, cv_folds, entity_columns, random_state):

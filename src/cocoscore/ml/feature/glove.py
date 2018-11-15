@@ -1,4 +1,5 @@
 import gzip
+
 import numpy as np
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
