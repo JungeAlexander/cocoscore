@@ -98,7 +98,7 @@ def _get_tax_id_preferred_name_to_name(preferred_names_file, serial_to_taxid_nam
     return tax_id_preferred_name_to_name
 
 
-def get_taxid_alias_to_name_mapper(names_file,  entity_file, unique_mappers_only=True, taxids=(9606, -26),
+def get_taxid_alias_to_name_mapper(names_file, entity_file, unique_mappers_only=True, taxids=(9606, -26),
                                    lowercase_strip=False, preferred_names_file=None, compressed=True):
     """
     Returns a mapper for aliases to their final names.

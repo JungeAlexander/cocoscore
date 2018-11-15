@@ -288,7 +288,7 @@ class TestClass(object):
         test_df['text'] = test_df['text'].apply(lambda s: s.strip().lower())
         with raises(TypeError, match="got an unexpected keyword argument"):
             _ = cv.random_cv(test_df, cv_function, cv_iterations, {'sentence_weightXXXX': 1},
-                            cos.get_hyperparameter_distributions(), 3)
+                             cos.get_hyperparameter_distributions(), 3)
 
     def test_cos_random_cv(self):
         paragraph_weight = 3

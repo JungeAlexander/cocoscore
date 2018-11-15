@@ -52,12 +52,12 @@ def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_p
     for arg in sorted(param_dict.keys()):
         val = param_dict[arg]
         train_args += [arg, str(val)]
-    train_call = [fasttext_path, 'supervised',  '-input', train_file_path, '-output', model_path]
+    train_call = [fasttext_path, 'supervised', '-input', train_file_path, '-output', model_path]
     train_call += train_args
     train_call += ['-thread', str(thread)]
     if pretrained_vectors_path is not None:
         train_call += ['-pretrainedVectors', pretrained_vectors_path]
-    compress_call = [fasttext_path, 'quantize', '-input',  model_path, '-output', model_path]
+    compress_call = [fasttext_path, 'quantize', '-input', model_path, '-output', model_path]
     return train_call, compress_call
 
 

@@ -330,9 +330,9 @@ def co_occurrence_score(matches_file_path, score_file_path,
         if not isinstance(key, tuple):
             continue
         entity_1, entity_2 = key
+        tmp = 1 - weighting_exponent
         co_occurrence = (score ** weighting_exponent) * \
-                        (((score * norm_factor) / (weighted_counts[entity_1] * weighted_counts[entity_2])) **
-                         (1 - weighting_exponent))
+                        (((score * norm_factor) / (weighted_counts[entity_1] * weighted_counts[entity_2])) ** tmp)
         co_occurrence_scores[key] = co_occurrence
     return co_occurrence_scores
 
