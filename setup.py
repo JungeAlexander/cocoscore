@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='cocoscore',
-    version='0.1.0',
+    version='0.2.0',
     license='MIT license',
     description='CoCoScore: context-aware co-occurrence scores for text mining applications',
     long_description='%s\n%s' % (
