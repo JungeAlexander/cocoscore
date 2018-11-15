@@ -240,7 +240,7 @@ def _compute_metric(dataset_file_path, prob_file_path, metric='roc_auc_score'):
     elif metric == 'average_precision_score':
         score = average_precision_score(labels, predicted)
     else:
-        raise ValueError(f'Unknown scoring metric: {metric}')
+        raise ValueError('Unknown scoring metric: {}'.format(metric))
     return score, predicted
 
 

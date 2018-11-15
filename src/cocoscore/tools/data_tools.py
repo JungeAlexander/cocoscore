@@ -39,7 +39,8 @@ def load_data_frame(data_frame_path, sort_reindex=False, class_labels=True, matc
     if nulls.sum().sum() != 0:
         null_rows = list(set(np.where(nulls)[0]))
         data_df.drop(data_df.index[null_rows], inplace=True)
-        warnings.warn(f'Encountered missing values while loading data from {data_frame_path} in rows: {null_rows}')
+        warnings.warn('Encountered missing values while loading data from {} in rows: {}'.format(data_frame_path,
+                                                                                                 null_rows))
 
     if sort_reindex:
         data_df.sort_values('pmid', axis=0, inplace=True, kind='mergesort')

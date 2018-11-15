@@ -377,7 +377,7 @@ def _compute_metric(score_dict, data_frame, warn=True, metric='roc_auc_score'):
             scores.append(score_dict[entity_pair])
         else:
             if warn:
-                warnings.warn(f'Missing score for entity pair {entity_pair}.')
+                warnings.warn('Missing score for entity pair {}.'.format(entity_pair))
             scores.append(0.0)
         classes.append(_class)
     if metric == 'roc_auc_score':
@@ -385,7 +385,7 @@ def _compute_metric(score_dict, data_frame, warn=True, metric='roc_auc_score'):
     elif metric == 'average_precision_score':
         return metrics.average_precision_score(classes, scores)
     else:
-        raise ValueError(f'Unknown scoring metric: {metric}')
+        raise ValueError('Unknown scoring metric: {}'.format(metric))
 
 
 def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
@@ -438,7 +438,7 @@ def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs
         elif constant_scoring == 'sentence':
             pass  # already handled earlier when computing sentence-level scores
         else:
-            raise ValueError(f'Unknown constant_scoring parameter: {constant_scoring}')
+            raise ValueError('Unknown constant_scoring parameter: {}'.format(constant_scoring))
     train_scores[non_sentence_rows_train] = non_sentence_train_scores
     test_scores[non_sentence_rows_test] = non_sentence_test_scores
     return train_scores, test_scores
@@ -680,7 +680,7 @@ def _get_score_dict(scores, df, warn=True):
         else:
             pair_scores[p] = 0.0
             if warn:
-                warnings.warn(f'Missing score for entity pair {p}.')
+                warnings.warn('Missing score for entity pair {}.'.format(p))
     return pair_scores
 
 

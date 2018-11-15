@@ -4,7 +4,7 @@ from math import exp
 def _distance_scorer(data_df, score_function):
     distance_column = 'distance'
     if distance_column not in data_df.columns:
-        raise ValueError(f'The given data_df does not have a {distance_column} column.')
+        raise ValueError('The given data_df does not have a {} column.'.format(distance_column))
     distances = data_df.loc[:, distance_column]
     return distances.apply(score_function)
 
