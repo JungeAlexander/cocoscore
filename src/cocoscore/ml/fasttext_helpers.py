@@ -1,17 +1,21 @@
 import gzip
-import shutil
 import os
+import shutil
 import subprocess
-from statistics import mean, stdev
+from statistics import mean
+from statistics import stdev
 
 import numpy as np
 import pandas as pd
 from gensim import utils
-from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import roc_auc_score
 
-from .cv import compute_cv_fold_stats, cv_independent_associations
-from .tools import get_uniform_int, get_log_uniform
 from ..tools.file_tools import get_file_handle
+from .cv import compute_cv_fold_stats
+from .cv import cv_independent_associations
+from .tools import get_log_uniform
+from .tools import get_uniform_int
 
 
 def get_hyperparameter_distributions(random_seed=None):
@@ -52,12 +56,12 @@ def get_fasttext_train_calls(train_file_path, param_dict, fasttext_path, model_p
     for arg in sorted(param_dict.keys()):
         val = param_dict[arg]
         train_args += [arg, str(val)]
-    train_call = [fasttext_path, 'supervised',  '-input', train_file_path, '-output', model_path]
+    train_call = [fasttext_path, 'supervised', '-input', train_file_path, '-output', model_path]
     train_call += train_args
     train_call += ['-thread', str(thread)]
     if pretrained_vectors_path is not None:
         train_call += ['-pretrainedVectors', pretrained_vectors_path]
-    compress_call = [fasttext_path, 'quantize', '-input',  model_path, '-output', model_path]
+    compress_call = [fasttext_path, 'quantize', '-input', model_path, '-output', model_path]
     return train_call, compress_call
 
 
@@ -361,7 +365,7 @@ def load_labels(dataset_path, compression=False):
         true_labels = []
         for line in conn:
             true_labels.append(line.split()[0])
-        true_labels = [1 if l == '__label__1' else 0 for l in true_labels]
+        true_labels = [1 if ll == '__label__1' else 0 for ll in true_labels]
         return true_labels
     finally:
         conn.close()

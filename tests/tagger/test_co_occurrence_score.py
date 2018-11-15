@@ -1,12 +1,20 @@
 import numpy
 import pandas
 from pandas.util.testing import assert_frame_equal
-from pytest import approx, raises
+from pytest import approx
+from pytest import raises
 
 import cocoscore.tagger.co_occurrence_score as co_occurrence_score
 import cocoscore.tools.data_tools as dt
 from cocoscore.ml.distance_scores import polynomial_decay_distance
 from cocoscore.ml.fasttext_helpers import fasttext_fit_predict_default
+
+
+def fasttext_function(train, valid, epochs, dim, bucket):
+    return fasttext_fit_predict_default(train, valid,
+                                        epochs=epochs,
+                                        dim=dim,
+                                        bucket=bucket)
 
 
 class TestClass(object):
@@ -800,19 +808,14 @@ class TestClass(object):
         df['text'] = df['text'].apply(lambda s: s.strip().lower())
         train_df = df.copy()
         test_df = df.copy()
-        fasttext_function = lambda train, valid, epochs, dim, bucket: fasttext_fit_predict_default(train, valid,
-                                                                                                   epochs=epochs,
-                                                                                                   dim=dim,
-                                                                                                   bucket=bucket)
 
-        def new_match_distance_function(data_frame):
+        def nmdf(data_frame):
             return polynomial_decay_distance(data_frame, 0, -2, 1)
 
         train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
                                                                                fasttext_epochs=5, fasttext_dim=20,
                                                                                fasttext_bucket=1000,
-                                                                               match_distance_function=
-                                                                               new_match_distance_function,
+                                                                               match_distance_function=nmdf,
                                                                                constant_scoring='sentence')
         sentence_matches = numpy.logical_and(df['sentence'] != -1, df['paragraph'] != -1)
         non_sentence_matches = numpy.logical_not(sentence_matches)
@@ -825,19 +828,14 @@ class TestClass(object):
         df['text'] = df['text'].apply(lambda s: s.strip().lower())
         train_df = df.copy()
         test_df = df.copy()
-        fasttext_function = lambda train, valid, epochs, dim, bucket: fasttext_fit_predict_default(train, valid,
-                                                                                                   epochs=epochs,
-                                                                                                   dim=dim,
-                                                                                                   bucket=bucket)
 
-        def new_match_distance_function(data_frame):
+        def nmdf(data_frame):
             return polynomial_decay_distance(data_frame, 0, -2, 1)
 
         train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
                                                                                fasttext_epochs=5, fasttext_dim=20,
                                                                                fasttext_bucket=1000,
-                                                                               match_distance_function=
-                                                                               new_match_distance_function,
+                                                                               match_distance_function=nmdf,
                                                                                constant_scoring='paragraph')
 
         paragraph_matches = numpy.logical_and(df['sentence'] == -1, df['paragraph'] != -1)
@@ -851,19 +849,14 @@ class TestClass(object):
         df['text'] = df['text'].apply(lambda s: s.strip().lower())
         train_df = df.copy()
         test_df = df.copy()
-        fasttext_function = lambda train, valid, epochs, dim, bucket: fasttext_fit_predict_default(train, valid,
-                                                                                                   epochs=epochs,
-                                                                                                   dim=dim,
-                                                                                                   bucket=bucket)
 
-        def new_match_distance_function(data_frame):
+        def nmdf(data_frame):
             return polynomial_decay_distance(data_frame, 0, -2, 1)
 
         train_scores, test_scores = co_occurrence_score._get_train_test_scores(train_df, test_df, fasttext_function,
                                                                                fasttext_epochs=5, fasttext_dim=20,
                                                                                fasttext_bucket=1000,
-                                                                               match_distance_function=
-                                                                               new_match_distance_function,
+                                                                               match_distance_function=nmdf,
                                                                                constant_scoring='document')
 
         paragraph_matches = numpy.logical_and(df['sentence'] == -1, df['paragraph'] != -1)

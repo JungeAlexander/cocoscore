@@ -1,7 +1,8 @@
 import pandas as pd
 from pytest import raises
 
-from cocoscore.ml.distance_scores import reciprocal_distance, _distance_scorer
+from cocoscore.ml.distance_scores import _distance_scorer
+from cocoscore.ml.distance_scores import reciprocal_distance
 from cocoscore.tools.data_tools import load_data_frame
 
 
@@ -18,7 +19,7 @@ class TestClass(object):
     def test_document_scores_reciprocal(self):
         document_df = load_data_frame(self.document_scores_file, class_labels=False, match_distance=True)
         scores = reciprocal_distance(document_df)
-        expected = pd.Series([1., .5, 1/3])
+        expected = pd.Series([1., .5, 1 / 3])
         pd.testing.assert_series_equal(scores, expected, check_names=False)
 
     def test_distance_scorer_exception(self):

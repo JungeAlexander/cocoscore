@@ -26,7 +26,7 @@ class TestClass(object):
         obtained = ent.get_taxid_alias_to_name_mapper(self.names_file, self.entity_file, unique_mappers_only=False,
                                                       compressed=False, lowercase_strip=False)
         assert {(9606, '--D'): {'--D'}, (-26, 'A'): {'A'}, (-26, ' B-  b '): {' B-  b '},
-                              (-26, 'a'): {'A', ' B-  b '}} == obtained
+                (-26, 'a'): {'A', ' B-  b '}} == obtained
 
     def test_lowercase_strip_entity(self):
         obtained = ent.get_taxid_alias_to_name_mapper(self.names_file, self.entity_file, unique_mappers_only=True,

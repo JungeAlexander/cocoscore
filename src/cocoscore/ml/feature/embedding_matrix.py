@@ -1,8 +1,10 @@
 import logging
-import numpy as np
 import string
 
-from ...tools.constants import DISEASE_PLACEHOLDER, GENE_PLACEHOLDER
+import numpy as np
+
+from ...tools.constants import DISEASE_PLACEHOLDER
+from ...tools.constants import GENE_PLACEHOLDER
 
 module_logger = logging.getLogger(__name__)
 
@@ -70,5 +72,5 @@ def get_sentence_vector_array(sentences_tokenized, word_vectors, word_to_index, 
             sentence_vec = np.full(vector_dim, np.nan)
             module_logger.warning('Following sentence could not be represented as a vector since only {:d} words were '
                                   'mapped to vectors: {}'.format(vector_count, ' '.join(sentence)))
-        sentence_array[sentence_index] = sentence_vec/vector_count
+        sentence_array[sentence_index] = sentence_vec / vector_count
     return sentence_array

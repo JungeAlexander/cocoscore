@@ -33,7 +33,7 @@ def get_file_handle(file_path, compression):
 def get_serial_to_taxid_name_mapper(entity_file, taxids=(9606, -26), compressed=True):
     """
     Returns a mapper for serial numbers to their final names.
-    
+
     :param entity_file: tab-delimited file with three columns (serial number, taxonomy ID, entity name).
     :param taxids: list of integers, the taxonomy IDs to use.
     :param compressed: indicates whether files are gzipped or not
@@ -98,18 +98,18 @@ def _get_tax_id_preferred_name_to_name(preferred_names_file, serial_to_taxid_nam
     return tax_id_preferred_name_to_name
 
 
-def get_taxid_alias_to_name_mapper(names_file,  entity_file, unique_mappers_only=True, taxids=(9606, -26),
+def get_taxid_alias_to_name_mapper(names_file, entity_file, unique_mappers_only=True, taxids=(9606, -26),
                                    lowercase_strip=False, preferred_names_file=None, compressed=True):
     """
     Returns a mapper for aliases to their final names.
-    
-    :param names_file: tab-delimited file with two columns (serial number, entity alias). Note that serial 
+
+    :param names_file: tab-delimited file with two columns (serial number, entity alias). Note that serial
     numbers must not be unique (if the file lists several alternative names for the same entity).
     :param entity_file: tab-delimited file with three columns (serial number, taxonomy ID, entity name).
     :param taxids: list of integers, the taxonomy IDs to use.
     :param unique_mappers_only: indicates whether aliases that map to multiple names should be included in the returned
     hash.
-    :param lowercase_strip: indicates whether aliases should be converted to lowercase, stripped of whitespace and 
+    :param lowercase_strip: indicates whether aliases should be converted to lowercase, stripped of whitespace and
     hyphens in the final mapping.
     :param preferred_names_file: path to file with preferred names which has the same format as names_file. Whenever an
     alias is declared a preferred name in this file, the alias will not be mapped to other names in the same taxon.

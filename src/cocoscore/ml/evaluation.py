@@ -23,15 +23,15 @@ def precision_recall_reweighted(scores, labels, class_balance_original, class_ba
     best_f_score = -1.0
     precisions = []
     recalls = []
-    tp_factor = class_balance_target/class_balance_original
-    fp_factor = (1 - class_balance_target)/(1 - class_balance_original)
+    tp_factor = class_balance_target / class_balance_original
+    fp_factor = (1 - class_balance_target) / (1 - class_balance_original)
     for _, label in score_label:
         if label == 1:
             tp += 1
         else:
             fp += 1
 
-        tn = negative_count - fp
+        _ = negative_count - fp
         fn = positive_count - tp
 
         precision, recall, f_score = 0, 0, 0

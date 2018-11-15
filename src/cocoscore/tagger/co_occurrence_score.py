@@ -5,18 +5,22 @@ import itertools
 import os
 import tempfile
 import warnings
-from statistics import mean, stdev
+from statistics import mean
+from statistics import stdev
 
 import numpy as np
 import pandas as pd
 from sklearn import metrics
 
-from .entity_mappers import get_serial_to_taxid_name_mapper
 from ..ml import cv
-from ..ml.distance_scores import constant_distance, polynomial_decay_distance, reciprocal_distance
+from ..ml.distance_scores import constant_distance
+from ..ml.distance_scores import polynomial_decay_distance
+from ..ml.distance_scores import reciprocal_distance
 from ..ml.fasttext_helpers import fasttext_fit_predict_default
-from ..ml.tools import get_uniform, get_log_uniform
+from ..ml.tools import get_log_uniform
+from ..ml.tools import get_uniform
 from ..tools.file_tools import get_file_handle
+from .entity_mappers import get_serial_to_taxid_name_mapper
 
 __author__ = 'Alexander Junge (alexander.junge@gmail.com)'
 
@@ -330,9 +334,9 @@ def co_occurrence_score(matches_file_path, score_file_path,
         if not isinstance(key, tuple):
             continue
         entity_1, entity_2 = key
+        tmp = 1 - weighting_exponent
         co_occurrence = (score ** weighting_exponent) * \
-                        (((score * norm_factor) / (weighted_counts[entity_1] * weighted_counts[entity_2])) **
-                         (1 - weighting_exponent))
+                        (((score * norm_factor) / (weighted_counts[entity_1] * weighted_counts[entity_2])) ** tmp)
         co_occurrence_scores[key] = co_occurrence
     return co_occurrence_scores
 

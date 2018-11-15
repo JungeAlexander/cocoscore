@@ -1,0 +1,25 @@
+graft docs
+graft src
+graft ci
+graft tests
+
+include .bumpversion.cfg
+include .coveragerc
+include .cookiecutterrc
+include .editorconfig
+
+include AUTHORS.rst
+include CHANGELOG.rst
+include CONTRIBUTING.rst
+include LICENSE
+include README.rst
+
+include tox.ini .travis.yml appveyor.yml
+
+recursive-include doc *.ai
+recursive-include doc *.md
+recursive-include doc *.png
+recursive-include doc *.svg
+recursive-include doc *.tsv
+
+global-exclude *.py[cod] __pycache__ *.so *.dylib

@@ -9,22 +9,20 @@ env:
     - TOXENV=check
 matrix:
   include:
-    - python: '3.6'
+{%- for env in tox_environments %}{{ '' }}
+    - python: '{{ env.split("-")[0] if env.startswith("pypy") else "{0[2]}.{0[3]}".format(env) }}'
+{% if env.startswith('py37') %}
+      dist: xenial
+      sudo: required
+{% endif %}
       env:
-        - TOXENV=py36,report
-    - python: '3.7-dev'
-      env:
-        - TOXENV=py37,report
+        - TOXENV={{ env }},report
+{%- endfor %}{{ '' }}
 before_install:
   - python --version
   - uname -a
   - lsb_release -a
 install:
-  - wget https://github.com/facebookresearch/fastText/archive/v0.1.0.zip
-  - unzip v0.1.0.zip
-  - cd fastText-0.1.0
-  - make
-  - export PATH="`pwd`:$PATH"
   - pip install tox
   - virtualenv --version
   - easy_install --version
