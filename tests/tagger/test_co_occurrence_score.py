@@ -68,7 +68,7 @@ class TestClass(object):
                 '--D': 15.9 + 15.44,
                 'B': 15,
                 'C': 15,
-                None: 15.9 + 15.44 + 15} == weighted_counts
+                None: 15.9 + 15.44 + 15} == approx(weighted_counts)
 
     def test_weighted_counts_sentences_paragraphs(self):
         scores = co_occurrence_score.load_score_file(self.paragraph_sentence_score_file_path)
@@ -83,7 +83,7 @@ class TestClass(object):
                 '--D': 15.9 + 0.9 + 15.44 + 0.4,
                 'B': 15,
                 'C': 15,
-                None: 15.9 + 0.9 + 15.44 + 0.4 + 15} == weighted_counts
+                None: 15.9 + 0.9 + 15.44 + 0.4 + 15} == approx(weighted_counts)
 
     def test_weighted_counts_paragraphs(self):
         paragraph_scores = co_occurrence_score.load_score_file(self.paragraph_score_file_path)
