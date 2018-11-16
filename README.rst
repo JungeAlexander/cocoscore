@@ -62,8 +62,10 @@ Installation
 
 To install CoCoScore via bioconda (for Linux and Mac OS):
 
+
 ::
-   conda install -c bioconda cocoscore
+
+    conda install -c bioconda cocoscore
 
 
 To install CoCoScore via pip:
