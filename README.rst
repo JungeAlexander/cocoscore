@@ -11,14 +11,18 @@ CoCoScore: context-aware co-occurrence scores for text mining applications
       - | |travis|
         |
     * - package
-      - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
+      - | |bioconda| |version| |wheel| |supported-versions|
+        | |supported-implementations| |commits-since|
 
 
 
 .. |travis| image:: https://travis-ci.org/JungeAlexander/cocoscore.svg?branch=master
     :alt: Travis-CI Build Status
     :target: https://travis-ci.org/JungeAlexander/cocoscore
+
+.. |bioconda| image:: https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square
+    :alt: Install with bioconda
+    :target: http://bioconda.github.io/recipes/cocoscore/README.html
 
 .. |version| image:: https://img.shields.io/pypi/v/cocoscore.svg
     :alt: PyPI Package latest release
@@ -56,14 +60,24 @@ Free software: MIT license
 Installation
 ============
 
+To install CoCoScore via bioconda (for Linux and Mac OS):
+
+::
+   conda install -c bioconda cocoscore
+
+
+To install CoCoScore via pip:
+
+
 ::
 
     pip install cocoscore
 
 
-CoCoScore also depends on `fastText <https://fasttext.cc/>`_.
-Please build v0.1.0 of fastText as described `here <https://github.com/facebookresearch/fastText/#building-fasttext-using-make-preferred>`_ and make sure the ``fasttext`` binary is discoverable via your ``$PATH`` environment variable.
+CoCoScore depends on `fastText <https://fasttext.cc/>`_ which needs to be installed separately if CoCoScore was installed via pip.
+The installation via bioconda automatically installs fastText, too.
 
+Please build v0.1.0 of fastText as described `here <https://github.com/facebookresearch/fastText/#building-fasttext-using-make-preferred>`_ and make sure the ``fasttext`` binary is discoverable via your ``$PATH`` environment variable.
 
 fastText v0.1.0 is also available via `conda-forge <https://anaconda.org/conda-forge/fasttext>`_:
 
@@ -71,6 +85,7 @@ fastText v0.1.0 is also available via `conda-forge <https://anaconda.org/conda-f
 ::
 
    conda install -c conda-forge fasttext=0.1.0
+
 
 
 Quick start
