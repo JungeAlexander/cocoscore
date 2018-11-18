@@ -79,7 +79,7 @@ To install CoCoScore via pip:
 CoCoScore depends on `fastText <https://fasttext.cc/>`_ which needs to be installed separately if CoCoScore was installed via pip.
 The installation via bioconda automatically installs fastText, too.
 
-Please build v0.1.0 of fastText as described `here <https://github.com/facebookresearch/fastText/#building-fasttext-using-make-preferred>`_ and make sure the ``fasttext`` binary is discoverable via your ``$PATH`` environment variable.
+If you installed you installed CoCoScore via pip, please build v0.1.0 of fastText as described `here <https://github.com/facebookresearch/fastText/#building-fasttext-using-make-preferred>`_ and make sure the ``fasttext`` binary is discoverable via your ``$PATH`` environment variable.
 
 fastText v0.1.0 is also available via `conda-forge <https://anaconda.org/conda-forge/fasttext>`_:
 
@@ -88,6 +88,12 @@ fastText v0.1.0 is also available via `conda-forge <https://anaconda.org/conda-f
 
    conda install -c conda-forge fasttext=0.1.0
 
+
+**CoCoScore docker container:**
+
+
+Bioconda automatically builds a Docker container for CoCoScore. 
+See the `package documentation <https://bioconda.github.io/recipes/cocoscore/README.html>`_ for more information.
 
 
 Quick start
