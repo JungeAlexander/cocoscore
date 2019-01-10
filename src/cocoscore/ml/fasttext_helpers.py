@@ -146,7 +146,7 @@ def fasttext_fit_predict_default(train_df, test_df, dim=300, epochs=50, lr=0.005
     :param output_sentence_score_path: str, path to save the test set sentence scores to, file will be gzipped. If None,
     the sentence scores are not saved.
     :param shuffle: boolean, whether the texts should be shuffled prior to prediction
-    :return: tuple of training and test performance
+    :return: training set AUROC, training set scores, test set AUROC, test set scores
     """
     fasttext_path = 'fasttext'
     compress_model = True
