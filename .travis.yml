@@ -1,11 +1,9 @@
 language: python
-sudo: false
 cache: pip
 env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
     - SEGFAULT_SIGNALS=all
-    - BOTO_CONFIG=/dev/null
   matrix:
     - TOXENV=check
 matrix:
