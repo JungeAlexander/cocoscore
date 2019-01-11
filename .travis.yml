@@ -4,6 +4,7 @@ env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
     - SEGFAULT_SIGNALS=all
+    - BOTO_CONFIG=/dev/null
   matrix:
     - TOXENV=check
 matrix:
@@ -28,8 +29,6 @@ install:
   - make
   - export PATH="`pwd`:$PATH"
   - pip install tox
-  - pip uninstall boto
-  - pip install boto==2.48.0
   - virtualenv --version
   - easy_install --version
   - pip --version
