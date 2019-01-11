@@ -28,11 +28,12 @@ install:
   - make
   - export PATH="`pwd`:$PATH"
   - pip install tox
+  - pip uninstall boto
+  - pip install boto==2.48.0
   - virtualenv --version
   - easy_install --version
   - pip --version
   - tox --version
-  - |
     set -ex
     if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then
         (cd $HOME
