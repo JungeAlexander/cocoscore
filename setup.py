@@ -64,7 +64,6 @@ setup(
     ],
     install_requires=[
         # eg: 'aspectlib==1.1.1', 'six>=1.7',
-        'gensim>=3.4.0',
         'pandas>=0.23.0',
         'scikit-learn>=0.19.1',
     ],
