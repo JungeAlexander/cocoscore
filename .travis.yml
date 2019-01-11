@@ -1,4 +1,5 @@
 language: python
+sudo: false
 cache: pip
 env:
   global:
@@ -33,6 +34,7 @@ install:
   - easy_install --version
   - pip --version
   - tox --version
+  - |
     set -ex
     if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then
         (cd $HOME
