@@ -233,7 +233,7 @@ hyperparams = {'-dim': 300, '-epoch': 41, '-lr': 0.226, '-wordNgrams': 4, '-ws':
 
 Note that in a real world setting the `cv_iterations` variable above should be greater than 5 to try out more hyperparameter combinations.
 
-### Using another sentence scoring model
+### Using a different sentence scoring model
 
 - TODO: document usage of user-provided sentence scores
 - TODO: document sentence score cutoff
