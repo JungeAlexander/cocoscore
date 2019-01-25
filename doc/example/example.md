@@ -261,7 +261,9 @@ cocoscores = cos.co_occurrence_score(score_file_path=my_scored_dataset_path,
 
 #### Using a cutoff on the sentence scores
 
-TODO
+When using a custom sentence scoring model with CoCoScore, ignoring sentences with scores below a certain cutoff may increase the overall performance of the co-occurrence scoring.
+To make this filtering easy, the `co_occurrence_score()` method called in the prevous code block exposes a `cutoff` parameter. All sentences with a score that is lower than this threshold will be ignored in the subsequent co-occurrence scoring.
+By default, `cutoff` is set to 0.0 which renders the cutoff inactive for the probabilistic scores produced by the default fastText-based sentence scoring model.
 
 ### Computing co-occurrence scores
 
