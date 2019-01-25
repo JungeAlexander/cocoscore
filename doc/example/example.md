@@ -1,10 +1,8 @@
 # Example - computing context-aware co-occurrence scores with CoCoScore
 
-First of all, open a terminal, activate the virtual environment with the CoCoScore dependencies and
-change to the directory of this example:
+First of all, install CoCoScore, open a terminal, and change to the directory of this example:
 
 ```bash
-source activate cocoscore
 cd doc/example
 ```
 
@@ -232,6 +230,38 @@ hyperparams = {'-dim': 300, '-epoch': 41, '-lr': 0.226, '-wordNgrams': 4, '-ws':
 ```
 
 Note that in a real world setting the `cv_iterations` variable above should be greater than 5 to try out more hyperparameter combinations.
+
+### Using a different sentence scoring model
+
+#### Using sentence scores produced by another model
+
+The fastText-based default scoring model used in CoCoScore was developed with the primary intentsion of providing a robust, highly generalizable approach that is easily applicable to new datasets.
+However, a user may prefer to use a more specialized scoring model that is customized to the dataset of interest or even pretrained on another dataset.
+
+It is easy to use a different scoring model together with the co-occurrence scoring implemented in CoCoScore. 
+All that is needed is a tab-separated sentence score file (which can be either uncompressed or gzipped) with the following columns:
+
+- document identifier, e.g., the PubMed ID
+- paragraph number
+- sentence number 
+- identifier of the first co-mentioned entity
+- identifier of the second co-mentioned entity
+- sentence score produced by the custom model 
+ 
+As previously explained in the Section "Computing co-occurrence scores", this sentence score file is then passed via the `score_file_path` parameter to `co_occurrence_score()` and the custom sentence scores will be used to compute final co-occurrence scores.
+
+E.g.:
+
+```python
+# my_scored_dataset_path is the path to the custom sentence score file provided by the users
+cocoscores = cos.co_occurrence_score(score_file_path=my_scored_dataset_path,
+                                     first_type=9606, second_type=-26,
+                                     matches_file_path=None, entities_file=None)
+```
+
+#### Using a cutoff on the sentence scores
+
+TODO
 
 ### Computing co-occurrence scores
 
