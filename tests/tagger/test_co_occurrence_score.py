@@ -44,6 +44,11 @@ class TestClass(object):
                                (3333, 2, 2): 0.4, (3333, 2, 3): 0.44},
                 ('B', 'C'): {(2222, 1, 1): 0}} == sentence_scores
 
+    def test_load_sentence_scores_score_cutoff(self):
+        sentence_scores = co_occurrence_score.load_score_file(self.sentence_score_file_path,
+                                                              cutoff=0.5)
+        assert {('--D', 'A'): {(1111, 1, 2): 0.9, (1111, 2, 3): 0.5}} == sentence_scores
+
     def test_load_paragraph_scores(self):
         paragraph_scores = co_occurrence_score.load_score_file(self.paragraph_score_file_path)
         assert {('--D', 'A'): {(1111, 1): 0.9, (1111, 2): 0.5,

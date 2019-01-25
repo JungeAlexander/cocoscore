@@ -245,7 +245,7 @@ def get_weighted_counts(matches_file_path, sentence_scores, paragraph_scores, do
     return dict(pair_scores)
 
 
-def load_score_file(score_file_path):
+def load_score_file(score_file_path, cutoff=0.0):
     compression = score_file_path.endswith('.gz')
     score_file = get_file_handle(score_file_path, compression)
     score_dict = collections.defaultdict(dict)
@@ -259,7 +259,8 @@ def load_score_file(score_file_path):
                 score_key = (int(pmid), int(paragraph))
             else:  # document-level score
                 score_key = int(pmid)
-            score_dict[entity_key][score_key] = float(score)
+            if cutoff <= float(score):
+                score_dict[entity_key][score_key] = float(score)
     finally:
         score_file.close()
     return dict(score_dict)
@@ -292,7 +293,8 @@ def split_scores(score_dict):
 def co_occurrence_score(matches_file_path, score_file_path,
                         entities_file, first_type, second_type,
                         document_weight=15.0, paragraph_weight=0.0,
-                        sentence_weight=1.0, weighting_exponent=0.6, ignore_scores=False, silent=False):
+                        sentence_weight=1.0, weighting_exponent=0.6, ignore_scores=False,
+                        silent=False, score_cutoff=0.0):
     """
     Computes co-occurrence score for a given matches file and/or sentence score file. See notes from 20170803 for an
     explanation compared to DISEASES scoring scheme (as implemented in co_occurrence_score_diseases).
@@ -311,12 +313,14 @@ def co_occurrence_score(matches_file_path, score_file_path,
     :param weighting_exponent: exponent weight in the co-occurrence score
     :param ignore_scores: If True, sentence scores are ignored.
     :param silent: If True, no progress updates are printed
+    :param score_cutoff: float, sentences in score_file_path with a score lower than this cutoff
+    will be ignored.
     :return: a dictionary mapping entity pairs to their co-occurrence scores
     """
     if matches_file_path is None and score_file_path is None:
         raise ValueError('matches_file_path or score_file_path must be specified.')
     if score_file_path is not None:
-        scores = load_score_file(score_file_path)
+        scores = load_score_file(score_file_path, cutoff=score_cutoff)
         sentence_scores, paragraph_scores, document_scores = split_scores(scores)
         del scores  # hint to GC as this may be large
     else:
