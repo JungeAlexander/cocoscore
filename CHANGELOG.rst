@@ -2,7 +2,7 @@
 Changelog
 =========
 
-1.0.0 (2010-01-25)
+1.0.0 (2019-01-25)
 ------------------
 
 * implement new sentence score cutoff in ``tagger.co_occurrence_score.co_occurrence_score()``
