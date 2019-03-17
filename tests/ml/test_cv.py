@@ -312,6 +312,7 @@ class TestClass(object):
             'distance_offset',
             'document_weight',
             'paragraph_weight',
+            'score_cutoff',
             'weighting_exponent',
             'mean_test_score',
             'stdev_test_score',
@@ -338,6 +339,7 @@ class TestClass(object):
             'distance_ceiling',
             'distance_offset',
             'document_weight',
+            'score_cutoff',
             'weighting_exponent',
         ]
         for rand in random_col_names:
@@ -361,6 +363,7 @@ class TestClass(object):
             [.222] * cv_iterations,
             [.111] * cv_iterations,
             [paragraph_weight] * cv_iterations,
+            [.111] * cv_iterations,
             [.111] * cv_iterations,
             [1.0] * cv_iterations,
             [0.0] * cv_iterations,
