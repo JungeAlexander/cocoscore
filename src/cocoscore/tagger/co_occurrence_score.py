@@ -31,10 +31,10 @@ def get_hyperparameter_distributions(random_seed=None):
     :return: a dictionary mapping co-occurrence score parameters to distributions to sample parameters from.
     """
     if random_seed is None:
-        seeds = [13, 24, 43, 56, 65, 123, 12]
+        seeds = [13, 24, 43, 56, 65, 123, 12, 2]
     else:
         random_state = np.random.RandomState(random_seed)
-        seeds = random_state.randint(100000, size=7)
+        seeds = random_state.randint(100000, size=8)
     param_dict = {
         'document_weight': get_log_uniform(-3, 1, seeds[0]),
         'paragraph_weight': get_uniform(0, 20, seeds[1]),
@@ -43,6 +43,7 @@ def get_hyperparameter_distributions(random_seed=None):
         'decay_rate': get_uniform(0.2, 0.8, seeds[4]),
         'distance_offset': get_uniform(0, .5, seeds[5]),
         'distance_ceiling': get_uniform(0, .5, seeds[6]),
+        'score_cutoff': get_uniform(0, 1, seeds[7]),
     }
     return param_dict
 
