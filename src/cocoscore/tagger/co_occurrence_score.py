@@ -394,7 +394,7 @@ def _compute_metric(score_dict, data_frame, warn=True, metric='roc_auc_score'):
 
 
 def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs, fasttext_dim, fasttext_bucket,
-                           match_distance_function, constant_scoring):
+                           match_distance_function, constant_scoring, score_cutoff=0.0):
     train_scores = pd.Series([0] * len(train_df), index=train_df.index)
     test_scores = pd.Series([0] * len(test_df), index=test_df.index)
     sentence_rows_train = np.logical_and(train_df.loc[:, 'sentence'] != -1,
@@ -405,14 +405,21 @@ def _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs
     sentence_test_df = test_df.loc[sentence_rows_test, :]
 
     if len(sentence_train_df) > 0:
+        _, sentence_train_scores, _, sentence_test_scores = fasttext_function(sentence_train_df, sentence_test_df,
+                                                                              epochs=fasttext_epochs,
+                                                                              dim=fasttext_dim,
+                                                                              bucket=fasttext_bucket)
         if constant_scoring == 'sentence':
+            if score_cutoff > 0:
+                zero_train_score_ix = set((ix for ix, s in enumerate(sentence_train_scores) if s < score_cutoff))
+                zero_test_score_ix = set((ix for ix, s in enumerate(sentence_test_scores) if s < score_cutoff))
+            else:
+                zero_train_score_ix = []
+                zero_test_score_ix = []
             sentence_train_scores = constant_distance(sentence_train_df)
+            sentence_train_scores = [0 if ix in zero_train_score_ix else s for ix, s in enumerate(sentence_train_scores)]
             sentence_test_scores = constant_distance(sentence_test_df)
-        else:
-            _, sentence_train_scores, _, sentence_test_scores = fasttext_function(sentence_train_df, sentence_test_df,
-                                                                                  epochs=fasttext_epochs,
-                                                                                  dim=fasttext_dim,
-                                                                                  bucket=fasttext_bucket)
+            sentence_test_scores = [0 if ix in zero_test_score_ix else s for ix, s in enumerate(sentence_test_scores)]
     else:
         sentence_train_scores = [0.0] * len(sentence_train_df)
         sentence_test_scores = [0.0] * len(sentence_train_df)
@@ -587,10 +594,14 @@ def _get_cocoscores(train_df, test_df, param_dict, fasttext_function, fasttext_e
     if tmp_file_path is None:
         _, tmp_file_path = tempfile.mkstemp(text=True, suffix='.gz')
     try:
+        if 'score_cutoff' in param_dict:
+            score_cutoff = param_dict['score_cutoff']
+        else:
+            score_cutoff = 0.0
         train_scores, test_scores = _get_train_test_scores(train_df, test_df, fasttext_function, fasttext_epochs,
                                                            fasttext_dim, fasttext_bucket,
                                                            match_distance_function,
-                                                           constant_scoring)
+                                                           constant_scoring, score_cutoff=score_cutoff)
         train_df['predicted'] = train_scores
         test_df['predicted'] = test_scores
 
